@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 @Setter
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class user {
+public class User {
     private String id;
     private String profileImage;
     private String introduction;
