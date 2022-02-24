@@ -1,6 +1,7 @@
 package com.propwave.daotool.user;
 
-import com.propwave.daotool.badge.BadgeService;
+import com.propwave.daotool.badge.model.Badge;
+import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
 import com.propwave.daotool.user.model.User;
@@ -10,7 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 //Provider: Read 비즈니스 로직 처리
 @Service
@@ -54,4 +58,39 @@ public class UserProvider {
         }
     }
 
+    public List<UserWallet> getAllUserWalletByWallet(String walletAddress) throws BaseException{
+        try{
+            return userDao.getAllUserWalletByWalletId(walletAddress);
+        } catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
+    public List<UserWallet> getAllUserWalletByUserId(String userId) throws BaseException{
+        try{
+            return userDao.getAllUserWalletByUserId(userId);
+        } catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
+    public List<Badge> getAllBadge(String walletAddress) throws BaseException{
+        try{
+            // 유저의 뱃지 이름 가져오기
+            List<BadgeWallet> allBadgeWallet = userDao.getAllBadgeWallet(walletAddress);
+            // 뱃지 내용 모으기
+            List<Badge> allBadge = new ArrayList<>();
+            for(BadgeWallet badgeWallet: allBadgeWallet){
+                String badgeName = badgeWallet.getBadgeName();
+                allBadge.add(userDao.getBadge(badgeName));
+            }
+            // 뱃지 중복 제거
+            HashSet<Badge> set = new HashSet<Badge>(allBadge);
+            List<Badge> newAllBadge = new ArrayList<Badge>(set);
+
+            return newAllBadge;
+        } catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
 }

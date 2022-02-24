@@ -1,5 +1,6 @@
 package com.propwave.daotool.user;
 
+import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
@@ -11,6 +12,7 @@ import org.apache.tomcat.util.http.fileupload.FileItem;
 //import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItem;
+import org.hibernate.type.TrueFalseType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +28,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 
@@ -123,11 +123,48 @@ public class UserController {
             e.printStackTrace();
             return new BaseResponse<>(e.getStatus());
         }
-
-        @PostMapping("/login")
-        public BaseResponse<Map<String, Object>> userLogin(@RequestBody String walletAddress){
-            asdf
-        }
     }
 
+    @PostMapping("/login")
+    public BaseResponse<Map<String, Object>> userLogin(@RequestBody Map<String, String> walletAddress) throws BaseException {
+        // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
+        // 1. 유저 정보
+        // 해당 주소에 연결된 user의 모든 정보 가져오기
+        List<UserWallet> userWalletList = userProvider.getAllUserWalletByWallet(walletAddress.get("walletAddress"));
+        String userId = null;
+        User user = null;
+        for (UserWallet userWallet : userWalletList) {
+            if (userWallet.isLoginAvailable()) {
+                userId = userWallet.getUser();
+                user = userProvider.getUser(userId);
+                break;
+            }
+        }
+        // 해당 user의 모든 지갑 정보 가져오기
+        List<UserWallet> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
+
+        // 유저의 viewDataAvailable이 true인 친구들의 뱃지 데려오기... 힘들다 힘들어
+        List<Badge> badges = new ArrayList<>();
+        List<Badge> badgeTmp = new ArrayList<>();
+        for (UserWallet userWallet : userWalletListByUser) {
+            System.out.println(userWallet.isViewDataAvailable());
+            if (userWallet.isViewDataAvailable()) {
+                badgeTmp = userProvider.getAllBadge(userWallet.getWalletAddress());
+                badges.addAll(badgeTmp);
+            }
+        }
+        // 뱃지 중복 제거
+        HashSet<Badge> set = new HashSet<Badge>(badges);
+        List<Badge> newAllBadge = new ArrayList<Badge>(set);
+
+        String token = securityService.createToken(user.getId(), (120*1000*60)); // 토큰 유효시간 2시간
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("user", user);
+        result.put("token", token);
+        result.put("wallets", userWalletListByUser);
+        result.put("badges", newAllBadge);
+
+        return new BaseResponse<>(result);
+    }
 }

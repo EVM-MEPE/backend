@@ -1,12 +1,15 @@
 package com.propwave.daotool.user;
 
+import com.propwave.daotool.badge.model.Badge;
+import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.user.model.User;
-import com.propwave.daotool.wallet.model.Wallet;
+import com.propwave.daotool.wallet.model.UserWallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.util.List;
 import java.util.Map;
 
 @Repository
@@ -41,6 +44,43 @@ public class UserDao {
         );
     }
 
+    public List<UserWallet> getAllUserWalletByWalletId(String walletAddress){
+        // userWallet에서 로그인 가능한 친구 가져오기
+        String getUserWalletQuery = "select * from userWallet where walletAddress=?";
+        String getUserWalletParam = walletAddress;
+        return this.jdbcTemplate.query(getUserWalletQuery,
+                (rs, rowNum) -> new UserWallet(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("walletAddress"),
+                        rs.getBoolean("loginAvailable"),
+                        rs.getBoolean("viewDataAvailable"),
+                        rs.getString("walletName"),
+                        rs.getString("walletIcon"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getUserWalletParam
+        );
+    }
+
+    public List<UserWallet> getAllUserWalletByUserId(String userId){
+        String getUserWalletQuery = "select * from userWallet where user=?";
+        String getUserWalletParam = userId;
+        return this.jdbcTemplate.query(getUserWalletQuery,
+                (rs, rowNum) -> new UserWallet(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("walletAddress"),
+                        rs.getBoolean("loginAvailable"),
+                        rs.getBoolean("viewDataAvailable"),
+                        rs.getString("walletName"),
+                        rs.getString("walletIcon"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getUserWalletParam
+        );
+    }
+
     //지갑 유무 확인
     public int isWalletExist(String walletAddress){
         String walletExistQuery = "select exists(select * from wallet where address = ?)";
@@ -61,5 +101,33 @@ public class UserDao {
         Object[] createUserWalletParam = new Object[]{userId, wallet.get("address"), wallet.get("name"), wallet.get("icon"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable")};
         this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
         return (String)wallet.get("address");
+    }
+
+    public List<BadgeWallet> getAllBadgeWallet(String walletAddress){
+        String getAllBadgeQuery = "select * from badgeWallet where walletAddress=?";
+        String getAllBadgeParam = walletAddress;
+        return this.jdbcTemplate.query(getAllBadgeQuery,
+                (rs, rowNum) -> new BadgeWallet(
+                        rs.getInt("index"),
+                        rs.getString("walletAddress"),
+                        rs.getString("badgeName"),
+                        rs.getTimestamp("joinedAt")
+                ),
+                getAllBadgeParam
+        );
+    }
+
+    public Badge getBadge(String badgeName){
+        String getBadgeQuery = "select * from badge where name=?";
+        String getBadgeParam = badgeName;
+        return this.jdbcTemplate.queryForObject(getBadgeQuery,
+                (rs, rowNum) -> new Badge(
+                        rs.getString("name"),
+                        rs.getString("image"),
+                        rs.getString("explanation"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getBadgeParam
+        );
     }
 }
