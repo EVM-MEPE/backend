@@ -1,7 +1,9 @@
 package com.propwave.daotool.user;
 
+import com.propwave.daotool.badge.BadgeService;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
+import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.UserWalletDao;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.slf4j.Logger;
@@ -30,6 +32,24 @@ public class UserProvider {
             List<UserWallet> userWallet = userWalletDao.getUserWallet(walletAddress);
             return userWallet;
         } catch (Exception exception) {
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
+    //User 정보 불러오기 -> ID로
+    public User getUser(String id) throws BaseException{
+        try{
+            User user = userDao.getUserAllInfo(id);
+            return user;
+        } catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
+    public int isWalletExist(String walletAddress) throws BaseException {
+        try{
+            return userDao.isWalletExist(walletAddress);
+        } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
     }

@@ -13,7 +13,7 @@ import java.util.Date;
 @Service
 public class SecurityService {
     // 로그인 서비스할때 같이 사용
-    String createToken(String subject, long expTime){
+    public String createToken(String subject, long expTime){
         // 만료시간 예외처리
         if(expTime<=0){
             throw new RuntimeException("expectTime should be longer than zero");
