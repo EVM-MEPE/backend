@@ -41,9 +41,6 @@ public enum BaseResponseStatus {
     NO_USER_NUMBER_MINUS(false, 2020,"USER 번호가 음수입니다."),
     SAME_USER_NUMBER(false,2021,"USER 번호가 같습니다"),
 
-    POST_ADMIN_INVALID_SCORE(false, 2030, "잘못된 평점 형식입니다."),
-    POST_ADMIN_ID_NULL(false, 2030,"noticeBoardId 값이 없습니다."),
-
 
     /**
      * 3000 : Response 오류
@@ -63,6 +60,7 @@ public enum BaseResponseStatus {
      */
     DATABASE_ERROR(false, 401, "데이터베이스 연결에 실패하였습니다."),
     SERVER_ERROR(false, 4001, "서버와의 연결에 실패하였습니다."),
+    S3_UPLOAD_ERROR(false, 401, "이미지 업로드에 실패했습니다."),
 
     //[PATCH] /users/{userIdx}
     MODIFY_FAIL_USERNAME(false,4014,"유저네임 수정 실패"),
