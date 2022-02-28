@@ -22,6 +22,7 @@ public enum BaseResponseStatus {
     INVALID_USER_JWT(false,2003,"권한이 없는 유저의 접근입니다."),
 
     // users
+    USER_NOT_EXISTS(false, 401, "존재하지 않는 유저입니다."),
     USERS_EMPTY_USER_ID(false, 2010, "유저 아이디 값을 확인해주세요."),
     USERS_STATUS_NOT_ACTIVATED(false,2011,"활성화된 유저가 아닙니다."),
     USERS_EMPTY_USER_EMAIL(false, 2012, "유저 이메일 값을 확인해주세요"),

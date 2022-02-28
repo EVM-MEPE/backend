@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 //Provider: Read 비즈니스 로직 처리
 @Service
@@ -68,6 +67,7 @@ public class UserProvider {
 
     public List<UserWallet> getAllUserWalletByUserId(String userId) throws BaseException{
         try{
+            System.out.println(userDao.getAllUserWalletByUserId("test1"));
             return userDao.getAllUserWalletByUserId(userId);
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);

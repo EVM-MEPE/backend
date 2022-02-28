@@ -6,13 +6,9 @@ import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.User;
-import com.propwave.daotool.wallet.WalletProvider;
 import com.propwave.daotool.wallet.model.UserWallet;
-import org.apache.tomcat.util.http.fileupload.FileItem;
 //import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.tomcat.util.http.fileupload.disk.DiskFileItem;
-import org.hibernate.type.TrueFalseType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +18,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.file.Files;
 import java.util.*;
 
 import static com.propwave.daotool.config.BaseResponseStatus.*;
