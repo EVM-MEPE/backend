@@ -1,7 +1,9 @@
 package com.propwave.daotool.badge;
 
 import com.propwave.daotool.badge.model.Badge;
+import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.badge.model.GetBadgesRes;
+import com.propwave.daotool.badge.model.UserSimple;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.user.UserProvider;
@@ -56,5 +58,30 @@ public class BadgeController {
 
     // 뱃지의 사용자 불러오기
     @GetMapping("/users")
+    public BaseResponse<Map<String,Object>> getBadgeUsers(@RequestParam String badgeName) throws BaseException{
+        //1. 뱃지 정보
+        Badge badge = badgeProvider.getBadgeInfo(badgeName);
+        //2. 뱃지월렛 joinedAt, walletAddress -> 해당 뱃지를 가진 모든 badgeWallet 가져오기
+        List<BadgeWallet> badgeWallets = badgeProvider.getBadgeWallet(badgeName);
+        //3. 유저월렛 user -> wallet의 user 가져오기
+        List<Map<String, Object>> badgeUsers = new ArrayList<>();
+        for(BadgeWallet badgeWallet:badgeWallets){
+            List<UserSimple> users = badgeProvider.getUserSimple(badgeWallet.getWalletAddress());
+
+            for(UserSimple user:users){
+                Map<String, Object> badgeUser = new HashMap<>();
+                badgeUser.put("user", user);
+                badgeUser.put("walletAddress",badgeWallet.getWalletAddress());
+                badgeUser.put("badgeJoinedDate", badgeWallet.getJoinedAt());
+                badgeUsers.add(badgeUser);
+            }
+
+        }
+        Map<String,Object> response = new HashMap<>();
+        response.put("badgeName", badgeName);
+        response.put("walletCount", badgeWallets.size());
+        response.put("badgeUsers", badgeUsers);
+        return new BaseResponse<>(response);
+    }
 
 }
