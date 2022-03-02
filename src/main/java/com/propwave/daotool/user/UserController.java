@@ -13,10 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
@@ -128,12 +125,14 @@ public class UserController {
         for (UserWallet userWallet : userWalletList) {
             if (userWallet.isLoginAvailable()) {
                 userId = userWallet.getUser();
+                userService.addHit(userId);
                 user = userProvider.getUser(userId);
                 break;
             }
         }
         // 해당 user의 모든 지갑 정보 가져오기
         List<UserWallet> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
+
 
         // 유저의 viewDataAvailable이 true인 친구들의 뱃지 데려오기... 힘들다 힘들어
         List<Badge> badges = new ArrayList<>();
@@ -159,4 +158,37 @@ public class UserController {
 
         return new BaseResponse<>(result);
     }
+
+    @GetMapping("/mypage")
+    public BaseResponse<Map<String, Object>> userLogin(@RequestParam String userId) throws BaseException {
+        // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
+        // 1. 유저 정보
+        userService.addHit(userId);
+        User user = userProvider.getUser(userId);
+
+        // 해당 주소에 연결된 user의 모든 정보 가져오기
+        List<UserWallet> userWalletList = userProvider.getAllUserWalletByUserId(userId);
+
+        // 유저의 viewDataAvailable이 true인 친구들의 뱃지 데려오기... 힘들다 힘들어
+        List<Badge> badges = new ArrayList<>();
+        List<Badge> badgeTmp = new ArrayList<>();
+        for (UserWallet userWallet : userWalletList) {
+            System.out.println(userWallet.isViewDataAvailable());
+            if (userWallet.isViewDataAvailable()) {
+                badgeTmp = userProvider.getAllBadge(userWallet.getWalletAddress());
+                badges.addAll(badgeTmp);
+            }
+        }
+        // 뱃지 중복 제거
+        HashSet<Badge> set = new HashSet<Badge>(badges);
+        List<Badge> newAllBadge = new ArrayList<Badge>(set);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("user", user);
+        result.put("wallets", userWalletList);
+        result.put("badges", newAllBadge);
+
+        return new BaseResponse<>(result);
+    }
+
 }

@@ -50,4 +50,12 @@ public class UserService {
             throw new BaseException(DATABASE_ERROR);
         }
     }
+
+    public void addHit(String userId) throws BaseException{
+        try{
+            userDao.addHit(userId);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
 }

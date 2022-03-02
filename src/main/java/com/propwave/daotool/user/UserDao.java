@@ -130,4 +130,11 @@ public class UserDao {
                 getBadgeParam
         );
     }
+
+    public int addHit(String userId){
+        String modifyUserHitsQuery = "update user set hits = hits + 1 where id = ?";
+        String modifyUserHitsParam = userId;
+        return this.jdbcTemplate.update(modifyUserHitsQuery, modifyUserHitsParam);
+
+    }
 }

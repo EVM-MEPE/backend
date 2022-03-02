@@ -51,7 +51,10 @@ public class BadgeController {
                 getBadgesResList.addAll(badgeProvider.getBadges(userWallet.getWalletAddress()));
             }
         }
-        System.out.println(getBadgesResList);
         return new BaseResponse<>(getBadgesResList);
     }
+
+    // 뱃지의 사용자 불러오기
+    @GetMapping("/users")
+
 }
