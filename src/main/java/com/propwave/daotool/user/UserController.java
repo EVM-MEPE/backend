@@ -13,6 +13,7 @@ import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.sql.init.DatabaseInitializationSettings;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -87,8 +88,6 @@ public class UserController {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", newUser.getId());
             map.put("token", token);
-
-
 
             // 2. 지갑 만들기
             for(Map<String, Object> wallet : wallets){
@@ -198,7 +197,8 @@ public class UserController {
 
     //사용자가 가진 뱃지 불러오기
     @GetMapping("/badges")
-    public BaseResponse<List<GetBadgesRes>> getBadges(@RequestParam("userId") String userId) throws BaseException {
+    public BaseResponse<List<GetBadgesRes>> getBadges(@RequestParam("userId") String userId) throws BaseException
+    {
         if(userProvider.checkUser(userId)==0){
             return new BaseResponse<>(USER_NOT_EXISTS);
         }
@@ -215,4 +215,58 @@ public class UserController {
         }
         return new BaseResponse<>(getBadgesResList);
     }
+
+    //login용 지갑 추가
+    @PostMapping("/wallets/login")
+    public BaseResponse<String> addLoginWallet(@RequestBody Map<String, Object> request){
+            //1. 사용자 정보 받아서 1) 지갑 만들고, 2) UserWallet 만들고.
+            try{
+                String newWalletAddress = (String) request.get("address");
+                // 경우 1. 지갑이 아예 없었던 새로인 친구인 경우
+                if (userProvider.isWalletExist(newWalletAddress)==0) {
+                    //없으면 객체 만들기 -> 경우 1. 완전 처음 들어오는 지갑인 경우
+                    userService.createWallet(newWalletAddress);
+                    //2. userWallet 만들기
+                    request.put("walletName", "");
+                    request.put("loginAvailable", true);
+                    request.put("viewDataAvailable", false);
+                    userService.createUserWallet(request, (String) request.get("user"));
+                    return new BaseResponse<>("로그인 지갑이 추가되었습니다.");
+                }
+                else{
+                    System.out.println("지갑 있음!");
+                    String user = (String)request.get("user");
+                    // 경우 4. 지갑이 이미 있고, 다른 유저의 로그인용으로 있는 경우
+                    if(userProvider.isWalletExistForLogin(newWalletAddress)==1){
+                        System.out.println("경우4");
+                        return new BaseResponse<>(WALLET_ALREADY_EXIST_FOR_LOGIN);
+                    }
+                    // 경우 2. 지갑자체는 이미 있고, 이 유저한테는 지갑이 없는 경우
+                    if(userProvider.isUserWalletByWalletAddressAndUserIdExist(user, newWalletAddress)==0){
+                        //2. userWallet 만들기
+                        System.out.println("경우2");
+                        request.put("walletName", "");
+                        request.put("loginAvailable", true);
+                        request.put("viewDataAvailable", false);
+                        userService.createUserWallet(request, (String) request.get("user"));
+                        return new BaseResponse<>("로그인 지갑이 추가되었습니다.");
+                    }
+                    // 경우 3. 지갑은 이미 있고, 이 유저한테 지갑이 대시보드용으로 있는 경우
+                    UserWallet userWallet = userProvider.getUserWalletByWalletAddressAndUserId(user, newWalletAddress);
+                    if(!userWallet.isLoginAvailable() && userWallet.isViewDataAvailable()){
+                        System.out.println("경우3");
+                        userService.makeLoginAvailable(userWallet.getIndex());
+                        return new BaseResponse<>("로그인 지갑이 추가되었습니다.");
+                    }
+                    System.out.println("경우 없는 경우...");
+                    return new BaseResponse<>(RESPONSE_ERROR);
+                }
+        } catch (BaseException e) {
+                return new BaseResponse<>((e.getStatus()));
+        }
+    }
+
+    //login용 지갑 삭제
+//    @DeleteMapping("/wallets/login")
+//    public BaseResponse<String> deleteLoginWallet
 }

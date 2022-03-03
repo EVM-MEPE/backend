@@ -6,6 +6,7 @@ import com.propwave.daotool.badge.model.BadgeNameImage;
 import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.UserWallet;
+import com.propwave.daotool.wallet.model.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -83,12 +84,55 @@ public class UserDao {
         );
     }
 
+    public UserWallet getUserWalletByWalletAddressAndUserId(String userId, String walletAddress){
+        String getUserWalletByWalletAddressAndUserIdQuery = "select * from userWallet where user=? and walletAddress=?";
+        Object[] getUserWalletByWalletAddressAndUserIdParam = new Object[]{userId, walletAddress};
+        return this.jdbcTemplate.queryForObject(getUserWalletByWalletAddressAndUserIdQuery,
+                (rs, rowNum) -> new UserWallet(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("walletAddress"),
+                        rs.getBoolean("loginAvailable"),
+                        rs.getBoolean("viewDataAvailable"),
+                        rs.getString("walletName"),
+                        rs.getString("walletIcon"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getUserWalletByWalletAddressAndUserIdParam
+        );
+    }
+
+    public int isUserWalletByWalletAddressAndUserIdExist(String userId, String walletAddress){
+        String getUserWalletByWalletAddressAndUserIdQuery = "select exists(select * from userWallet where user=? and walletAddress=?)";
+        Object[] getUserWalletByWalletAddressAndUserIdParam = new Object[]{userId, walletAddress};
+        return this.jdbcTemplate.queryForObject(getUserWalletByWalletAddressAndUserIdQuery,
+                int.class,
+                getUserWalletByWalletAddressAndUserIdParam
+        );
+    }
+
+    // 로그인용으로 지갑 바꾸기
+    public int makeLoginAvailable(int index){
+        String makeLoginAvailableQuery = "update userWallet set loginAvailable=true where `index`=?";
+        return this.jdbcTemplate.update(makeLoginAvailableQuery, index);
+    }
+
+
     //지갑 유무 확인
     public int isWalletExist(String walletAddress){
-        String walletExistQuery = "select exists(select * from wallet where address = ?)";
+        String walletExistQuery = "select exists(select * from wallet where address = ? )";
         String walletExistParam = walletAddress;
         return this.jdbcTemplate.queryForObject(walletExistQuery, int.class, walletExistParam);
     }
+
+    //지갑이 로그인용으로 있는지 유무 확인
+    public int isWalletExistForLogin(String walletAddress){
+        String isWalletExistForLoginQuery = "select exists(select * from userWallet where walletAddress = ? AND loginAvailable=1)";
+        String isWalletExistForLoginParam = walletAddress;
+        return this.jdbcTemplate.queryForObject(isWalletExistForLoginQuery, int.class, isWalletExistForLoginParam);
+    }
+
+
 
     public String createWallet(String walletAddress){
         String walletCreateQuery = "INSERT INTO wallet(address) VALUES(?)";

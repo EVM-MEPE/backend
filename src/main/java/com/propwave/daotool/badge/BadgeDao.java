@@ -30,8 +30,14 @@ public class BadgeDao {
                 getBadgeInfoParam);
     }
 
-    public List<BadgeWallet> getBadgeWalletByBadgeName(String BadgeName){
-        String getBadgeWalletQuery = "select * from badgeWallet where badgeName=?";
+    public List<BadgeWallet> getBadgeWalletByBadgeName(String BadgeName, String orderBy){
+        String getBadgeWalletQuery = null;
+        if (orderBy.equals("oldest")){
+            getBadgeWalletQuery = "select * from badgeWallet where badgeName=? order by joinedAt ASC";
+        }
+        else{
+            getBadgeWalletQuery = "select * from badgeWallet where badgeName=? order by joinedAt DESC";
+        }
         String getBadgeWalletParam = BadgeName;
         return this.jdbcTemplate.query(getBadgeWalletQuery,
                 (rs, rowNum) -> new BadgeWallet(

@@ -42,11 +42,14 @@ public class BadgeController {
 
     // 뱃지의 사용자 불러오기
     @GetMapping("/users")
-    public BaseResponse<Map<String,Object>> getBadgeUsers(@RequestParam String badgeName) throws BaseException{
+    public BaseResponse<Map<String,Object>> getBadgeUsers(
+            @RequestParam String badgeName,
+            @RequestParam("orderBy") String orderBy) throws BaseException
+    {
         //1. 뱃지 정보
         Badge badge = badgeProvider.getBadgeInfo(badgeName);
         //2. 뱃지월렛 joinedAt, walletAddress -> 해당 뱃지를 가진 모든 badgeWallet 가져오기
-        List<BadgeWallet> badgeWallets = badgeProvider.getBadgeWallet(badgeName);
+        List<BadgeWallet> badgeWallets = badgeProvider.getBadgeWallet(badgeName, orderBy);
         //3. 유저월렛 user -> wallet의 user 가져오기
         List<Map<String, Object>> badgeUsers = new ArrayList<>();
         for(BadgeWallet badgeWallet:badgeWallets){

@@ -35,6 +35,7 @@ public class UserService {
 
     public String createWallet(String walletAddress) throws BaseException {
         try{
+            System.out.println(walletAddress);
             String newWallet = userDao.createWallet(walletAddress);
             return newWallet;
         } catch(Exception exception){
@@ -57,5 +58,14 @@ public class UserService {
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
+    }
+
+    public void makeLoginAvailable(int index)throws BaseException{
+        try{
+            userDao.makeLoginAvailable(index);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+
     }
 }

@@ -48,12 +48,41 @@ public class UserProvider {
         }
     }
 
+    // Userid, wallet address로 userWallet 가져오기
+    public UserWallet getUserWalletByWalletAddressAndUserId(String userId, String walletAddress) throws BaseException{
+        try{
+            return userDao.getUserWalletByWalletAddressAndUserId(userId, walletAddress);
+        }catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
+    public int isUserWalletByWalletAddressAndUserIdExist(String userId, String walletAddress) throws BaseException{
+        try{
+            return userDao.isUserWalletByWalletAddressAndUserIdExist(userId, walletAddress);
+        }catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
+    // 지갑 주소가 wallet에 있는지 확인
     public int isWalletExist(String walletAddress) throws BaseException {
         try{
             return userDao.isWalletExist(walletAddress);
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
+    }
+
+    // 지갑 주소가 userWallet에서 로그인 용으로 이미 있는지 확인
+    public int isWalletExistForLogin(String walletAddress) throws BaseException{
+        try{
+            System.out.println("provider: 지갑 소 이미 로그인용으로 있나 확인해보자");
+            return userDao.isWalletExistForLogin(walletAddress);
+        }catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+
     }
 
     public List<UserWallet> getAllUserWalletByWallet(String walletAddress) throws BaseException{
@@ -66,12 +95,12 @@ public class UserProvider {
 
     public List<UserWallet> getAllUserWalletByUserId(String userId) throws BaseException{
         try{
-            System.out.println(userDao.getAllUserWalletByUserId("test1"));
             return userDao.getAllUserWalletByUserId(userId);
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
     }
+
 
     public List<Badge> getAllBadge(String walletAddress) throws BaseException{
         try{
