@@ -1,7 +1,6 @@
 package com.propwave.daotool.user;
 
-import com.propwave.daotool.badge.model.Badge;
-import com.propwave.daotool.badge.model.BadgeWallet;
+import com.propwave.daotool.badge.model.*;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
 import com.propwave.daotool.user.model.User;
@@ -92,5 +91,25 @@ public class UserProvider {
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
+    }
+
+    public List<GetBadgesRes> getBadges(String walletAddress){
+        // 뱃지 이름, join 한 날짜 가져오기
+        List<BadgeJoinedAt> badgeJoinedAt = userDao.getBadgeJoinedAt(walletAddress);
+
+        List<GetBadgesRes> getBadgesRes = new ArrayList<>();
+        //뱃지 이름가지고 이름, 이미지 가져오기 -> getbadgeres 만들기
+        for(BadgeJoinedAt badge: badgeJoinedAt){
+            // badge 의 이름하고 이미지 가져옴
+            BadgeNameImage badgeTmp = userDao.getBadgeNameImage(badge.getBadgeName());
+            //
+            GetBadgesRes badgeResTmp = new GetBadgesRes(badge.getBadgeName(), badgeTmp.getImage(), badge.getJoinedAt());
+            getBadgesRes.add(badgeResTmp);
+        }
+        return getBadgesRes;
+    }
+
+    public int checkUser(String userId){
+        return userDao.checkUser(userId);
     }
 }

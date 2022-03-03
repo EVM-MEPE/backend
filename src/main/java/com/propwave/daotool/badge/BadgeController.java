@@ -27,33 +27,17 @@ public class BadgeController {
     private final BadgeProvider badgeProvider;
     @Autowired
     private final BadgeService badgeService;
-    @Autowired
-    private final UserProvider userProvider;
 
-    public BadgeController(BadgeProvider badgeProvider, BadgeService badgeService, UserProvider userProvider){
+    public BadgeController(BadgeProvider badgeProvider, BadgeService badgeService){
         this.badgeProvider = badgeProvider;
         this.badgeService = badgeService;
-        this.userProvider = userProvider;
     }
 
-    //사용자가 가진 뱃지 불러오기
+    // 모든 뱃지 불러오기
     @GetMapping("/")
-    public BaseResponse<List<GetBadgesRes>> GetBadges(@RequestParam("userId") String userId) throws BaseException {
-        if(badgeProvider.checkUser(userId)==0){
-            return new BaseResponse<>(USER_NOT_EXISTS);
-        }
-
-        // 해당 user의 모든 지갑 정보 가져오기
-        List<UserWallet> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
-
-        List<GetBadgesRes> getBadgesResList = new ArrayList<>();
-        for (UserWallet userWallet : userWalletListByUser) {
-            System.out.println(userWallet);
-            if (userWallet.isViewDataAvailable()) {
-                getBadgesResList.addAll(badgeProvider.getBadges(userWallet.getWalletAddress()));
-            }
-        }
-        return new BaseResponse<>(getBadgesResList);
+    public BaseResponse<List<Map<String, Object>>> getAllBadges(@RequestParam String orderBy){
+        List<Map<String, Object>> badges = badgeProvider.getAllBadges(orderBy);
+        return new BaseResponse<>(badges);
     }
 
     // 뱃지의 사용자 불러오기
@@ -83,5 +67,7 @@ public class BadgeController {
         response.put("badgeUsers", badgeUsers);
         return new BaseResponse<>(response);
     }
+
+
 
 }

@@ -1,6 +1,8 @@
 package com.propwave.daotool.user;
 
 import com.propwave.daotool.badge.model.Badge;
+import com.propwave.daotool.badge.model.BadgeJoinedAt;
+import com.propwave.daotool.badge.model.BadgeNameImage;
 import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.UserWallet;
@@ -137,4 +139,39 @@ public class UserDao {
         return this.jdbcTemplate.update(modifyUserHitsQuery, modifyUserHitsParam);
 
     }
+
+    //뱃지 join 날짜
+    public List<BadgeJoinedAt> getBadgeJoinedAt(String walletAddress){
+        String getBadgeJoinedAtQuery = "select badgeName, joinedAt from badgeWallet where walletAddress=?";
+        String getBadgeJoinedAtParam = walletAddress;
+        return this.jdbcTemplate.query(getBadgeJoinedAtQuery,
+                (rs, rowNum) -> new BadgeJoinedAt(
+                        rs.getString("badgeName"),
+                        rs.getTimestamp("joinedAt")
+                ),
+                getBadgeJoinedAtParam
+        );
+    }
+
+    public int checkUser(String userId){
+        String getBadgeJoinedAtQuery = "select exists(select * from user where id=?)";
+        String getBadgeJoinedAtParam = userId;
+        return this.jdbcTemplate.queryForObject(getBadgeJoinedAtQuery,
+                int.class,
+                getBadgeJoinedAtParam);
+    }
+
+    // 뱃지 이름, 사진 가져오기
+    public BadgeNameImage getBadgeNameImage(String badgeName){
+        String getBadgeNameImageQuery = "select name, image from badge where name=?";
+        String getBadgeNameParams = badgeName;
+        return this.jdbcTemplate.queryForObject(getBadgeNameImageQuery,
+                (rs, rowNum) -> new BadgeNameImage(
+                        rs.getString("name"),
+                        rs.getString("image")
+                ),
+                getBadgeNameParams
+        );
+    }
+
 }

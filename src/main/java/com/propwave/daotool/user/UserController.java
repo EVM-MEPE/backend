@@ -1,6 +1,7 @@
 package com.propwave.daotool.user;
 
 import com.propwave.daotool.badge.model.Badge;
+import com.propwave.daotool.badge.model.GetBadgesRes;
 import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
@@ -133,7 +134,6 @@ public class UserController {
         // 해당 user의 모든 지갑 정보 가져오기
         List<UserWallet> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
 
-
         // 유저의 viewDataAvailable이 true인 친구들의 뱃지 데려오기... 힘들다 힘들어
         List<Badge> badges = new ArrayList<>();
         List<Badge> badgeTmp = new ArrayList<>();
@@ -191,4 +191,28 @@ public class UserController {
         return new BaseResponse<>(result);
     }
 
+//    @PatchMapping("/{userId}/profile")
+//    public BaseResponse<String> editUserProfile(@PathVariable("userId") int userId, @RequestBody String token){
+//        //
+//    }
+
+    //사용자가 가진 뱃지 불러오기
+    @GetMapping("/badges")
+    public BaseResponse<List<GetBadgesRes>> getBadges(@RequestParam("userId") String userId) throws BaseException {
+        if(userProvider.checkUser(userId)==0){
+            return new BaseResponse<>(USER_NOT_EXISTS);
+        }
+
+        // 해당 user의 모든 지갑 정보 가져오기
+        List<UserWallet> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
+
+        List<GetBadgesRes> getBadgesResList = new ArrayList<>();
+        for (UserWallet userWallet : userWalletListByUser) {
+            System.out.println(userWallet);
+            if (userWallet.isViewDataAvailable()) {
+                getBadgesResList.addAll(userProvider.getBadges(userWallet.getWalletAddress()));
+            }
+        }
+        return new BaseResponse<>(getBadgesResList);
+    }
 }
