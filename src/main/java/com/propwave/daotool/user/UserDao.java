@@ -4,6 +4,7 @@ import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.badge.model.BadgeJoinedAt;
 import com.propwave.daotool.badge.model.BadgeNameImage;
 import com.propwave.daotool.badge.model.BadgeWallet;
+import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.UserWallet;
 import com.propwave.daotool.wallet.model.Wallet;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
+
+import static com.propwave.daotool.config.BaseResponseStatus.DATABASE_ERROR;
 
 @Repository
 public class UserDao {
@@ -163,6 +166,19 @@ public class UserDao {
         );
     }
 
+    public List<BadgeWallet> getBadgeWalletByBadgeName(String BadgeName){
+        String getBadgeWalletQuery = "select * from badgeWallet where badgeName=? ";
+        String getBadgeWalletParam = BadgeName;
+        return this.jdbcTemplate.query(getBadgeWalletQuery,
+                (rs, rowNum) -> new BadgeWallet(
+                        rs.getInt("index"),
+                        rs.getString("walletAddress"),
+                        rs.getString("badgeName"),
+                        rs.getTimestamp("joinedAt")),
+                getBadgeWalletParam
+        );
+    }
+
     public Badge getBadge(String badgeName){
         String getBadgeQuery = "select * from badge where name=?";
         String getBadgeParam = badgeName;
@@ -218,4 +234,41 @@ public class UserDao {
         );
     }
 
+    // 다른 사람에게 해당 지갑이 있는지 여부
+    int isWalletSomeoneElse(String userId, String walletAddress){
+        String isWalletSomeoneElseQuery = "select exists(select * from userWallet where (not user=?) and walletAddress=? )";
+        Object[] isWalletSomeoneElseParams = new Object[] {userId, walletAddress};
+        return this.jdbcTemplate.queryForObject(isWalletSomeoneElseQuery,
+                int.class,
+                isWalletSomeoneElseParams
+        );
+    }
+
+    // 나에게 대시보드 용도 있는지 여부
+    public int isWalletMyDashboard(String userId, String walletAddress){
+        String isWalletMyDashboardQuery = "select exists(select * from userWallet where user=? and walletAddress=? and viewDataAvailable=1)";
+        Object[] isWalletMyDashboardParams = new Object[] {userId, walletAddress};
+        return this.jdbcTemplate.queryForObject(isWalletMyDashboardQuery,
+                int.class,
+                isWalletMyDashboardParams
+        );
+    }
+
+    //
+    public int makeLoginUnavailable(String userId, String walletAddress) {
+        String makeLoginAvailableQuery = "update userWallet set loginAvailable=false where user=? and walletAddress=?";
+        Object[] isWalletMyDashboardParams = new Object[] {userId, walletAddress};
+        return this.jdbcTemplate.update(makeLoginAvailableQuery, isWalletMyDashboardParams);
+    }
+
+    public int deleteUserWallet(String userId, String walletAddress) {
+        String deleteUserWalletQuery = "delete from userWallet where user=? and walletAddress=?";
+        Object[] deleteUserWalletParams = new Object[] {userId, walletAddress};
+        return this.jdbcTemplate.update(deleteUserWalletQuery, deleteUserWalletParams);
+    }
+
+    public int deleteWallet(String walletAddress){
+        String deleteWalletQuery = "delete from wallet where address=?";
+        return this.jdbcTemplate.update(deleteWalletQuery, walletAddress);
+    }
 }

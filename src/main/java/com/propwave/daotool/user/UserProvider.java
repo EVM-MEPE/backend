@@ -3,6 +3,7 @@ package com.propwave.daotool.user;
 import com.propwave.daotool.badge.model.*;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
+import static com.propwave.daotool.config.BaseResponseStatus.*;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.UserWalletDao;
 import com.propwave.daotool.wallet.model.UserWallet;
@@ -10,9 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 //Provider: Read 비즈니스 로직 처리
 @Service
@@ -102,21 +101,29 @@ public class UserProvider {
     }
 
 
-    public List<Badge> getAllBadge(String walletAddress) throws BaseException{
+    public List<Map<String, Object>> getAllBadge(String walletAddress) throws BaseException{
         try{
             // 유저의 뱃지 이름 가져오기
             List<BadgeWallet> allBadgeWallet = userDao.getAllBadgeWallet(walletAddress);
             // 뱃지 내용 모으기
-            List<Badge> allBadge = new ArrayList<>();
+            List<Map<String, Object>> allBadge = new ArrayList<>();
             for(BadgeWallet badgeWallet: allBadgeWallet){
                 String badgeName = badgeWallet.getBadgeName();
-                allBadge.add(userDao.getBadge(badgeName));
-            }
-            // 뱃지 중복 제거
-            HashSet<Badge> set = new HashSet<Badge>(allBadge);
-            List<Badge> newAllBadge = new ArrayList<Badge>(set);
+                Badge badge = userDao.getBadge(badgeName);
 
-            return newAllBadge;
+                // 뱃지에 참여중인 사람의 수도 같이 return
+                List<BadgeWallet> badgeWallets = userDao.getBadgeWalletByBadgeName(badgeName);
+
+                Map<String, Object> tmp = new HashMap<>();
+                tmp.put("name", badge.getName());
+                tmp.put("image", badge.getImage());
+                tmp.put("explanation", badge.getExplanation());
+                tmp.put("createdAt", badge.getCreatedAt());
+                tmp.put("joinedWalletCount", badgeWallets.size());
+
+                allBadge.add(tmp);
+            }
+            return allBadge;
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
@@ -140,5 +147,23 @@ public class UserProvider {
 
     public int checkUser(String userId){
         return userDao.checkUser(userId);
+    }
+
+    // 지갑이 남에게도 있는지 여부 확인
+    int isWalletSomeoneElse(String userId, String walletAddress) throws BaseException{
+        try {
+            return userDao.isWalletSomeoneElse(userId, walletAddress);
+        } catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    // 나에게 대시보드 용도 있는지 여부
+    int isWalletMyDashboard(String userId,String walletAddress) throws BaseException{
+        try {
+            return userDao.isWalletMyDashboard(userId, walletAddress);
+        } catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
     }
 }

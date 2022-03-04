@@ -66,6 +66,29 @@ public class UserService {
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
+    }
 
+    public int makeLoginUnavailable(String userId, String walletAddress) throws BaseException{
+        try{
+            return userDao.makeLoginUnavailable(userId, walletAddress);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public int deleteUserWallet(String userId, String walletAddress) throws BaseException{
+        try{
+            return userDao.deleteUserWallet(userId, walletAddress);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public int deleteWallet(String walletAddress) throws BaseException{
+        try{
+            return userDao.deleteWallet(walletAddress);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
     }
 }

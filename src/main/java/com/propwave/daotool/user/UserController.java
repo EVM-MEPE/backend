@@ -134,8 +134,8 @@ public class UserController {
         List<UserWallet> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
 
         // 유저의 viewDataAvailable이 true인 친구들의 뱃지 데려오기... 힘들다 힘들어
-        List<Badge> badges = new ArrayList<>();
-        List<Badge> badgeTmp = new ArrayList<>();
+        List<Map<String, Object>> badges = new ArrayList<>();
+        List<Map<String, Object>> badgeTmp = new ArrayList<>();
         for (UserWallet userWallet : userWalletListByUser) {
             System.out.println(userWallet.isViewDataAvailable());
             if (userWallet.isViewDataAvailable()) {
@@ -144,8 +144,8 @@ public class UserController {
             }
         }
         // 뱃지 중복 제거
-        HashSet<Badge> set = new HashSet<Badge>(badges);
-        List<Badge> newAllBadge = new ArrayList<Badge>(set);
+        HashSet<Map<String, Object>> set = new HashSet<Map<String, Object>>(badges);
+        List<Map<String, Object>> newAllBadge = new ArrayList<Map<String, Object>>(set);
 
         String token = securityService.createToken(user.getId(), (120*1000*60)); // 토큰 유효시간 2시간
 
@@ -169,8 +169,8 @@ public class UserController {
         List<UserWallet> userWalletList = userProvider.getAllUserWalletByUserId(userId);
 
         // 유저의 viewDataAvailable이 true인 친구들의 뱃지 데려오기... 힘들다 힘들어
-        List<Badge> badges = new ArrayList<>();
-        List<Badge> badgeTmp = new ArrayList<>();
+        List<Map<String, Object>> badges = new ArrayList<>();
+        List<Map<String, Object>> badgeTmp = new ArrayList<>();
         for (UserWallet userWallet : userWalletList) {
             System.out.println(userWallet.isViewDataAvailable());
             if (userWallet.isViewDataAvailable()) {
@@ -179,8 +179,8 @@ public class UserController {
             }
         }
         // 뱃지 중복 제거
-        HashSet<Badge> set = new HashSet<Badge>(badges);
-        List<Badge> newAllBadge = new ArrayList<Badge>(set);
+        HashSet<Map<String, Object>> set = new HashSet<Map<String, Object>>(badges);
+        List<Map<String, Object>> newAllBadge = new ArrayList<Map<String, Object>>(set);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("user", user);
@@ -267,6 +267,45 @@ public class UserController {
     }
 
     //login용 지갑 삭제
-//    @DeleteMapping("/wallets/login")
-//    public BaseResponse<String> deleteLoginWallet
+    @DeleteMapping("/wallets/login")
+    public BaseResponse<String> deleteLoginWallet(@RequestBody Map<String, String> request) throws BaseException {
+        System.out.println("지갑 삭제 고");
+        String userId = request.get("userId");
+        String walletAddress = request.get("walletAddress");
+        // 1. 지갑이 남에게 있는지 여부
+        int isWalletSomeoneElse = userProvider.isWalletSomeoneElse(userId, walletAddress);
+        System.out.println(isWalletSomeoneElse);
+        // 2. 나에게 대시보드 용도 있는지 여부
+        int isWalletMyDashboard = userProvider.isWalletMyDashboard(userId, walletAddress);
+        System.out.println(isWalletMyDashboard);
+
+        // 상황 1. 나에게만 지갑이 있고 Only 로그인용
+        if (isWalletSomeoneElse==0 && isWalletMyDashboard == 0){
+            // userWallet 삭제, wallet 삭제
+            System.out.println("상황 1. 나에게만 지갑이 있고 Only 로그인용");
+            userService.deleteUserWallet(userId, walletAddress);
+            userService.deleteWallet(walletAddress);
+            return new BaseResponse<>("상황1) 나에게만 지갑이 있고 Only 로그인용 -> userWallet 삭제, wallet 삭제");
+        }
+        // 상황 2. 나에게만 지갑이 있고, 대시보드용도 있음 & 상황 4. 남에게 지갑이 있고, 대시보드용도 있음
+        else if (isWalletMyDashboard == 1){
+            // userWallet의 login을 0으로 변경
+            System.out.println("상황 2. 나에게만 지갑이 있고, 대시보드용도 있음 & 상황 4. 남에게 지갑이 있고, 대시보드용도 있음");
+            userService.makeLoginUnavailable(userId, walletAddress);
+            return new BaseResponse<>("상황2, 4) 대시보드용 있음 -> userWallet의 login을 0으로 변경");
+        }
+        // 상황 3. 남에게 지갑이 있고, 나에게 Only 로그인용
+        else if (isWalletSomeoneElse==1 && isWalletMyDashboard == 0){
+            System.out.println("상황 3. 남에게 지갑이 있고, 나에게 Only 로그인용");
+            // 내 userWallet 삭제
+            userService.deleteUserWallet(userId, walletAddress);
+            return new BaseResponse<>("상황3) 남에게 지갑이 있고, 나에게 Only 로그인용 -> 내 userWallet 삭제");
+        }
+        // 그 외
+        else {
+            System.out.println("경우 없는 경우...");
+            return new BaseResponse<>(RESPONSE_ERROR);
+        }
+
+    }
 }
