@@ -25,13 +25,29 @@ public class UserDao {
     @Autowired
     public void setDataSource(DataSource dataSource){this.jdbcTemplate = new JdbcTemplate(dataSource);}
 
-    public User createUser(Map<String, Object> userInfo, String profileImageS3Path){
-        userInfo.replace("profileImage", profileImageS3Path);
+    public User createUser(Map<String, Object> userInfo){
+        //userInfo.replace("profileImage", profileImageS3Path);
         String createUserQuery = "INSERT INTO user(id, profileImage, introduction, url) VALUES(?,?,?,?)";
         Object[] createUserParams = new Object[]{userInfo.get("id"), userInfo.get("profileImage"), userInfo.get("introduction"), userInfo.get("url")};
         this.jdbcTemplate.update(createUserQuery, createUserParams);
         User newUser = getUserAllInfo((String)userInfo.get("id"));
         return newUser;
+    }
+
+    public int checkUserIdExist(String userId){
+        String checkUserIdExistQuery = "select exists(select * from user where id = ?)";
+        return this.jdbcTemplate.queryForObject(checkUserIdExistQuery,
+                int.class,
+                userId
+        );
+    }
+
+    public User editUser(Map<String, String> userInfo){
+        //userInfo.replace("profileImage", profileImageS3Path);
+        String editUserQuery = "UPDATE user SET id=?, profileImage=?, introduction=?, url=? WHERE id = ?";
+        Object[] editUserParams = new Object[]{userInfo.get("changedId"), userInfo.get("profileImage"), userInfo.get("introduction"), userInfo.get("url"), userInfo.get("preId")};
+        this.jdbcTemplate.update(editUserQuery, editUserParams);
+        return getUserAllInfo(userInfo.get("changedId"));
     }
 
     public User getUserAllInfo(String id){
@@ -48,6 +64,12 @@ public class UserDao {
                 ),
                 getUserParams
         );
+    }
+
+    //user의 프로필 이미지 주소 가져오기
+    public String getUserImagePath(String userId){
+        String getUserImageQuery = "select profileImage from user where id = ?";
+        return this.jdbcTemplate.queryForObject(getUserImageQuery, String.class, userId);
     }
 
     public List<UserWallet> getAllUserWalletByWalletId(String walletAddress){
@@ -105,12 +127,20 @@ public class UserDao {
         );
     }
 
-    public int isUserWalletByWalletAddressAndUserIdExist(String userId, String walletAddress){
-        String getUserWalletByWalletAddressAndUserIdQuery = "select exists(select * from userWallet where user=? and walletAddress=?)";
-        Object[] getUserWalletByWalletAddressAndUserIdParam = new Object[]{userId, walletAddress};
-        return this.jdbcTemplate.queryForObject(getUserWalletByWalletAddressAndUserIdQuery,
+    public int isUserWalletExist(String userId, String walletAddress){
+        String isUserWalletExistIdQuery = "select exists(select * from userWallet where user=? and walletAddress=?)";
+        Object[] isUserWalletExistParam = new Object[]{userId, walletAddress};
+        return this.jdbcTemplate.queryForObject(isUserWalletExistIdQuery,
                 int.class,
-                getUserWalletByWalletAddressAndUserIdParam
+                isUserWalletExistParam
+        );
+    }
+
+    public int isUserWalletExist(String walletAddress){
+        String isUserWalletExistQuery = "select exists(select * from userWallet where walletAddress=?)";
+        return this.jdbcTemplate.queryForObject(isUserWalletExistQuery,
+                int.class,
+                walletAddress
         );
     }
 
@@ -135,6 +165,12 @@ public class UserDao {
         return this.jdbcTemplate.queryForObject(isWalletExistForLoginQuery, int.class, isWalletExistForLoginParam);
     }
 
+    public int isWalletExistForLogin(String userId, String walletAddress){
+        String isWalletExistForLoginQuery = "select exists(select * from userWallet where walletAddress = ? AND loginAvailable=1 AND user=?)";
+        Object[] isWalletExistForLoginParam = new Object[]{walletAddress, userId};
+        return this.jdbcTemplate.queryForObject(isWalletExistForLoginQuery, int.class, isWalletExistForLoginParam);
+    }
+
 
 
     public String createWallet(String walletAddress){
@@ -147,10 +183,25 @@ public class UserDao {
 
     public String createUserWallet(Map<String, Object> wallet, String userId){
         String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, walletIcon, loginAvailable, viewDataAvailable) VALUES(?,?,?,?,?,?)";
-        Object[] createUserWalletParam = new Object[]{userId, wallet.get("address"), wallet.get("name"), wallet.get("icon"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable")};
+        Object[] createUserWalletParam = new Object[]{userId, wallet.get("walletAddress"), wallet.get("walletName"), wallet.get("walletIcon"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable")};
         this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
         return (String)wallet.get("address");
     }
+
+    public String createUserWallet(Map<String, Object> wallet){
+        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, walletIcon, loginAvailable, viewDataAvailable) VALUES(?,?,?,?,?,?)";
+        Object[] createUserWalletParam = new Object[]{wallet.get("user"), wallet.get("walletAddress"), wallet.get("walletName"), wallet.get("walletIcon"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable")};
+        this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
+        return (String)wallet.get("address");
+    }
+
+    public int editUserWallet(Map<String, Object> wallet){
+        String editUserWalletQuery = "UPDATE userWallet SET walletName = ?, walletIcon = ? WHERE user=? and walletAddress=?";
+        Object[] editUserWalletParams = new Object[] {wallet.get("walletName"), wallet.get("walletIcon"), wallet.get("user"), wallet.get("walletAddress")};
+        return this.jdbcTemplate.update(editUserWalletQuery, editUserWalletParams);
+    }
+
+
 
     public List<BadgeWallet> getAllBadgeWallet(String walletAddress){
         String getAllBadgeQuery = "select * from badgeWallet where walletAddress=?";
@@ -270,5 +321,17 @@ public class UserDao {
     public int deleteWallet(String walletAddress){
         String deleteWalletQuery = "delete from wallet where address=?";
         return this.jdbcTemplate.update(deleteWalletQuery, walletAddress);
+    }
+
+    public int makeViewDataAvailable(String userId, String walletAddress) {
+        String makeViewDataAvailableQuery = "update userWallet set viewDataAvailable = true where user=? and walletAddress=?";
+        Object[] makeViewDataAvailableParams = new Object[] {userId, walletAddress};
+        return this.jdbcTemplate.update(makeViewDataAvailableQuery, makeViewDataAvailableParams);
+    }
+
+    public int makeViewDataUnavailable(String userId, String walletAddress) {
+        String makeViewDataUnavailableQuery = "update userWallet set viewDataAvailable = false where user=? and walletAddress=?";
+        Object[] makeViewDataUnavailableParams = new Object[] {userId, walletAddress};
+        return this.jdbcTemplate.update(makeViewDataUnavailableQuery, makeViewDataUnavailableParams);
     }
 }

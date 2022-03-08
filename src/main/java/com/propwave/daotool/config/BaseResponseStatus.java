@@ -13,6 +13,8 @@ public enum BaseResponseStatus {
     REQUEST_ERROR(false, 404, "입력값을 확인해주세요."),
 
     USER_NOT_EXISTS(false, 401, "존재하지 않는 유저입니다."),
+    USER_TOKEN_WRONG(false, 401, "토큰 값이 맞지 않습니다."),
+    USER_ID_ALREADY_EXIST(false, 402, "이미 존재하는 유저 이름입니다."),
 
     RESPONSE_ERROR(false, 404, "값을 불러오는데 실패하였습니다."),
 

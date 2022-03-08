@@ -1,6 +1,5 @@
 package com.propwave.daotool.user;
 
-import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.badge.model.GetBadgesRes;
 import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
@@ -8,12 +7,10 @@ import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.UserWallet;
-//import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.sql.init.DatabaseInitializationSettings;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +23,8 @@ import static com.propwave.daotool.config.BaseResponseStatus.*;
 @RestController
 @RequestMapping("/users")
 public class UserController {
+    final String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/a9e4edcc-b426-45f9-9593-792b088bf0b2userDefaultImage.png";
+
     final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final S3Uploader s3Uploader;
 
@@ -63,25 +62,21 @@ public class UserController {
     }
 
     @PostMapping("/signup")
-    public BaseResponse<Map<String, Object>> UserSignUp(@RequestBody Object json){
+    public BaseResponse<Map<String, Object>> UserSignUp(@RequestBody Object json) throws BaseException {
         Map<String, Object> json2 = (Map<String, Object>) json;
         Map<String, Object> userInfo = (Map<String, Object>) json2.get("userInfo");
 
         List<Map<String, Object>> wallets = (List<Map<String, Object>>) json2.get("wallet");
         //1. 사용자 정보 받아서 1) 지갑 만들고, 2) User 만들고, 3) UserWallet 만들고.
         //1) User 만들기
+        // 이미 있는 id 인지 확인하기
+        if(userProvider.checkUserIdExist((String) userInfo.get("id")) == 1){
+            return new BaseResponse<>(USER_ID_ALREADY_EXIST);
+        }
         try{
-
             //1. user 만들기
             // image S3에 올리기 -> 일단 예시로 한것임...! (test용)
-            File file = new File((String) userInfo.get("profileImage"));
-            FileInputStream input = new FileInputStream(file);
-            MultipartFile multipartFile = new MockMultipartFile("file",
-                    file.getName(),
-                    "text/plain",
-                    IOUtils.toByteArray(input));
-
-            String imagePath = s3Uploader.upload(multipartFile, "media/user/profileImage");
+            String imagePath = S3ImageUploadAtLocal((String) userInfo.get("profileImage"), "media/user/profileImage");
             User newUser = userService.createUser(userInfo, imagePath);
             //newUser의 JWT 토큰 만들기
             String token = securityService.createToken(newUser.getId(), (120*1000*60)); // 토큰 유효시간 2시간
@@ -95,7 +90,7 @@ public class UserController {
                 // 로그인 가능이면 token 만들어줘야할듯
 
                 // 지갑 객체가 이미 있는 친구인지 확인하기
-                String walletAddress = (String) wallet.get("address");
+                String walletAddress = (String) wallet.get("walletAddress");
                 if (userProvider.isWalletExist(walletAddress)==0) {
                     //없으면 객체 만들기
                     userService.createWallet(walletAddress);
@@ -190,10 +185,65 @@ public class UserController {
         return new BaseResponse<>(result);
     }
 
-//    @PatchMapping("/{userId}/profile")
-//    public BaseResponse<String> editUserProfile(@PathVariable("userId") int userId, @RequestBody String token){
-//        //
-//    }
+    @PatchMapping("/mypage")
+    public BaseResponse<Map<String, String>> editUserProfile(@RequestBody Map<String, Object> request) throws BaseException, IOException {
+        //1. 토큰 검증
+        String token = (String) request.get("userToken");
+        String subject = securityService.getSubject(token);
+        System.out.println(subject);
+        Map<String, String> userInfo = (Map<String, String>) request.get("userInfo");
+        if(!subject.equals(userInfo.get("preId"))){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+        //2. 사용자 정보 수정하기 -> 사용자 이미지가 default일 수도 있음.. 잘 띵킹
+        // 사용자의 이름이 변경된 경우, 변경된 이름이 이미 있는건지 확인!
+        if(!userInfo.get("preId").equals(userInfo.get("changedId"))){
+            if(userProvider.checkUserIdExist(userInfo.get("changedId")) == 1){ //
+                return new BaseResponse<>(USER_ID_ALREADY_EXIST);
+            }
+        }
+        String newToken = securityService.createToken(userInfo.get("changedId"), (120*1000*60));
+        //2-1. 이미가 변경되었다면 이미지 올리기
+        //2-1-1. 이미지 변경 여부 확인
+        String newUserImage = userInfo.get("profileImage");
+        if(newUserImage.equals("")){
+            newUserImage = DEFAULT_USER_PROFILE_IMAGE;
+        }
+        String nowProfileImagePath = userProvider.getUserImagePath(userInfo.get("preId"));
+        if(!nowProfileImagePath.equals(newUserImage)){
+            // 둘이 다르면 이미지 업로드
+            // default -> 업로드 필요 없음
+            if(!newUserImage.equals(DEFAULT_USER_PROFILE_IMAGE)){
+                newUserImage = S3ImageUploadAtLocal(newUserImage, "media/user/profileImage");
+            }
+        }
+        User newUser = userService.editUser(userInfo, newUserImage);
+        //3. 지갑 처리하기
+        List<Map<String, Object>> wallets = (List<Map<String, Object>>) request.get("wallets");
+        for(Map<String, Object> wallet:wallets){
+            System.out.println(wallet.get("walletAddress"));
+            System.out.println(wallet.get("walletName"));
+            if(wallet.get("request").equals("add")){
+                System.out.println("대시보드용 지갑 추가");
+                wallet.remove("request");
+                userService.createDashboardWallet(newUser.getId(), wallet);
+            }
+            else if(wallet.get("request").equals("patch")){
+                System.out.println("대시보드용 지갑 수정");
+                wallet.remove("request");
+                userService.updateDashboardWallet(newUser.getId(), wallet);
+            }
+            else if(wallet.get("request").equals("delete")){
+                System.out.println("대시보드용 지갑 삭제");
+                wallet.remove("request");
+                userService.deleteDashboardWallet(newUser.getId(), wallet);
+            }
+        }
+        Map<String, String> response = new HashMap<>();
+        response.put("token", newToken);
+        return new BaseResponse<>(response);
+    }
+
 
     //사용자가 가진 뱃지 불러오기
     @GetMapping("/badges")
@@ -307,5 +357,18 @@ public class UserController {
             return new BaseResponse<>(RESPONSE_ERROR);
         }
 
+    }
+
+    //------------------
+    // 이미지 올리기 - 로컬에서!
+    public String S3ImageUploadAtLocal(String imagePath, String S3DirPath) throws IOException {
+        File file = new File(imagePath);
+        FileInputStream input = new FileInputStream(file);
+        MultipartFile multipartFile = new MockMultipartFile("file",
+                file.getName(),
+                "text/plain",
+                IOUtils.toByteArray(input));
+
+        return s3Uploader.upload(multipartFile, S3DirPath);
     }
 }

@@ -37,11 +37,29 @@ public class UserProvider {
         }
     }
 
+    public int checkUserIdExist(String id) throws BaseException{
+        try{
+            return userDao.checkUserIdExist(id);
+        }catch (Exception exception) {
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
     //User 정보 불러오기 -> ID로
     public User getUser(String id) throws BaseException{
         try{
             User user = userDao.getUserAllInfo(id);
             return user;
+        } catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
+    //User의 profileImage Path불러오기
+    public String getUserImagePath(String userId) throws BaseException{
+        try{
+            String imagePath = userDao.getUserImagePath(userId);
+            return imagePath;
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
@@ -58,7 +76,7 @@ public class UserProvider {
 
     public int isUserWalletByWalletAddressAndUserIdExist(String userId, String walletAddress) throws BaseException{
         try{
-            return userDao.isUserWalletByWalletAddressAndUserIdExist(userId, walletAddress);
+            return userDao.isUserWalletExist(userId, walletAddress);
         }catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
