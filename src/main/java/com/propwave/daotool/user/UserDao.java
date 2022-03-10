@@ -4,10 +4,9 @@ import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.badge.model.BadgeJoinedAt;
 import com.propwave.daotool.badge.model.BadgeNameImage;
 import com.propwave.daotool.badge.model.BadgeWallet;
-import com.propwave.daotool.config.BaseException;
+import com.propwave.daotool.user.model.AdminRequest;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.UserWallet;
-import com.propwave.daotool.wallet.model.Wallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -15,8 +14,6 @@ import org.springframework.stereotype.Repository;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
-
-import static com.propwave.daotool.config.BaseResponseStatus.DATABASE_ERROR;
 
 @Repository
 public class UserDao {
@@ -75,7 +72,6 @@ public class UserDao {
     public List<UserWallet> getAllUserWalletByWalletId(String walletAddress){
         // userWallet에서 로그인 가능한 친구 가져오기
         String getUserWalletQuery = "select * from userWallet where walletAddress=?";
-        String getUserWalletParam = walletAddress;
         return this.jdbcTemplate.query(getUserWalletQuery,
                 (rs, rowNum) -> new UserWallet(
                         rs.getInt("index"),
@@ -87,7 +83,7 @@ public class UserDao {
                         rs.getString("walletIcon"),
                         rs.getTimestamp("createdAt")
                 ),
-                getUserWalletParam
+                walletAddress
         );
     }
 
@@ -333,5 +329,33 @@ public class UserDao {
         String makeViewDataUnavailableQuery = "update userWallet set viewDataAvailable = false where user=? and walletAddress=?";
         Object[] makeViewDataUnavailableParams = new Object[] {userId, walletAddress};
         return this.jdbcTemplate.update(makeViewDataUnavailableQuery, makeViewDataUnavailableParams);
+    }
+
+    // AdminReqeust 생성하기
+    public AdminRequest createAdminRequest(Map<String, String> request){
+        String createAdminRequestQuery = "INSERT INTO adminRequest(user, badgeName, srcWalletAddress, dstWalletAddress) VALUES(?,?,?,?)";
+        Object[] createAdminRequestParams = new Object[]{request.get("user"), request.get("badgeName"), request.get("srcWalletAddress"), request.get("dstWalletAddress")};
+        this.jdbcTemplate.update(createAdminRequestQuery, createAdminRequestParams);
+        String lastInserIdQuery = "select last_insert_id()"; // 가장 마지막에 삽입된(생성된) id값은 가져온다.
+        int lastInsertId = this.jdbcTemplate.queryForObject(lastInserIdQuery, int.class);
+        return getAdminRequest(lastInsertId); // 해당 쿼리문의 결과 마지막으로 삽인된 유저의 userIdx번호를 반환한다.
+    }
+
+    // AdminRequest 하나 가져오기
+    public AdminRequest getAdminRequest(int index){
+        String createAdminRequestQuery = "select * from adminReqeust where index=?";
+        return this.jdbcTemplate.queryForObject(createAdminRequestQuery,
+                (rs, rowNum) -> new AdminRequest(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("badgeName"),
+                        rs.getString("srcWalletAddress"),
+                        rs.getString("destWalletAddress"),
+                        rs.getBoolean("completed"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getTimestamp("completedAt")
+                ),
+                index
+        );
     }
 }

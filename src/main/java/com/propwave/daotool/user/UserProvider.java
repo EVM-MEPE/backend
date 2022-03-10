@@ -2,6 +2,7 @@ package com.propwave.daotool.user;
 
 import com.propwave.daotool.badge.model.*;
 import com.propwave.daotool.config.BaseException;
+import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.BaseResponseStatus;
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 import com.propwave.daotool.user.model.User;
@@ -10,6 +11,7 @@ import com.propwave.daotool.wallet.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.*;
 
@@ -28,13 +30,19 @@ public class UserProvider {
     }
 
     //회원가입 여부 확인
-    public List<UserWallet> isWalletRegistered(String walletAddress) throws BaseException {
-        try {
-            List<UserWallet> userWallet = userWalletDao.getUserWallet(walletAddress);
-            return userWallet;
-        } catch (Exception exception) {
-            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+    public int checkUserSignupAlready(String walletAddress) throws BaseException {
+        System.out.println(walletAddress);
+        List<UserWallet> userWallets = userDao.getAllUserWalletByWalletId(walletAddress);
+        int login = 0;
+        System.out.println(userWallets.size());
+        System.out.println(userWallets);
+        for (UserWallet userWallet : userWallets) {
+            if (userWallet.isLoginAvailable()) {
+                login = 1;
+                return login;
+            }
         }
+        return login;
     }
 
     public int checkUserIdExist(String id) throws BaseException{

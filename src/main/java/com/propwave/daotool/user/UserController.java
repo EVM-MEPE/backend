@@ -5,6 +5,7 @@ import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
+import com.propwave.daotool.user.model.AdminRequest;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.apache.commons.io.IOUtils;
@@ -21,7 +22,6 @@ import java.util.*;
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 
 @RestController
-@RequestMapping("/users")
 public class UserController {
     final String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/a9e4edcc-b426-45f9-9593-792b088bf0b2userDefaultImage.png";
 
@@ -43,25 +43,13 @@ public class UserController {
     }
 
     // 기존 회원가입 여부 확인
-    @PostMapping("/check")
-    public BaseResponse<Integer> checkUserSignupAlready(@RequestBody String walletAddress) throws BaseException {
-            List<UserWallet> result = userProvider.isWalletRegistered(walletAddress);
-            if(result.isEmpty()){
-                int login = 0;
-                return new BaseResponse<>(login);
-            }
-            System.out.println(result.size());
-            for(UserWallet userWallet : result){
-                if (userWallet.isLoginAvailable()){
-                    int login = 1;
-                    return new BaseResponse<>(login);
-                }
-            }
-            int login = 0;
-            return new BaseResponse<>(login);
+    @PostMapping("/users/check")
+    public BaseResponse<Integer> checkUserSignupAlready(@RequestParam("walletAddress") String walletAddress) throws BaseException {
+            int result = userProvider.checkUserSignupAlready(walletAddress);
+            return new BaseResponse<>(result);
     }
 
-    @PostMapping("/signup")
+    @PostMapping("/users/signup")
     public BaseResponse<Map<String, Object>> UserSignUp(@RequestBody Object json) throws BaseException {
         Map<String, Object> json2 = (Map<String, Object>) json;
         Map<String, Object> userInfo = (Map<String, Object>) json2.get("userInfo");
@@ -109,7 +97,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/login")
+    @PostMapping("/users/login")
     public BaseResponse<Map<String, Object>> userLogin(@RequestBody Map<String, String> walletAddress) throws BaseException {
         // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
         // 1. 유저 정보
@@ -153,7 +141,7 @@ public class UserController {
         return new BaseResponse<>(result);
     }
 
-    @GetMapping("/mypage")
+    @GetMapping("/users/mypage")
     public BaseResponse<Map<String, Object>> userLogin(@RequestParam String userId) throws BaseException {
         // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
         // 1. 유저 정보
@@ -185,7 +173,7 @@ public class UserController {
         return new BaseResponse<>(result);
     }
 
-    @PatchMapping("/mypage")
+    @PatchMapping("/users/mypage")
     public BaseResponse<Map<String, String>> editUserProfile(@RequestBody Map<String, Object> request) throws BaseException, IOException {
         //1. 토큰 검증
         String token = (String) request.get("userToken");
@@ -246,7 +234,7 @@ public class UserController {
 
 
     //사용자가 가진 뱃지 불러오기
-    @GetMapping("/badges")
+    @GetMapping("/users/badges")
     public BaseResponse<List<GetBadgesRes>> getBadges(@RequestParam("userId") String userId) throws BaseException
     {
         if(userProvider.checkUser(userId)==0){
@@ -267,7 +255,7 @@ public class UserController {
     }
 
     //login용 지갑 추가
-    @PostMapping("/wallets/login")
+    @PostMapping("/users/wallets/login")
     public BaseResponse<String> addLoginWallet(@RequestBody Map<String, Object> request){
             //1. 사용자 정보 받아서 1) 지갑 만들고, 2) UserWallet 만들고.
             try{
@@ -317,7 +305,7 @@ public class UserController {
     }
 
     //login용 지갑 삭제
-    @DeleteMapping("/wallets/login")
+    @DeleteMapping("/users/wallets/login")
     public BaseResponse<String> deleteLoginWallet(@RequestBody Map<String, String> request) throws BaseException {
         System.out.println("지갑 삭제 고");
         String userId = request.get("userId");
@@ -357,6 +345,13 @@ public class UserController {
             return new BaseResponse<>(RESPONSE_ERROR);
         }
 
+    }
+
+    //badge 신청하기
+    @PostMapping("/admin/badges")
+    public BaseResponse<AdminRequest> getBadgeRequest(@RequestParam("badgeName") String badgeName, @RequestBody Map<String, String> request){
+        AdminRequest adminRequest = userService.createAdminRequest(badgeName, request);
+        return new BaseResponse<>(adminRequest);
     }
 
     //------------------

@@ -3,6 +3,7 @@ package com.propwave.daotool.user;
 import com.fasterxml.jackson.databind.ser.Serializers;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
+import com.propwave.daotool.user.model.AdminRequest;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.Wallet;
 import org.slf4j.Logger;
@@ -186,5 +187,10 @@ public class UserService {
             System.out.println("경우 없는 경우...");
             throw new BaseException(RESPONSE_ERROR);
         }
+    }
+
+    public AdminRequest createAdminRequest(String badgeName, Map<String, String> request){
+        request.put("badgeName", badgeName);
+        return userDao.createAdminRequest(request);
     }
 }
