@@ -4,7 +4,7 @@ import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.badge.model.BadgeJoinedAt;
 import com.propwave.daotool.badge.model.BadgeNameImage;
 import com.propwave.daotool.badge.model.BadgeWallet;
-import com.propwave.daotool.user.model.AdminRequest;
+import com.propwave.daotool.user.model.BadgeRequest;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +12,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
+import java.sql.Timestamp;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 
@@ -332,20 +334,29 @@ public class UserDao {
     }
 
     // AdminReqeust 생성하기
-    public AdminRequest createAdminRequest(Map<String, String> request){
-        String createAdminRequestQuery = "INSERT INTO adminRequest(user, badgeName, srcWalletAddress, dstWalletAddress) VALUES(?,?,?,?)";
-        Object[] createAdminRequestParams = new Object[]{request.get("user"), request.get("badgeName"), request.get("srcWalletAddress"), request.get("dstWalletAddress")};
-        this.jdbcTemplate.update(createAdminRequestQuery, createAdminRequestParams);
+    public BadgeRequest createBadgeRequest(Map<String, String> request){
+        String createBadgeRequestQuery = "INSERT INTO badgeRequest(user, badgeName, srcWalletAddress, destWalletAddress) VALUES(?,?,?,?)";
+        Object[] createBadgeRequestParams = new Object[]{request.get("user"), request.get("badgeName"), request.get("srcWalletAddress"), request.get("dstWalletAddress")};
+        this.jdbcTemplate.update(createBadgeRequestQuery, createBadgeRequestParams);
         String lastInserIdQuery = "select last_insert_id()"; // 가장 마지막에 삽입된(생성된) id값은 가져온다.
         int lastInsertId = this.jdbcTemplate.queryForObject(lastInserIdQuery, int.class);
-        return getAdminRequest(lastInsertId); // 해당 쿼리문의 결과 마지막으로 삽인된 유저의 userIdx번호를 반환한다.
+        return getBadgeRequest(lastInsertId); // 해당 쿼리문의 결과 마지막으로 삽인된 유저의 userIdx번호를 반환한다.
+    }
+
+    public BadgeRequest updateBadgeRequest(int index){
+        String updateBadgeRequestQuery = "UPDATE badgeRequest SET completed = true, completedAt = ? WHERE `index` = ?";
+        //String currentTime = getCurrentTime();
+        //System.out.println();
+        Object[] updateBadgeRequestParams = new Object[] {new Timestamp(System.currentTimeMillis()), index};
+        this.jdbcTemplate.update(updateBadgeRequestQuery, updateBadgeRequestParams);
+        return getBadgeRequest(index);
     }
 
     // AdminRequest 하나 가져오기
-    public AdminRequest getAdminRequest(int index){
-        String createAdminRequestQuery = "select * from adminReqeust where index=?";
-        return this.jdbcTemplate.queryForObject(createAdminRequestQuery,
-                (rs, rowNum) -> new AdminRequest(
+    public BadgeRequest getBadgeRequest(int index){
+        String getBadgeRequestQuery = "select * from badgeRequest where `index`=?";
+        return this.jdbcTemplate.queryForObject(getBadgeRequestQuery,
+                (rs, rowNum) -> new BadgeRequest(
                         rs.getInt("index"),
                         rs.getString("user"),
                         rs.getString("badgeName"),
@@ -357,5 +368,50 @@ public class UserDao {
                 ),
                 index
         );
+    }
+
+    public List<BadgeRequest> getAllBadgeRequest(){
+        String getBadgeRequestQuery = "select * from badgeRequest";
+        return this.jdbcTemplate.query(getBadgeRequestQuery,
+                (rs, rowNum) -> new BadgeRequest(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("badgeName"),
+                        rs.getString("srcWalletAddress"),
+                        rs.getString("destWalletAddress"),
+                        rs.getBoolean("completed"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getTimestamp("completedAt")
+                )
+        );
+    }
+
+    public BadgeWallet createBadgeWallet(String destWalletAddress, String BadgeName){
+        String createBadgeWalletQuery = "INSERT INTO badgeWallet(walletAddress, badgeName) VALUES(?,?)";
+        Object[] createBadgeWalletParams = new Object[]{destWalletAddress, BadgeName};
+        this.jdbcTemplate.update(createBadgeWalletQuery, createBadgeWalletParams);
+        String lastInserIdQuery = "select last_insert_id()"; // 가장 마지막에 삽입된(생성된) id값은 가져온다.
+        int lastInsertId = this.jdbcTemplate.queryForObject(lastInserIdQuery, int.class);
+        return getBadgeWallet(lastInsertId); // 해당 쿼리문의 결과 마지막으로 삽인된 유저의 userIdx번호를 반환한다.
+    }
+
+    public BadgeWallet getBadgeWallet(int index){
+        String getBadgeWalletQuery = "select * from badgeWallet where `index`=?";
+        return this.jdbcTemplate.queryForObject(getBadgeWalletQuery,
+                (rs, rowNum) -> new BadgeWallet(
+                        rs.getInt("index"),
+                        rs.getString("walletAddress"),
+                        rs.getString("badgeName"),
+                        rs.getTimestamp("joinedAt")),
+                index
+        );
+    }
+
+    public String getCurrentTime(){
+        java.sql.Timestamp date = new java.sql.Timestamp(new java.util.Date().getTime());
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+
+        return sdf.format(date);
     }
 }

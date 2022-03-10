@@ -1,11 +1,9 @@
 package com.propwave.daotool.user;
 
-import com.fasterxml.jackson.databind.ser.Serializers;
+import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.config.BaseException;
-import com.propwave.daotool.config.BaseResponse;
-import com.propwave.daotool.user.model.AdminRequest;
+import com.propwave.daotool.user.model.BadgeRequest;
 import com.propwave.daotool.user.model.User;
-import com.propwave.daotool.wallet.model.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -189,8 +187,23 @@ public class UserService {
         }
     }
 
-    public AdminRequest createAdminRequest(String badgeName, Map<String, String> request){
+    public BadgeRequest createBadgeRequest(String badgeName, Map<String, String> request){
         request.put("badgeName", badgeName);
-        return userDao.createAdminRequest(request);
+        return userDao.createBadgeRequest(request);
     }
+
+    public BadgeRequest processBadgeRequest(int index) throws BaseException {
+        //1. 해당 인덱스에 해당하는 badgeRequest 가져오기
+        try {
+            BadgeRequest badgeRequest = userDao.getBadgeRequest(index);
+            System.out.println(badgeRequest);
+            // 2. badgeWallet 추가하기
+            BadgeWallet newBadgeWallet = userDao.createBadgeWallet(badgeRequest.getDestWalletAddress(), badgeRequest.getBadgeName());
+            System.out.println(newBadgeWallet);
+            //3. badgeReqeust 값 수정하기
+            return userDao.updateBadgeRequest(index);
+        }catch(Exception exception){
+            throw new BaseException(RESPONSE_ERROR);
+        }
+            }
 }

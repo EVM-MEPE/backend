@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class AdminRequest {
+public class BadgeRequest {
     private int index;
     private String user;
     private String badgeName;

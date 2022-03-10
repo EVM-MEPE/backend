@@ -5,6 +5,8 @@ import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.BaseResponseStatus;
 import static com.propwave.daotool.config.BaseResponseStatus.*;
+
+import com.propwave.daotool.user.model.BadgeRequest;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.UserWalletDao;
 import com.propwave.daotool.wallet.model.UserWallet;
@@ -176,7 +178,7 @@ public class UserProvider {
     }
 
     // 지갑이 남에게도 있는지 여부 확인
-    int isWalletSomeoneElse(String userId, String walletAddress) throws BaseException{
+    public int isWalletSomeoneElse(String userId, String walletAddress) throws BaseException{
         try {
             return userDao.isWalletSomeoneElse(userId, walletAddress);
         } catch(Exception exception){
@@ -185,11 +187,16 @@ public class UserProvider {
     }
 
     // 나에게 대시보드 용도 있는지 여부
-    int isWalletMyDashboard(String userId,String walletAddress) throws BaseException{
+    public int isWalletMyDashboard(String userId,String walletAddress) throws BaseException{
         try {
             return userDao.isWalletMyDashboard(userId, walletAddress);
         } catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
     }
+
+    public List<BadgeRequest> getAllBadgeRequest() throws BaseException{
+        return userDao.getAllBadgeRequest();
+    }
+
 }

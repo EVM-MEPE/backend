@@ -1,11 +1,12 @@
 package com.propwave.daotool.user;
 
+import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.badge.model.GetBadgesRes;
 import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
-import com.propwave.daotool.user.model.AdminRequest;
+import com.propwave.daotool.user.model.BadgeRequest;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.apache.commons.io.IOUtils;
@@ -23,8 +24,8 @@ import static com.propwave.daotool.config.BaseResponseStatus.*;
 
 @RestController
 public class UserController {
-    final String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/a9e4edcc-b426-45f9-9593-792b088bf0b2userDefaultImage.png";
-
+    final static String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/a9e4edcc-b426-45f9-9593-792b088bf0b2userDefaultImage.png";
+    final static String ADMIN_PASSWORD = "propwave0806!";
     final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final S3Uploader s3Uploader;
 
@@ -349,9 +350,29 @@ public class UserController {
 
     //badge 신청하기
     @PostMapping("/admin/badges")
-    public BaseResponse<AdminRequest> getBadgeRequest(@RequestParam("badgeName") String badgeName, @RequestBody Map<String, String> request){
-        AdminRequest adminRequest = userService.createAdminRequest(badgeName, request);
+    public BaseResponse<BadgeRequest> getBadgeRequest(@RequestParam("badgeName") String badgeName, @RequestBody Map<String, String> request){
+        BadgeRequest adminRequest = userService.createBadgeRequest(badgeName, request);
         return new BaseResponse<>(adminRequest);
+    }
+
+    @GetMapping("/admin/badges")
+    public BaseResponse<List<BadgeRequest>> getAllBadgeRequest(@RequestBody Map<String, String> request) throws BaseException {
+        String password = request.get("password");
+        if(!password.equals(ADMIN_PASSWORD)){
+            return new BaseResponse<>(PASSWORD_WRONG);
+        }
+        List<BadgeRequest> badgeRequests = userProvider.getAllBadgeRequest();
+        return new BaseResponse<>(badgeRequests);
+    }
+
+    @PostMapping("/admin/badge")
+    public BaseResponse<BadgeRequest> processBadgeRequest(@RequestParam("index") int index, @RequestBody Map<String, String> request) throws BaseException {
+        String password = request.get("password");
+        if(!password.equals(ADMIN_PASSWORD)){
+            return new BaseResponse<>(PASSWORD_WRONG);
+        }
+        BadgeRequest badgeRequest = userService.processBadgeRequest(index);
+        return new BaseResponse<>(badgeRequest);
     }
 
     //------------------
