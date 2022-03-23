@@ -6,23 +6,29 @@ import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
-import com.propwave.daotool.user.model.BadgeRequest;
-import com.propwave.daotool.user.model.User;
+import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
+import java.util.List;
+import java.util.zip.Deflater;
 
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 
 @RestController
+@CrossOrigin(origins="*")
 public class UserController {
     final static String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/a9e4edcc-b426-45f9-9593-792b088bf0b2userDefaultImage.png";
     final static String ADMIN_PASSWORD = "propwave0806!";
@@ -46,12 +52,17 @@ public class UserController {
     // 기존 회원가입 여부 확인
     @PostMapping("/users/check")
     public BaseResponse<Integer> checkUserSignupAlready(@RequestParam("walletAddress") String walletAddress) throws BaseException {
+            System.out.println("#01 - check signup api start");
             int result = userProvider.checkUserSignupAlready(walletAddress);
             return new BaseResponse<>(result);
     }
 
-    @PostMapping("/users/signup")
-    public BaseResponse<Map<String, Object>> UserSignUp(@RequestBody Object json) throws BaseException {
+    @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public BaseResponse<Map<String, Object>> UserSignUp(@RequestBody Object json  /*UserSignupReq userInfo, WalletSignupReq wallet*/) throws BaseException {
+        System.out.println("#02 - signup api start");
+        System.out.println(json);
+        System.out.println(json.toString());
+        System.out.println((String)json);
         Map<String, Object> json2 = (Map<String, Object>) json;
         Map<String, Object> userInfo = (Map<String, Object>) json2.get("userInfo");
 
@@ -100,6 +111,7 @@ public class UserController {
 
     @PostMapping("/users/login")
     public BaseResponse<Map<String, Object>> userLogin(@RequestBody Map<String, String> walletAddress) throws BaseException {
+        System.out.println("#03 - login api start");
         // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
         // 1. 유저 정보
         // 해당 주소에 연결된 user의 모든 정보 가져오기
@@ -144,6 +156,7 @@ public class UserController {
 
     @GetMapping("/users/mypage")
     public BaseResponse<Map<String, Object>> userLogin(@RequestParam String userId) throws BaseException {
+        System.out.println("#04 - get mypage api start");
         // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
         // 1. 유저 정보
         userService.addHit(userId);
@@ -176,6 +189,7 @@ public class UserController {
 
     @PatchMapping("/users/mypage")
     public BaseResponse<Map<String, String>> editUserProfile(@RequestBody Map<String, Object> request) throws BaseException, IOException {
+        System.out.println("#05 - mypage update api start");
         //1. 토큰 검증
         String token = (String) request.get("userToken");
         String subject = securityService.getSubject(token);
@@ -238,6 +252,7 @@ public class UserController {
     @GetMapping("/users/badges")
     public BaseResponse<List<GetBadgesRes>> getBadges(@RequestParam("userId") String userId) throws BaseException
     {
+        System.out.println("#06 - get user badges api start");
         if(userProvider.checkUser(userId)==0){
             return new BaseResponse<>(USER_NOT_EXISTS);
         }
@@ -258,48 +273,49 @@ public class UserController {
     //login용 지갑 추가
     @PostMapping("/users/wallets/login")
     public BaseResponse<String> addLoginWallet(@RequestBody Map<String, Object> request){
-            //1. 사용자 정보 받아서 1) 지갑 만들고, 2) UserWallet 만들고.
-            try{
-                String newWalletAddress = (String) request.get("address");
-                // 경우 1. 지갑이 아예 없었던 새로인 친구인 경우
-                if (userProvider.isWalletExist(newWalletAddress)==0) {
-                    //없으면 객체 만들기 -> 경우 1. 완전 처음 들어오는 지갑인 경우
-                    userService.createWallet(newWalletAddress);
+        System.out.println("#06 - get user badges api start");
+        //1. 사용자 정보 받아서 1) 지갑 만들고, 2) UserWallet 만들고.
+        try{
+            String newWalletAddress = (String) request.get("address");
+            // 경우 1. 지갑이 아예 없었던 새로인 친구인 경우
+            if (userProvider.isWalletExist(newWalletAddress)==0) {
+                //없으면 객체 만들기 -> 경우 1. 완전 처음 들어오는 지갑인 경우
+                userService.createWallet(newWalletAddress);
+                //2. userWallet 만들기
+                request.put("walletName", "");
+                request.put("loginAvailable", true);
+                request.put("viewDataAvailable", false);
+                userService.createUserWallet(request, (String) request.get("user"));
+                return new BaseResponse<>("로그인 지갑이 추가되었습니다.");
+            }
+            else{
+                System.out.println("지갑 있음!");
+                String user = (String)request.get("user");
+                // 경우 4. 지갑이 이미 있고, 다른 유저의 로그인용으로 있는 경우
+                if(userProvider.isWalletExistForLogin(newWalletAddress)==1){
+                    System.out.println("경우4");
+                    return new BaseResponse<>(WALLET_ALREADY_EXIST_FOR_LOGIN);
+                }
+                // 경우 2. 지갑자체는 이미 있고, 이 유저한테는 지갑이 없는 경우
+                if(userProvider.isUserWalletByWalletAddressAndUserIdExist(user, newWalletAddress)==0){
                     //2. userWallet 만들기
+                    System.out.println("경우2");
                     request.put("walletName", "");
                     request.put("loginAvailable", true);
                     request.put("viewDataAvailable", false);
                     userService.createUserWallet(request, (String) request.get("user"));
                     return new BaseResponse<>("로그인 지갑이 추가되었습니다.");
                 }
-                else{
-                    System.out.println("지갑 있음!");
-                    String user = (String)request.get("user");
-                    // 경우 4. 지갑이 이미 있고, 다른 유저의 로그인용으로 있는 경우
-                    if(userProvider.isWalletExistForLogin(newWalletAddress)==1){
-                        System.out.println("경우4");
-                        return new BaseResponse<>(WALLET_ALREADY_EXIST_FOR_LOGIN);
-                    }
-                    // 경우 2. 지갑자체는 이미 있고, 이 유저한테는 지갑이 없는 경우
-                    if(userProvider.isUserWalletByWalletAddressAndUserIdExist(user, newWalletAddress)==0){
-                        //2. userWallet 만들기
-                        System.out.println("경우2");
-                        request.put("walletName", "");
-                        request.put("loginAvailable", true);
-                        request.put("viewDataAvailable", false);
-                        userService.createUserWallet(request, (String) request.get("user"));
-                        return new BaseResponse<>("로그인 지갑이 추가되었습니다.");
-                    }
-                    // 경우 3. 지갑은 이미 있고, 이 유저한테 지갑이 대시보드용으로 있는 경우
-                    UserWallet userWallet = userProvider.getUserWalletByWalletAddressAndUserId(user, newWalletAddress);
-                    if(!userWallet.isLoginAvailable() && userWallet.isViewDataAvailable()){
-                        System.out.println("경우3");
-                        userService.makeLoginAvailable(userWallet.getIndex());
-                        return new BaseResponse<>("로그인 지갑이 추가되었습니다.");
-                    }
-                    System.out.println("경우 없는 경우...");
-                    return new BaseResponse<>(RESPONSE_ERROR);
+                // 경우 3. 지갑은 이미 있고, 이 유저한테 지갑이 대시보드용으로 있는 경우
+                UserWallet userWallet = userProvider.getUserWalletByWalletAddressAndUserId(user, newWalletAddress);
+                if(!userWallet.isLoginAvailable() && userWallet.isViewDataAvailable()){
+                    System.out.println("경우3");
+                    userService.makeLoginAvailable(userWallet.getIndex());
+                    return new BaseResponse<>("로그인 지갑이 추가되었습니다.");
                 }
+                System.out.println("경우 없는 경우...");
+                return new BaseResponse<>(RESPONSE_ERROR);
+            }
         } catch (BaseException e) {
                 return new BaseResponse<>((e.getStatus()));
         }
@@ -308,6 +324,7 @@ public class UserController {
     //login용 지갑 삭제
     @DeleteMapping("/users/wallets/login")
     public BaseResponse<String> deleteLoginWallet(@RequestBody Map<String, String> request) throws BaseException {
+        System.out.println("#07 - delete wallet badges api start");
         System.out.println("지갑 삭제 고");
         String userId = request.get("userId");
         String walletAddress = request.get("walletAddress");
@@ -351,12 +368,14 @@ public class UserController {
     //badge 신청하기
     @PostMapping("/admin/badges")
     public BaseResponse<BadgeRequest> getBadgeRequest(@RequestParam("badgeName") String badgeName, @RequestBody Map<String, String> request){
+        System.out.println("#08 - apply badge api start");
         BadgeRequest adminRequest = userService.createBadgeRequest(badgeName, request);
         return new BaseResponse<>(adminRequest);
     }
 
     @GetMapping("/admin/badges")
     public BaseResponse<List<BadgeRequest>> getAllBadgeRequest(@RequestBody Map<String, String> request) throws BaseException {
+        System.out.println("#09 - admin badge request api start");
         String password = request.get("password");
         if(!password.equals(ADMIN_PASSWORD)){
             return new BaseResponse<>(PASSWORD_WRONG);
@@ -367,6 +386,7 @@ public class UserController {
 
     @PostMapping("/admin/badge")
     public BaseResponse<BadgeRequest> processBadgeRequest(@RequestParam("index") int index, @RequestBody Map<String, String> request) throws BaseException {
+        System.out.println("#10 - admin give badge api start");
         String password = request.get("password");
         if(!password.equals(ADMIN_PASSWORD)){
             return new BaseResponse<>(PASSWORD_WRONG);
@@ -378,6 +398,7 @@ public class UserController {
     //------------------
     // 이미지 올리기 - 로컬에서!
     public String S3ImageUploadAtLocal(String imagePath, String S3DirPath) throws IOException {
+        System.out.println("받은 이미지 경로: "+ imagePath);
         File file = new File(imagePath);
         FileInputStream input = new FileInputStream(file);
         MultipartFile multipartFile = new MockMultipartFile("file",
@@ -386,5 +407,31 @@ public class UserController {
                 IOUtils.toByteArray(input));
 
         return s3Uploader.upload(multipartFile, S3DirPath);
+    }
+
+    //------- test
+    @PostMapping("/images/upload")
+    public BaseResponse<String> uplaodImage(@RequestParam("profileImage") MultipartFile multipartFile ) throws IOException {
+        String imgUrl = s3Uploader.upload(multipartFile, "media/user/profileImage");
+        return new BaseResponse<>(imgUrl);
+    }
+
+    public static byte[] compressBytes(byte[] data) {
+        Deflater deflater = new Deflater();
+        deflater.setInput(data);
+        deflater.finish();
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+        byte[] buffer = new byte[1024];
+        while (!deflater.finished()) {
+            int count = deflater.deflate(buffer);
+            outputStream.write(buffer, 0, count);
+
+            try {
+                outputStream.close();
+            } catch (IOException e) {
+            }
+        }
+        return outputStream.toByteArray();
     }
 }

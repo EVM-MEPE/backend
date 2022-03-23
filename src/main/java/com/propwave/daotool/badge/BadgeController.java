@@ -20,6 +20,7 @@ import static com.propwave.daotool.config.BaseResponseStatus.USER_NOT_EXISTS;
 
 @RestController
 @RequestMapping("/badges")
+@CrossOrigin(origins="*")
 public class BadgeController {
     final Logger logger = LoggerFactory.getLogger(this.getClass());
 
@@ -36,6 +37,7 @@ public class BadgeController {
     // 모든 뱃지 불러오기
     @GetMapping("/")
     public BaseResponse<List<Map<String, Object>>> getAllBadges(@RequestParam String orderBy){
+        System.out.println("#11 - badge: get all badges api start");
         List<Map<String, Object>> badges = badgeProvider.getAllBadges(orderBy);
         return new BaseResponse<>(badges);
     }
@@ -46,6 +48,7 @@ public class BadgeController {
             @RequestParam String badgeName,
             @RequestParam("orderBy") String orderBy) throws BaseException
     {
+        System.out.println("#12 - badge: get user's all badges api start");
         //1. 뱃지 정보
         Badge badge = badgeProvider.getBadgeInfo(badgeName);
         //2. 뱃지월렛 joinedAt, walletAddress -> 해당 뱃지를 가진 모든 badgeWallet 가져오기
@@ -70,7 +73,4 @@ public class BadgeController {
         response.put("badgeUsers", badgeUsers);
         return new BaseResponse<>(response);
     }
-
-
-
 }
