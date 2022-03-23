@@ -1,5 +1,9 @@
 package com.propwave.daotool.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.badge.model.GetBadgesRes;
 import com.propwave.daotool.commons.S3Uploader;
@@ -9,6 +13,7 @@ import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.apache.commons.io.IOUtils;
+import org.hibernate.mapping.Array;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,6 +108,101 @@ public class UserController {
         } catch (IOException e) {
             e.printStackTrace();
             return new BaseResponse<>(S3_UPLOAD_ERROR);
+        } catch (BaseException e) {
+            e.printStackTrace();
+            return new BaseResponse<>(e.getStatus());
+        }
+    }
+
+    // 회원가입 -> 사용자 정보 생성하기
+    @PostMapping("/users/signup/user")
+    public BaseResponse<Map<String, Object>> UserSignUp(@RequestParam("profileImage") MultipartFile profileImage, @RequestParam("json") String json) throws BaseException, JsonProcessingException {
+        System.out.println("#02-1 - signup userCreate api start");
+        logger.debug("json text = {}", json);
+
+        // 받은 내용 user로 object 변형하기
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+        UserSignupReq userSignupReq = objectMapper.readValue(json, new TypeReference<>() {});
+        logger.debug("user Object convert");
+
+        //1) User 만들기
+        // 이미 있는 id 인지 확인하기
+        if(userProvider.checkUserIdExist((userSignupReq.getId())) == 1){
+            return new BaseResponse<>(USER_ID_ALREADY_EXIST);
+        }
+        try{
+            //1. user 만들기
+            // image S3에 올리기 -> 일단 예시로 한것임...! (test용)
+            // image upload 하기
+            String imagePath = s3Uploader.upload(profileImage, "media/user/profileImage");
+            logger.debug("image upload url = {}", imagePath);
+            User newUser = userService.createUser(userSignupReq, imagePath);
+
+            //newUser의 JWT 토큰 만들기
+            String token = securityService.createToken(newUser.getId(), (120*1000*60)); // 토큰 유효시간 2시간
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("id", newUser.getId());
+            response.put("token", token);
+            response.put("profileImageUrl", newUser.getProfileImage());
+            response.put("introduction", newUser.getIntroduction());
+            response.put("url", newUser.getUrl());
+            return new BaseResponse<>(response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new BaseResponse<>(S3_UPLOAD_ERROR);
+        } catch (BaseException e) {
+            e.printStackTrace();
+            return new BaseResponse<>(e.getStatus());
+        }
+    }
+
+    //회원가입 시 지갑 등록
+    @PostMapping(value = "/users/signup/wallets")
+    public BaseResponse<List<String>> UserSignUpWallet(@RequestBody Object json) throws BaseException {
+        System.out.println("#02-3 - signup create wallets api start");
+        Map<String, Object> json2 = (Map<String, Object>) json;
+        String userId = (String) json2.get("user");
+        List<Map<String, Object>> wallets = (List<Map<String, Object>>) json2.get("wallets");
+        List<String> successWallets = new ArrayList<String>();
+        try{
+            // 2. 지갑 만들기
+            for(Map<String, Object> wallet : wallets){
+                //1. 지갑 만들기
+                // 지갑 객체가 이미 있는 친구인지 확인하기
+                String walletAddress = (String) wallet.get("walletAddress");
+                if (userProvider.isWalletExist(walletAddress)==0) {
+                    //없으면 객체 만들기
+                    userService.createWallet(walletAddress);
+                }
+                //2. userWallet 만들기
+                userService.createUserWallet(wallet,userId);
+                successWallets.add(walletAddress);
+
+            }
+            return new BaseResponse<>(successWallets);
+        } catch (BaseException e) {
+            e.printStackTrace();
+            return new BaseResponse<>(e.getStatus());
+        }
+    }
+
+    //유저 삭제
+    @DeleteMapping(value = "/users")
+    public BaseResponse<String> userDelete(@RequestBody Object json) throws BaseException {
+        System.out.println("user delete api start");
+        Map<String, String> json2 = (Map<String, String>) json;
+        String userId = json2.get("user");
+        String token = json2.get("token");
+
+        // TOken 확인
+        String subject = securityService.getSubject(token);
+        System.out.println("token 확인");
+        if(!subject.equals(userId)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+        try{
+           userService.deleteUser(userId);
+           return new BaseResponse<>("user delete success");
         } catch (BaseException e) {
             e.printStackTrace();
             return new BaseResponse<>(e.getStatus());
@@ -416,22 +516,4 @@ public class UserController {
         return new BaseResponse<>(imgUrl);
     }
 
-    public static byte[] compressBytes(byte[] data) {
-        Deflater deflater = new Deflater();
-        deflater.setInput(data);
-        deflater.finish();
-
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-        byte[] buffer = new byte[1024];
-        while (!deflater.finished()) {
-            int count = deflater.deflate(buffer);
-            outputStream.write(buffer, 0, count);
-
-            try {
-                outputStream.close();
-            } catch (IOException e) {
-            }
-        }
-        return outputStream.toByteArray();
-    }
 }

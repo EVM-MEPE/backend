@@ -8,7 +8,7 @@ import lombok.*;
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
 public class UserSignupReq {
     private String id;
-    private String profileImage;
+    //private String profileImage;
     private String introduction;
     private String url;
 }

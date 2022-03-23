@@ -49,6 +49,11 @@ public class UserDao {
         return getUserAllInfo(userInfo.get("changedId"));
     }
 
+    public int deleteUser(String userId){
+        String deleteUserQuery = "delete from user where id=?";
+        return this.jdbcTemplate.update(deleteUserQuery, userId);
+    }
+
     public User getUserAllInfo(String id){
         String getUserQuery = "select * from user where id=?";
         String getUserParams = id;

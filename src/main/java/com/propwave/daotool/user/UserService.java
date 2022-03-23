@@ -4,10 +4,13 @@ import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.user.model.BadgeRequest;
 import com.propwave.daotool.user.model.User;
+import com.propwave.daotool.user.model.UserSignupReq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.propwave.daotool.config.BaseResponseStatus.*;
@@ -33,6 +36,20 @@ public class UserService {
         }
     }
 
+    public User createUser(UserSignupReq userSignupReq, String profileImageS3Path) throws BaseException{
+        try{
+            Map<String, Object> userInfo = new LinkedHashMap<>();
+            userInfo.put("id", userSignupReq.getId());
+            userInfo.put("profileImage",profileImageS3Path);
+            userInfo.put("introduction", userSignupReq.getIntroduction());
+            userInfo.put("url", userSignupReq.getUrl());
+
+            return userDao.createUser(userInfo);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
     public User editUser(Map<String, String> userInfo, String profileImageS3Path) throws BaseException{
         try{
             System.out.println(userInfo);
@@ -40,6 +57,14 @@ public class UserService {
             userInfo.put("profileImage", profileImageS3Path);
             System.out.println(userInfo);
             return userDao.editUser(userInfo);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public int deleteUser(String userId) throws BaseException{
+        try{
+            return userDao.deleteUser(userId);
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
