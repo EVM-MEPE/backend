@@ -6,6 +6,7 @@ import com.propwave.daotool.badge.model.BadgeNameImage;
 import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.user.model.BadgeRequest;
 import com.propwave.daotool.user.model.User;
+import com.propwave.daotool.user.model.WalletSignupReq;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -189,6 +190,13 @@ public class UserDao {
         Object[] createUserWalletParam = new Object[]{userId, wallet.get("walletAddress"), wallet.get("walletName"), wallet.get("walletIcon"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable")};
         this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
         return (String)wallet.get("address");
+    }
+
+    public String createUserWallet(WalletSignupReq wallet, String userId){
+        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, walletIcon, loginAvailable, viewDataAvailable) VALUES(?,?,?,?,?,?)";
+        Object[] createUserWalletParam = new Object[]{userId, wallet.getWalletAddress(), wallet.getWalletName(), wallet.getWalletIcon(), wallet.getLoginAvailable(), wallet.getViewDataAvailable()};
+        this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
+        return (String)wallet.getWalletAddress();
     }
 
     public String createUserWallet(Map<String, Object> wallet){

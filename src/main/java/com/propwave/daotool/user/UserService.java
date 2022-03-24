@@ -5,6 +5,7 @@ import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.user.model.BadgeRequest;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.user.model.UserSignupReq;
+import com.propwave.daotool.user.model.WalletSignupReq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -81,6 +82,15 @@ public class UserService {
     }
 
     public String createUserWallet(Map<String, Object> wallet, String userId) throws BaseException {
+        try{
+            String newUserWallet = userDao.createUserWallet(wallet, userId);
+            return newUserWallet;
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public String createUserWallet(WalletSignupReq wallet, String userId) throws BaseException {
         try{
             String newUserWallet = userDao.createUserWallet(wallet, userId);
             return newUserWallet;

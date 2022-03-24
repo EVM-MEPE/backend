@@ -1,5 +1,6 @@
 package com.propwave.daotool.user;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -158,13 +159,39 @@ public class UserController {
 
     //회원가입 시 지갑 등록
     @PostMapping(value = "/users/signup/wallets")
-    public BaseResponse<List<String>> UserSignUpWallet(@RequestBody Object json) throws BaseException {
+    public BaseResponse<List<String>> UserSignUpWallet(@RequestBody Object json) throws BaseException, IOException {
         System.out.println("#02-3 - signup create wallets api start");
         Map<String, Object> json2 = (Map<String, Object>) json;
         String userId = (String) json2.get("user");
+//        Map<String, Object> wallets_json = (Map<String, Object>) json2.get("wallets");
+//        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+//        List<WalletSignupReq> wallets = new ArrayList<>;
+//        for
+//         = objectMapper.readValue((JsonParser) wallets_obj, new TypeReference<>(){});
+//
+//        List<String> successWallets = new ArrayList<>();
+//        try{
+//            // 2. 지갑 만들기
+//            for(WalletSignupReq wallet : wallets){
+//                //1. 지갑 만들기
+//                // 지갑 객체가 이미 있는 친구인지 확인하기
+//                String walletAddress = wallet.getWalletAddress();
+//                if (userProvider.isWalletExist(walletAddress)==0) {
+//                    //없으면 객체 만들기
+//                    userService.createWallet(walletAddress);
+//                }
+//                //2. userWallet 만들기
+//                userService.createUserWallet(wallet,userId);
+//                System.out.println("ok2");
+//                successWallets.add(walletAddress);
+//                System.out.println("ok3");
+//            }
+
         List<Map<String, Object>> wallets = (List<Map<String, Object>>) json2.get("wallets");
         System.out.println("ok1");
+        System.out.println("size: " + wallets.size());
         List<String> successWallets = new ArrayList<>();
+        System.out.println("ok2");
         try{
             // 2. 지갑 만들기
             for(Map<String, Object> wallet : wallets){
@@ -172,15 +199,19 @@ public class UserController {
                 // 지갑 객체가 이미 있는 친구인지 확인하기
                 System.out.println(wallet.get("walletAddress"));
                 String walletAddress = (String) wallet.get("walletAddress");
+                System.out.println("ok3");
                 if (userProvider.isWalletExist(walletAddress)==0) {
                     //없으면 객체 만들기
+                    System.out.println("in the if");
                     userService.createWallet(walletAddress);
+                    System.out.println("in if, create wallet success");
                 }
                 //2. userWallet 만들기
+                System.out.println("out if");
                 userService.createUserWallet(wallet,userId);
-                System.out.println("ok2");
+                System.out.println("ok4");
                 successWallets.add(walletAddress);
-                System.out.println("ok3");
+                System.out.println("ok5");
             }
             return new BaseResponse<>(successWallets);
         } catch (BaseException e) {
@@ -215,6 +246,8 @@ public class UserController {
     @PostMapping("/users/login")
     public BaseResponse<Map<String, Object>> userLogin(@RequestBody Map<String, String> walletAddress) throws BaseException {
         System.out.println("#03 - login api start");
+
+
         // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
         // 1. 유저 정보
         // 해당 주소에 연결된 user의 모든 정보 가져오기
