@@ -163,12 +163,14 @@ public class UserController {
         Map<String, Object> json2 = (Map<String, Object>) json;
         String userId = (String) json2.get("user");
         List<Map<String, Object>> wallets = (List<Map<String, Object>>) json2.get("wallets");
-        List<String> successWallets = new ArrayList<String>();
+        System.out.println("ok1");
+        List<String> successWallets = new ArrayList<>();
         try{
             // 2. 지갑 만들기
             for(Map<String, Object> wallet : wallets){
                 //1. 지갑 만들기
                 // 지갑 객체가 이미 있는 친구인지 확인하기
+                System.out.println(wallet.get("walletAddress"));
                 String walletAddress = (String) wallet.get("walletAddress");
                 if (userProvider.isWalletExist(walletAddress)==0) {
                     //없으면 객체 만들기
@@ -176,8 +178,9 @@ public class UserController {
                 }
                 //2. userWallet 만들기
                 userService.createUserWallet(wallet,userId);
+                System.out.println("ok2");
                 successWallets.add(walletAddress);
-
+                System.out.println("ok3");
             }
             return new BaseResponse<>(successWallets);
         } catch (BaseException e) {
@@ -474,9 +477,8 @@ public class UserController {
     }
 
     @GetMapping("/admin/badges")
-    public BaseResponse<List<BadgeRequest>> getAllBadgeRequest(@RequestBody Map<String, String> request) throws BaseException {
+    public BaseResponse<List<BadgeRequest>> getAllBadgeRequest(@RequestParam String password) throws BaseException {
         System.out.println("#09 - admin badge request api start");
-        String password = request.get("password");
         if(!password.equals(ADMIN_PASSWORD)){
             return new BaseResponse<>(PASSWORD_WRONG);
         }
