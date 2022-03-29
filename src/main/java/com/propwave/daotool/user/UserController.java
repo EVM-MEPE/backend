@@ -244,9 +244,11 @@ public class UserController {
     }
 
     @PostMapping("/users/login")
-    public BaseResponse<Map<String, Object>> userLogin(@RequestBody Map<String, String> walletAddress) throws BaseException {
+    public BaseResponse<Map<String, Object>> userLogin(@RequestBody Map<String, String> walletAddress) throws BaseException, JsonProcessingException {
         System.out.println("#03 - login api start");
 
+//        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+//         walletAddress = objectMapper.readValue(raw_walletAddress, new TypeReference<>() {});
 
         // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
         // 1. 유저 정보
@@ -291,7 +293,7 @@ public class UserController {
     }
 
     @GetMapping("/users/mypage")
-    public BaseResponse<Map<String, Object>> userLogin(@RequestParam String userId) throws BaseException {
+    public BaseResponse<Map<String, Object>> userMypage(@RequestParam String userId) throws BaseException {
         System.out.println("#04 - get mypage api start");
         // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
         // 1. 유저 정보
