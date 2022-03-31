@@ -4,9 +4,7 @@ import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.badge.model.BadgeJoinedAt;
 import com.propwave.daotool.badge.model.BadgeNameImage;
 import com.propwave.daotool.badge.model.BadgeWallet;
-import com.propwave.daotool.user.model.BadgeRequest;
-import com.propwave.daotool.user.model.User;
-import com.propwave.daotool.user.model.WalletSignupReq;
+import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -249,7 +247,10 @@ public class UserDao {
                         rs.getString("name"),
                         rs.getString("image"),
                         rs.getString("explanation"),
-                        rs.getTimestamp("createdAt")
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("chain"),
+                        rs.getInt("target"),
+                        rs.getInt("index")
                 ),
                 getBadgeParam
         );
@@ -420,6 +421,14 @@ public class UserDao {
         );
     }
 
+    public int checkBadge(String badgeName){
+        String checkBadgeQuery = "select exists(select * from badge where name = ?)";
+        return this.jdbcTemplate.queryForObject(checkBadgeQuery,
+                int.class,
+                badgeName
+        );
+    }
+
     public String getCurrentTime(){
         java.sql.Timestamp date = new java.sql.Timestamp(new java.util.Date().getTime());
 
@@ -427,4 +436,26 @@ public class UserDao {
 
         return sdf.format(date);
     }
+
+    public Chain getChain(String chainName){
+        String getChainQuery = "select * from chain where `name`=?";
+        return this.jdbcTemplate.queryForObject(getChainQuery,
+                (rs, rowNum) -> new Chain(
+                        rs.getString("name"),
+                        rs.getString("image"),
+                        rs.getInt("index")),
+                chainName
+        );
+    }
+
+    public BadgeTarget getBadgeTarget(int index){
+        String getBadgeTargetQuery = "select * from badgeTarget where `index`=?";
+        return this.jdbcTemplate.queryForObject(getBadgeTargetQuery,
+                (rs, rowNum) -> new BadgeTarget(
+                        rs.getInt("index"),
+                        rs.getString("target")),
+                index
+        );
+    }
+
 }

@@ -13,6 +13,7 @@ import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.model.UserWallet;
+import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.mapping.Array;
 import org.slf4j.Logger;
@@ -385,6 +386,7 @@ public class UserController {
         return new BaseResponse<>(response);
     }
 
+    //---------------------------------- badges
 
     //사용자가 가진 뱃지 불러오기
     @GetMapping("/users/badges")
@@ -407,6 +409,21 @@ public class UserController {
         }
         return new BaseResponse<>(getBadgesResList);
     }
+
+    @GetMapping("/badges")
+    public BaseResponse<Map<String, Object>>retrieveBadge(@RequestParam("badgeName") String badgeName) throws BaseException {
+        System.out.println("get badge details api start");
+        if(!userProvider.checkBadge(badgeName)){
+            return new BaseResponse<>(NO_BADGE_EXIST);
+        }
+
+        // badge
+        Map<String, Object> result = userProvider.getBadgeInfo(badgeName);
+        return new BaseResponse<>(result);
+    }
+
+
+    //------------------------------- wallets
 
     //login용 지갑 추가
     @PostMapping("/users/wallets/login")

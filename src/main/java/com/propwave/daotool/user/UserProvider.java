@@ -1,19 +1,23 @@
 package com.propwave.daotool.user;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.propwave.daotool.badge.model.*;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.BaseResponseStatus;
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 
-import com.propwave.daotool.user.model.BadgeRequest;
-import com.propwave.daotool.user.model.User;
+import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.UserWalletDao;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 import java.util.*;
 
@@ -197,6 +201,34 @@ public class UserProvider {
 
     public List<BadgeRequest> getAllBadgeRequest() throws BaseException{
         return userDao.getAllBadgeRequest();
+    }
+
+    public boolean checkBadge(String badgeName) throws BaseException {
+        try{
+            int result =  userDao.checkBadge(badgeName);
+            if (result == 1){
+                return true;
+            }
+            return false;
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public Map<String, Object> getBadgeInfo(String badgeName){
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        Badge badge = userDao.getBadge(badgeName);
+        Chain chain = userDao.getChain(badge.getChain());
+        BadgeTarget badgeTarget = userDao.getBadgeTarget(badge.getTarget());
+
+        Map<String, Object> badge_map = objectMapper.convertValue(badge, Map.class);
+        Map<String, Object> chain_map = objectMapper.convertValue(chain, Map.class);
+        Map<String, Object> target_map = objectMapper.convertValue(badgeTarget, Map.class);
+        badge_map.replace("chain",chain_map);
+        badge_map.replace("target",target_map);
+
+        return badge_map;
     }
 
 }

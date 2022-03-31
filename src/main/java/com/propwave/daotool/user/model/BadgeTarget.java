@@ -1,2 +1,12 @@
-package com.propwave.daotool.user.model;public class BadgeTarget {
+package com.propwave.daotool.user.model;
+
+import lombok.*;
+
+@Getter
+@Setter
+@NoArgsConstructor(access= AccessLevel.PROTECTED)
+@AllArgsConstructor
+public class BadgeTarget {
+    private int index;
+    private String target;
 }
