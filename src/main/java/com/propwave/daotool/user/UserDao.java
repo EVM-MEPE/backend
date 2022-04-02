@@ -253,7 +253,7 @@ public class UserDao {
     }
 
     public int addHit(String userId){
-        String modifyUserHitsQuery = "update user set hits = hits + 1 where id = ?";
+        String modifyUserHitsQuery = "update user set hits = hits + 1, todayHits = todayHits + 1 where id = ?";
         return this.jdbcTemplate.update(modifyUserHitsQuery, userId);
 
     }
