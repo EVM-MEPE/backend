@@ -8,6 +8,7 @@ import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 
@@ -15,8 +16,8 @@ import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
+@EnableScheduling
 @Repository
 public class UserDao {
     private JdbcTemplate jdbcTemplate;
@@ -186,7 +187,7 @@ public class UserDao {
         String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, loginAvailable, viewDataAvailable, chain) VALUES(?,?,?,?,?,?)";
         Object[] createUserWalletParam = new Object[]{userId, wallet.get("walletAddress"), wallet.get("walletName"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable"), wallet.get("walletChain")};
         this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
-        return (String)wallet.get("address");
+        return (String)wallet.get("walletAddress");
     }
 
     public String createUserWallet(WalletSignupReq wallet, String userId){
@@ -449,12 +450,12 @@ public class UserDao {
     }
 
     // 초, 분, 시, 일, 월, 주 순서
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 45 0 * * *")
     public void updatePrice() throws InterruptedException {
         System.out.println("today hit 초기화");
         // 저장된 모든 관심상품을 조회합니다.
 
-        String editUserQuery = "UPDATE user SET todayHits=?";
+        String editUserQuery = "UPDATE user SET todayHits=? where true";
         this.jdbcTemplate.update(editUserQuery, 0);
 
 //        String getUsersQuery = "select id from user";

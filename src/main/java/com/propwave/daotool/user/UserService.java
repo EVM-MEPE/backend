@@ -79,14 +79,16 @@ public class UserService {
                 System.out.println(wallet.get("walletAddress"));
                 String walletAddress = (String) wallet.get("walletAddress");
                 String walletType = (String) wallet.get("walletType");
-
+                System.out.println(userDao.isWalletExist(walletAddress));
                 if (userDao.isWalletExist(walletAddress) == 0) {
                     //없으면 객체 만들기
                     System.out.println("지갑 객체 없음");
                     userDao.createWallet(walletAddress, walletType);
                     System.out.println("in if, create wallet success");
                 }
+                System.out.println("out if, create userwallet");
                 //2. userWallet 만들기
+                System.out.println(wallet.get("walletAddress"));
                 userDao.createUserWallet(wallet, userId);
                 successWallets.add(walletAddress);
             }
