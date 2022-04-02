@@ -16,6 +16,6 @@ public class UserWallet {
     private boolean loginAvailable;
     private boolean viewDataAvailable;
     private String walletName;
-    private String walletIcon;
     private Timestamp createdAt;
+    private String chain;
 }

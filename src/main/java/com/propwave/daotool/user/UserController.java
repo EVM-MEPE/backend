@@ -1,11 +1,9 @@
 package com.propwave.daotool.user;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.badge.model.GetBadgesRes;
 import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
@@ -13,24 +11,18 @@ import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.model.UserWallet;
-import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
-import org.hibernate.mapping.Array;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
-import java.util.zip.Deflater;
 
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 
@@ -39,6 +31,7 @@ import static com.propwave.daotool.config.BaseResponseStatus.*;
 public class UserController {
     final static String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/a9e4edcc-b426-45f9-9593-792b088bf0b2userDefaultImage.png";
     final static String ADMIN_PASSWORD = "propwave0806!";
+
     final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final S3Uploader s3Uploader;
 
@@ -56,6 +49,8 @@ public class UserController {
         this.securityService = securityService;
     }
 
+    // ---------------------------------------------------- 로그인, 회원가입 ----------------------------------------------------
+
     // 기존 회원가입 여부 확인
     @PostMapping("/users/check")
     public BaseResponse<Integer> checkUserSignupAlready(@RequestParam("walletAddress") String walletAddress) throws BaseException {
@@ -64,57 +59,57 @@ public class UserController {
             return new BaseResponse<>(result);
     }
 
-    @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public BaseResponse<Map<String, Object>> UserSignUp(@RequestBody Object json  /*UserSignupReq userInfo, WalletSignupReq wallet*/) throws BaseException {
-        System.out.println("#02 - signup api start");
-        System.out.println(json);
-        System.out.println(json.toString());
-        System.out.println((String)json);
-        Map<String, Object> json2 = (Map<String, Object>) json;
-        Map<String, Object> userInfo = (Map<String, Object>) json2.get("userInfo");
-
-        List<Map<String, Object>> wallets = (List<Map<String, Object>>) json2.get("wallet");
-        //1. 사용자 정보 받아서 1) 지갑 만들고, 2) User 만들고, 3) UserWallet 만들고.
-        //1) User 만들기
-        // 이미 있는 id 인지 확인하기
-        if(userProvider.checkUserIdExist((String) userInfo.get("id")) == 1){
-            return new BaseResponse<>(USER_ID_ALREADY_EXIST);
-        }
-        try{
-            //1. user 만들기
-            // image S3에 올리기 -> 일단 예시로 한것임...! (test용)
-            String imagePath = S3ImageUploadAtLocal((String) userInfo.get("profileImage"), "media/user/profileImage");
-            User newUser = userService.createUser(userInfo, imagePath);
-            //newUser의 JWT 토큰 만들기
-            String token = securityService.createToken(newUser.getId(), (120*1000*60)); // 토큰 유효시간 2시간
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", newUser.getId());
-            map.put("token", token);
-
-            // 2. 지갑 만들기
-            for(Map<String, Object> wallet : wallets){
-                //1. 지갑 만들기
-                // 로그인 가능이면 token 만들어줘야할듯
-
-                // 지갑 객체가 이미 있는 친구인지 확인하기
-                String walletAddress = (String) wallet.get("walletAddress");
-                if (userProvider.isWalletExist(walletAddress)==0) {
-                    //없으면 객체 만들기
-                    userService.createWallet(walletAddress);
-                }
-                //2. userWallet 만들기
-                userService.createUserWallet(wallet, newUser.getId());
-            }
-
-            return new BaseResponse<>(map);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new BaseResponse<>(S3_UPLOAD_ERROR);
-        } catch (BaseException e) {
-            e.printStackTrace();
-            return new BaseResponse<>(e.getStatus());
-        }
-    }
+//    @PostMapping(value = "/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public BaseResponse<Map<String, Object>> UserSignUp(@RequestBody Object json  /*UserSignupReq userInfo, WalletSignupReq wallet*/) throws BaseException {
+//        System.out.println("#02 - signup api start");
+//        System.out.println(json);
+//        System.out.println(json.toString());
+//        System.out.println((String)json);
+//        Map<String, Object> json2 = (Map<String, Object>) json;
+//        Map<String, Object> userInfo = (Map<String, Object>) json2.get("userInfo");
+//
+//        List<Map<String, Object>> wallets = (List<Map<String, Object>>) json2.get("wallet");
+//        //1. 사용자 정보 받아서 1) 지갑 만들고, 2) User 만들고, 3) UserWallet 만들고.
+//        //1) User 만들기
+//        // 이미 있는 id 인지 확인하기
+//        if(userProvider.checkUserIdExist((String) userInfo.get("id")) == 1){
+//            return new BaseResponse<>(USER_ID_ALREADY_EXIST);
+//        }
+//        try{
+//            //1. user 만들기
+//            // image S3에 올리기 -> 일단 예시로 한것임...! (test용)
+//            String imagePath = S3ImageUploadAtLocal((String) userInfo.get("profileImage"), "media/user/profileImage");
+//            User newUser = userService.createUser(userInfo, imagePath);
+//            //newUser의 JWT 토큰 만들기
+//            String token = securityService.createToken(newUser.getId(), (120*1000*60)); // 토큰 유효시간 2시간
+//            Map<String, Object> map = new LinkedHashMap<>();
+//            map.put("id", newUser.getId());
+//            map.put("token", token);
+//
+//            // 2. 지갑 만들기
+//            for(Map<String, Object> wallet : wallets){
+//                //1. 지갑 만들기
+//                // 로그인 가능이면 token 만들어줘야할듯
+//
+//                // 지갑 객체가 이미 있는 친구인지 확인하기
+//                String walletAddress = (String) wallet.get("walletAddress");
+//                if (userProvider.isWalletExist(walletAddress)==0) {
+//                    //없으면 객체 만들기
+//                    userService.createWallet(walletAddress);
+//                }
+//                //2. userWallet 만들기
+//                userService.createUserWallet(wallet, newUser.getId());
+//            }
+//
+//            return new BaseResponse<>(map);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return new BaseResponse<>(S3_UPLOAD_ERROR);
+//        } catch (BaseException e) {
+//            e.printStackTrace();
+//            return new BaseResponse<>(e.getStatus());
+//        }
+//    }
 
     // 회원가입 -> 사용자 정보 생성하기
     @PostMapping("/users/signup/user")
@@ -125,7 +120,6 @@ public class UserController {
         // 받은 내용 user로 object 변형하기
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
         UserSignupReq userSignupReq = objectMapper.readValue(json, new TypeReference<>() {});
-        logger.debug("user Object convert");
 
         //1) User 만들기
         // 이미 있는 id 인지 확인하기
@@ -164,35 +158,8 @@ public class UserController {
         System.out.println("#02-3 - signup create wallets api start");
         Map<String, Object> json2 = (Map<String, Object>) json;
         String userId = (String) json2.get("user");
-//        Map<String, Object> wallets_json = (Map<String, Object>) json2.get("wallets");
-//        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
-//        List<WalletSignupReq> wallets = new ArrayList<>;
-//        for
-//         = objectMapper.readValue((JsonParser) wallets_obj, new TypeReference<>(){});
-//
-//        List<String> successWallets = new ArrayList<>();
-//        try{
-//            // 2. 지갑 만들기
-//            for(WalletSignupReq wallet : wallets){
-//                //1. 지갑 만들기
-//                // 지갑 객체가 이미 있는 친구인지 확인하기
-//                String walletAddress = wallet.getWalletAddress();
-//                if (userProvider.isWalletExist(walletAddress)==0) {
-//                    //없으면 객체 만들기
-//                    userService.createWallet(walletAddress);
-//                }
-//                //2. userWallet 만들기
-//                userService.createUserWallet(wallet,userId);
-//                System.out.println("ok2");
-//                successWallets.add(walletAddress);
-//                System.out.println("ok3");
-//            }
-
         List<Map<String, Object>> wallets = (List<Map<String, Object>>) json2.get("wallets");
-        System.out.println("ok1");
-        System.out.println("size: " + wallets.size());
         List<String> successWallets = new ArrayList<>();
-        System.out.println("ok2");
         try{
             // 2. 지갑 만들기
             for(Map<String, Object> wallet : wallets){
@@ -200,19 +167,17 @@ public class UserController {
                 // 지갑 객체가 이미 있는 친구인지 확인하기
                 System.out.println(wallet.get("walletAddress"));
                 String walletAddress = (String) wallet.get("walletAddress");
-                System.out.println("ok3");
+                String walletType = (String) wallet.get("walletType");
                 if (userProvider.isWalletExist(walletAddress)==0) {
                     //없으면 객체 만들기
                     System.out.println("in the if");
-                    userService.createWallet(walletAddress);
+                    userService.createWallet(walletAddress, walletType);
                     System.out.println("in if, create wallet success");
                 }
                 //2. userWallet 만들기
                 System.out.println("out if");
                 userService.createUserWallet(wallet,userId);
-                System.out.println("ok4");
                 successWallets.add(walletAddress);
-                System.out.println("ok5");
             }
             return new BaseResponse<>(successWallets);
         } catch (BaseException e) {
@@ -232,9 +197,11 @@ public class UserController {
         // TOken 확인
         String subject = securityService.getSubject(token);
         System.out.println("token 확인");
+
         if(!subject.equals(userId)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
+
         try{
            userService.deleteUser(userId);
            return new BaseResponse<>("user delete success");
@@ -247,10 +214,6 @@ public class UserController {
     @PostMapping("/users/login")
     public BaseResponse<Map<String, Object>> userLogin(@RequestBody Map<String, String> walletAddress) throws BaseException, JsonProcessingException {
         System.out.println("#03 - login api start");
-
-//        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
-//         walletAddress = objectMapper.readValue(raw_walletAddress, new TypeReference<>() {});
-
         // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
         // 1. 유저 정보
         // 해당 주소에 연결된 user의 모든 정보 가져오기
@@ -367,6 +330,7 @@ public class UserController {
             System.out.println(wallet.get("walletName"));
             if(wallet.get("request").equals("add")){
                 System.out.println("대시보드용 지갑 추가");
+                String walletType = (String) wallet.get("walletType");
                 wallet.remove("request");
                 userService.createDashboardWallet(newUser.getId(), wallet);
             }
@@ -386,7 +350,7 @@ public class UserController {
         return new BaseResponse<>(response);
     }
 
-    //---------------------------------- badges
+    // ---------------------------------------------------- badges ----------------------------------------------------
 
     //사용자가 가진 뱃지 불러오기
     @GetMapping("/users/badges")
@@ -435,7 +399,8 @@ public class UserController {
             // 경우 1. 지갑이 아예 없었던 새로인 친구인 경우
             if (userProvider.isWalletExist(newWalletAddress)==0) {
                 //없으면 객체 만들기 -> 경우 1. 완전 처음 들어오는 지갑인 경우
-                userService.createWallet(newWalletAddress);
+                String walletType = (String) request.get("walletType");
+                userService.createWallet(newWalletAddress, walletType);
                 //2. userWallet 만들기
                 request.put("walletName", "");
                 request.put("loginAvailable", true);
@@ -447,7 +412,7 @@ public class UserController {
                 System.out.println("지갑 있음!");
                 String user = (String)request.get("user");
                 // 경우 4. 지갑이 이미 있고, 다른 유저의 로그인용으로 있는 경우
-                if(userProvider.isWalletExistForLogin(newWalletAddress)==1){
+                if(userProvider.isWalletExistForLoginNotMe(newWalletAddress, user)==1){
                     System.out.println("경우4");
                     return new BaseResponse<>(WALLET_ALREADY_EXIST_FOR_LOGIN);
                 }

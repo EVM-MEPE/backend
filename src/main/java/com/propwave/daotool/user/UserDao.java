@@ -8,13 +8,14 @@ import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.Timestamp;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Repository
 public class UserDao {
@@ -24,12 +25,10 @@ public class UserDao {
     public void setDataSource(DataSource dataSource){this.jdbcTemplate = new JdbcTemplate(dataSource);}
 
     public User createUser(Map<String, Object> userInfo){
-        //userInfo.replace("profileImage", profileImageS3Path);
         String createUserQuery = "INSERT INTO user(id, profileImage, introduction, url) VALUES(?,?,?,?)";
         Object[] createUserParams = new Object[]{userInfo.get("id"), userInfo.get("profileImage"), userInfo.get("introduction"), userInfo.get("url")};
         this.jdbcTemplate.update(createUserQuery, createUserParams);
-        User newUser = getUserAllInfo((String)userInfo.get("id"));
-        return newUser;
+        return getUserAllInfo((String)userInfo.get("id"));
     }
 
     public int checkUserIdExist(String userId){
@@ -55,7 +54,6 @@ public class UserDao {
 
     public User getUserAllInfo(String id){
         String getUserQuery = "select * from user where id=?";
-        String getUserParams = id;
         return this.jdbcTemplate.queryForObject(getUserQuery,
                 (rs, rowNum) -> new User(
                         rs.getString("id"),
@@ -65,7 +63,7 @@ public class UserDao {
                         rs.getInt("hits"),
                         rs.getTimestamp("createdAt")
                 ),
-                getUserParams
+                id
         );
     }
 
@@ -76,7 +74,7 @@ public class UserDao {
     }
 
     public List<UserWallet> getAllUserWalletByWalletId(String walletAddress){
-        // userWallet에서 로그인 가능한 친구 가져오기
+        // userWallet에서 지갑 주소에 해당하는 record 다 가져오기
         String getUserWalletQuery = "select * from userWallet where walletAddress=?";
         return this.jdbcTemplate.query(getUserWalletQuery,
                 (rs, rowNum) -> new UserWallet(
@@ -86,8 +84,8 @@ public class UserDao {
                         rs.getBoolean("loginAvailable"),
                         rs.getBoolean("viewDataAvailable"),
                         rs.getString("walletName"),
-                        rs.getString("walletIcon"),
-                        rs.getTimestamp("createdAt")
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("chain")
                 ),
                 walletAddress
         );
@@ -95,7 +93,6 @@ public class UserDao {
 
     public List<UserWallet> getAllUserWalletByUserId(String userId){
         String getUserWalletQuery = "select * from userWallet where user=?";
-        String getUserWalletParam = userId;
         return this.jdbcTemplate.query(getUserWalletQuery,
                 (rs, rowNum) -> new UserWallet(
                         rs.getInt("index"),
@@ -104,10 +101,10 @@ public class UserDao {
                         rs.getBoolean("loginAvailable"),
                         rs.getBoolean("viewDataAvailable"),
                         rs.getString("walletName"),
-                        rs.getString("walletIcon"),
-                        rs.getTimestamp("createdAt")
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("chain")
                 ),
-                getUserWalletParam
+                userId
         );
     }
 
@@ -122,8 +119,8 @@ public class UserDao {
                         rs.getBoolean("loginAvailable"),
                         rs.getBoolean("viewDataAvailable"),
                         rs.getString("walletName"),
-                        rs.getString("walletIcon"),
-                        rs.getTimestamp("createdAt")
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("chain")
                 ),
                 getUserWalletByWalletAddressAndUserIdParam
         );
@@ -156,15 +153,13 @@ public class UserDao {
     //지갑 유무 확인
     public int isWalletExist(String walletAddress){
         String walletExistQuery = "select exists(select * from wallet where address = ? )";
-        String walletExistParam = walletAddress;
-        return this.jdbcTemplate.queryForObject(walletExistQuery, int.class, walletExistParam);
+        return this.jdbcTemplate.queryForObject(walletExistQuery, int.class, walletAddress);
     }
 
     //지갑이 로그인용으로 있는지 유무 확인
     public int isWalletExistForLogin(String walletAddress){
         String isWalletExistForLoginQuery = "select exists(select * from userWallet where walletAddress = ? AND loginAvailable=1)";
-        String isWalletExistForLoginParam = walletAddress;
-        return this.jdbcTemplate.queryForObject(isWalletExistForLoginQuery, int.class, isWalletExistForLoginParam);
+        return this.jdbcTemplate.queryForObject(isWalletExistForLoginQuery, int.class, walletAddress);
     }
 
     public int isWalletExistForLogin(String userId, String walletAddress){
@@ -173,12 +168,16 @@ public class UserDao {
         return this.jdbcTemplate.queryForObject(isWalletExistForLoginQuery, int.class, isWalletExistForLoginParam);
     }
 
+    public int isWalletExistForLoginNotMe(String userId, String walletAddress){
+        String isWalletExistForLoginQuery = "select exists(select * from userWallet where walletAddress = ? AND loginAvailable=1 AND NOT user=?)";
+        Object[] isWalletExistForLoginParam = new Object[]{walletAddress, userId};
+        return this.jdbcTemplate.queryForObject(isWalletExistForLoginQuery, int.class, isWalletExistForLoginParam);
+    }
 
 
-    public String createWallet(String walletAddress){
-        String walletCreateQuery = "INSERT INTO wallet(address) VALUES(?)";
-        String walletCreateParam = walletAddress;
-        System.out.println(walletCreateParam);
+    public String createWallet(String walletAddress, String walletType){
+        String walletCreateQuery = "INSERT INTO wallet(address, walletType) VALUES(?,?)";
+        Object[] walletCreateParam = new Object[]{walletAddress, walletType};
         this.jdbcTemplate.update(walletCreateQuery, walletCreateParam);
         return walletAddress;
     }
@@ -214,7 +213,6 @@ public class UserDao {
 
     public List<BadgeWallet> getAllBadgeWallet(String walletAddress){
         String getAllBadgeQuery = "select * from badgeWallet where walletAddress=?";
-        String getAllBadgeParam = walletAddress;
         return this.jdbcTemplate.query(getAllBadgeQuery,
                 (rs, rowNum) -> new BadgeWallet(
                         rs.getInt("index"),
@@ -222,26 +220,24 @@ public class UserDao {
                         rs.getString("badgeName"),
                         rs.getTimestamp("joinedAt")
                 ),
-                getAllBadgeParam
+                walletAddress
         );
     }
 
     public List<BadgeWallet> getBadgeWalletByBadgeName(String BadgeName){
         String getBadgeWalletQuery = "select * from badgeWallet where badgeName=? ";
-        String getBadgeWalletParam = BadgeName;
         return this.jdbcTemplate.query(getBadgeWalletQuery,
                 (rs, rowNum) -> new BadgeWallet(
                         rs.getInt("index"),
                         rs.getString("walletAddress"),
                         rs.getString("badgeName"),
                         rs.getTimestamp("joinedAt")),
-                getBadgeWalletParam
+                BadgeName
         );
     }
 
     public Badge getBadge(String badgeName){
         String getBadgeQuery = "select * from badge where name=?";
-        String getBadgeParam = badgeName;
         return this.jdbcTemplate.queryForObject(getBadgeQuery,
                 (rs, rowNum) -> new Badge(
                         rs.getString("name"),
@@ -252,48 +248,44 @@ public class UserDao {
                         rs.getInt("target"),
                         rs.getInt("index")
                 ),
-                getBadgeParam
+                badgeName
         );
     }
 
     public int addHit(String userId){
         String modifyUserHitsQuery = "update user set hits = hits + 1 where id = ?";
-        String modifyUserHitsParam = userId;
-        return this.jdbcTemplate.update(modifyUserHitsQuery, modifyUserHitsParam);
+        return this.jdbcTemplate.update(modifyUserHitsQuery, userId);
 
     }
 
     //뱃지 join 날짜
     public List<BadgeJoinedAt> getBadgeJoinedAt(String walletAddress){
         String getBadgeJoinedAtQuery = "select badgeName, joinedAt from badgeWallet where walletAddress=?";
-        String getBadgeJoinedAtParam = walletAddress;
         return this.jdbcTemplate.query(getBadgeJoinedAtQuery,
                 (rs, rowNum) -> new BadgeJoinedAt(
                         rs.getString("badgeName"),
                         rs.getTimestamp("joinedAt")
                 ),
-                getBadgeJoinedAtParam
+                walletAddress
         );
     }
 
     public int checkUser(String userId){
         String getBadgeJoinedAtQuery = "select exists(select * from user where id=?)";
-        String getBadgeJoinedAtParam = userId;
         return this.jdbcTemplate.queryForObject(getBadgeJoinedAtQuery,
                 int.class,
-                getBadgeJoinedAtParam);
+                userId);
     }
 
     // 뱃지 이름, 사진 가져오기
     public BadgeNameImage getBadgeNameImage(String badgeName){
         String getBadgeNameImageQuery = "select name, image from badge where name=?";
-        String getBadgeNameParams = badgeName;
         return this.jdbcTemplate.queryForObject(getBadgeNameImageQuery,
                 (rs, rowNum) -> new BadgeNameImage(
                         rs.getString("name"),
                         rs.getString("image")
                 ),
-                getBadgeNameParams
+                badgeName
         );
     }
 
@@ -359,8 +351,6 @@ public class UserDao {
 
     public BadgeRequest updateBadgeRequest(int index){
         String updateBadgeRequestQuery = "UPDATE badgeRequest SET completed = true, completedAt = ? WHERE `index` = ?";
-        //String currentTime = getCurrentTime();
-        //System.out.println();
         Object[] updateBadgeRequestParams = new Object[] {new Timestamp(System.currentTimeMillis()), index};
         this.jdbcTemplate.update(updateBadgeRequestQuery, updateBadgeRequestParams);
         return getBadgeRequest(index);
@@ -456,6 +446,21 @@ public class UserDao {
                         rs.getString("target")),
                 index
         );
+    }
+
+    // 초, 분, 시, 일, 월, 주 순서
+    @Scheduled(cron = "0 0 0 * * *")
+    public void updatePrice() throws InterruptedException {
+        System.out.println("today hit 초기화");
+        // 저장된 모든 관심상품을 조회합니다.
+
+        String editUserQuery = "UPDATE user SET todayHits=?";
+        this.jdbcTemplate.update(editUserQuery, 0);
+
+//        String getUsersQuery = "select id from user";
+//        List<String> users =  this.jdbcTemplate.query(getUsersQuery,
+//                (rs, rowNum) -> new String(rs.getString("id"))
+//        );
     }
 
 }

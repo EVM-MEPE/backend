@@ -2,21 +2,15 @@ package com.propwave.daotool.badge;
 
 import com.propwave.daotool.badge.model.Badge;
 import com.propwave.daotool.badge.model.BadgeWallet;
-import com.propwave.daotool.badge.model.GetBadgesRes;
 import com.propwave.daotool.badge.model.UserSimple;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
-import com.propwave.daotool.user.UserProvider;
-import com.propwave.daotool.wallet.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import com.propwave.daotool.config.BaseResponseStatus.*;
 
 import java.util.*;
-
-import static com.propwave.daotool.config.BaseResponseStatus.USER_NOT_EXISTS;
 
 @RestController
 @RequestMapping("/badges")
@@ -26,12 +20,9 @@ public class BadgeController {
 
     @Autowired
     private final BadgeProvider badgeProvider;
-    @Autowired
-    private final BadgeService badgeService;
 
     public BadgeController(BadgeProvider badgeProvider, BadgeService badgeService){
         this.badgeProvider = badgeProvider;
-        this.badgeService = badgeService;
     }
 
     // 모든 뱃지 불러오기

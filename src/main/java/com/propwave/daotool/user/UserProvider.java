@@ -1,11 +1,8 @@
 package com.propwave.daotool.user;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.propwave.daotool.badge.model.*;
 import com.propwave.daotool.config.BaseException;
-import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.BaseResponseStatus;
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 
@@ -15,9 +12,6 @@ import com.propwave.daotool.wallet.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 
 import java.util.*;
 
@@ -25,23 +19,18 @@ import java.util.*;
 @Service
 public class UserProvider {
 
-    private UserDao userDao;
-    private UserWalletDao userWalletDao;
+    private final UserDao userDao;
 
     final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public UserProvider(UserDao userDao, UserWalletDao userWalletDao){
         this.userDao = userDao;
-        this.userWalletDao = userWalletDao;
     }
 
     //회원가입 여부 확인
     public int checkUserSignupAlready(String walletAddress) throws BaseException {
-        System.out.println(walletAddress);
         List<UserWallet> userWallets = userDao.getAllUserWalletByWalletId(walletAddress);
         int login = 0;
-        System.out.println(userWallets.size());
-        System.out.println(userWallets);
         for (UserWallet userWallet : userWallets) {
             if (userWallet.isLoginAvailable()) {
                 login = 1;
@@ -62,8 +51,7 @@ public class UserProvider {
     //User 정보 불러오기 -> ID로
     public User getUser(String id) throws BaseException{
         try{
-            User user = userDao.getUserAllInfo(id);
-            return user;
+            return userDao.getUserAllInfo(id);
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
@@ -72,8 +60,7 @@ public class UserProvider {
     //User의 profileImage Path불러오기
     public String getUserImagePath(String userId) throws BaseException{
         try{
-            String imagePath = userDao.getUserImagePath(userId);
-            return imagePath;
+            return userDao.getUserImagePath(userId);
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
@@ -113,7 +100,24 @@ public class UserProvider {
         }catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
+    }
 
+//    public int isWalletExistForLogin(String walletAddress, String user) throws BaseException{
+//        try{
+//            System.out.println("provider: 지갑 소 이미 로그인용으로 있나 확인해보자");
+//            return userDao.isWalletExistForLogin(user, walletAddress);
+//        }catch(Exception exception){
+//            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+//        }
+//    }
+
+    public int isWalletExistForLoginNotMe(String walletAddress, String user) throws BaseException{
+        try{
+            System.out.println("provider: 지갑 주소 이미 나 제외 로그인용으로 있나 확인해보자");
+            return userDao.isWalletExistForLoginNotMe(user, walletAddress);
+        }catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
     }
 
     public List<UserWallet> getAllUserWalletByWallet(String walletAddress) throws BaseException{
@@ -206,10 +210,7 @@ public class UserProvider {
     public boolean checkBadge(String badgeName) throws BaseException {
         try{
             int result =  userDao.checkBadge(badgeName);
-            if (result == 1){
-                return true;
-            }
-            return false;
+            return result == 1;
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }

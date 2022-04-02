@@ -35,9 +35,7 @@ public class BadgeProvider {
 
     public List<BadgeWallet> getBadgeWallet(String badgeName, String orderBy) throws BaseException {
         try{
-
-            List<BadgeWallet> badgewallets = badgeDao.getBadgeWalletByBadgeName(badgeName, orderBygetBadgeInfo);
-            return badgewallets;
+            return badgeDao.getBadgeWalletByBadgeName(badgeName, orderBy);
         } catch(Exception e){
             throw new BaseException(NO_BADGE_EXIST);
         }

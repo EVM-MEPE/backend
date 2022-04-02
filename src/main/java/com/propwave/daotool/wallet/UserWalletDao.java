@@ -27,8 +27,8 @@ public class UserWalletDao {
                         rs.getBoolean("loginAvailable"),
                         rs.getBoolean("viewDataAvailable"),
                         rs.getString("walletName"),
-                        rs.getString("walletIcon"),
-                        rs.getTimestamp("createdAt")
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("chain")
                 ),
                 getWalletAddressParam
         );

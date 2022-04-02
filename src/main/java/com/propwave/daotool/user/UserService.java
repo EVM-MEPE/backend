@@ -71,10 +71,10 @@ public class UserService {
         }
     }
 
-    public String createWallet(String walletAddress) throws BaseException {
+    public String createWallet(String walletAddress, String walletType) throws BaseException {
         try{
             System.out.println(walletAddress);
-            String newWallet = userDao.createWallet(walletAddress);
+            String newWallet = userDao.createWallet(walletAddress, walletType);
             return newWallet;
         } catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
@@ -83,8 +83,7 @@ public class UserService {
 
     public String createUserWallet(Map<String, Object> wallet, String userId) throws BaseException {
         try{
-            String newUserWallet = userDao.createUserWallet(wallet, userId);
-            return newUserWallet;
+            return userDao.createUserWallet(wallet, userId);
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
@@ -165,7 +164,7 @@ public class UserService {
         else if (userDao.isUserWalletExist(walletAddress)==0){
             // 남에게도 없는 경우 -> wallet 생성, userWallet 생성
             System.out.println("경우 1. 나에게도, 남에게도 지갑이 없는 경우 -> UserWallet, Wallet 추가");
-            userDao.createWallet(walletAddress);
+            userDao.createWallet(walletAddress, (String)wallet.get("walletType"));
             userDao.createUserWallet(wallet);
             return 1;
         }
