@@ -10,9 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 
@@ -66,6 +64,33 @@ public class UserService {
     public int deleteUser(String userId) throws BaseException{
         try{
             return userDao.deleteUser(userId);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public List<String> createWallet(String userId, List<Map<String, Object>> wallets) throws BaseException {
+        List<String> successWallets = new ArrayList<>();
+        try {
+            // 2. 지갑 만들기
+            for (Map<String, Object> wallet : wallets) {
+                //1. 지갑 만들기
+                // 지갑 객체가 이미 있는 친구인지 확인하기
+                System.out.println(wallet.get("walletAddress"));
+                String walletAddress = (String) wallet.get("walletAddress");
+                String walletType = (String) wallet.get("walletType");
+
+                if (userDao.isWalletExist(walletAddress) == 0) {
+                    //없으면 객체 만들기
+                    System.out.println("지갑 객체 없음");
+                    userDao.createWallet(walletAddress, walletType);
+                    System.out.println("in if, create wallet success");
+                }
+                //2. userWallet 만들기
+                userDao.createUserWallet(wallet, userId);
+                successWallets.add(walletAddress);
+            }
+            return successWallets;
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }

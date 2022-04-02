@@ -156,34 +156,36 @@ public class UserController {
     @PostMapping(value = "/users/signup/wallets")
     public BaseResponse<List<String>> UserSignUpWallet(@RequestBody Object json) throws BaseException, IOException {
         System.out.println("#02-3 - signup create wallets api start");
-        Map<String, Object> json2 = (Map<String, Object>) json;
-        String userId = (String) json2.get("user");
-        List<Map<String, Object>> wallets = (List<Map<String, Object>>) json2.get("wallets");
-        List<String> successWallets = new ArrayList<>();
-        try{
-            // 2. 지갑 만들기
-            for(Map<String, Object> wallet : wallets){
-                //1. 지갑 만들기
-                // 지갑 객체가 이미 있는 친구인지 확인하기
-                System.out.println(wallet.get("walletAddress"));
-                String walletAddress = (String) wallet.get("walletAddress");
-                String walletType = (String) wallet.get("walletType");
-                if (userProvider.isWalletExist(walletAddress)==0) {
-                    //없으면 객체 만들기
-                    System.out.println("in the if");
-                    userService.createWallet(walletAddress, walletType);
-                    System.out.println("in if, create wallet success");
-                }
-                //2. userWallet 만들기
-                System.out.println("out if");
-                userService.createUserWallet(wallet,userId);
-                successWallets.add(walletAddress);
-            }
+        Map<String, Object> json_map = (Map<String, Object>) json;
+        String userId = (String) json_map.get("user");
+        List<Map<String, Object>> wallets = (List<Map<String, Object>>) json_map.get("wallets");
+        List<String> successWallets = userService.createWallet(userId, wallets);
+
+//        List<String> successWallets = new ArrayList<>();
+//        try{
+//            // 2. 지갑 만들기
+//            for(Map<String, Object> wallet : wallets){
+//                //1. 지갑 만들기
+//                // 지갑 객체가 이미 있는 친구인지 확인하기
+//                System.out.println(wallet.get("walletAddress"));
+//                String walletAddress = (String) wallet.get("walletAddress");
+//                String walletType = (String) wallet.get("walletType");
+//                if (userProvider.isWalletExist(walletAddress)==0) {
+//                    //없으면 객체 만들기
+//                    System.out.println("in the if");
+//                    userService.createWallet(walletAddress, walletType);
+//                    System.out.println("in if, create wallet success");
+//                }
+//                //2. userWallet 만들기
+//                System.out.println("out if");
+//                userService.createUserWallet(wallet,userId);
+//                successWallets.add(walletAddress);
+//            }
             return new BaseResponse<>(successWallets);
-        } catch (BaseException e) {
-            e.printStackTrace();
-            return new BaseResponse<>(e.getStatus());
-        }
+//        } catch (BaseException e) {
+//            e.printStackTrace();
+//            return new BaseResponse<>(e.getStatus());
+//        }
     }
 
     //유저 삭제
