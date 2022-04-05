@@ -175,6 +175,7 @@ public class UserProvider {
 
                 Map<String, Object> badgeMap = getBadgeInfo(badgeName);
                 badgeMap.put("hide", badgeWallet.getHide());
+                badgeMap.put("joinedAt", badgeWallet.getJoinedAt());
                 allBadge.add(badgeMap);
             }
             return allBadge;
