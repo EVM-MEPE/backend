@@ -62,6 +62,7 @@ public class UserDao {
                         rs.getString("introduction"),
                         rs.getString("url"),
                         rs.getInt("hits"),
+                        rs.getInt("todayHits"),
                         rs.getTimestamp("createdAt")
                 ),
                 id
@@ -246,7 +247,6 @@ public class UserDao {
                         rs.getString("explanation"),
                         rs.getTimestamp("createdAt"),
                         rs.getString("chain"),
-                        rs.getInt("target"),
                         rs.getInt("index")
                 ),
                 badgeName
@@ -439,14 +439,49 @@ public class UserDao {
         );
     }
 
-    public BadgeTarget getBadgeTarget(int index){
-        String getBadgeTargetQuery = "select * from badgeTarget where `index`=?";
-        return this.jdbcTemplate.queryForObject(getBadgeTargetQuery,
+    public List<BadgeTarget> getBadgeTarget(String badgeName){
+        String getBadgeTargetQuery = "select * from badgeTarget where `badgeName`=?";
+        return this.jdbcTemplate.query(getBadgeTargetQuery,
                 (rs, rowNum) -> new BadgeTarget(
                         rs.getInt("index"),
-                        rs.getString("target")),
-                index
+                        rs.getString("badgeName"),
+                        rs.getInt("targetIdx")),
+                badgeName
         );
+    }
+
+    public Target getTarget(int targetIndex){
+        String getTargetQuery = "select * from target where `index`=?";
+        return this.jdbcTemplate.queryForObject(getTargetQuery,
+                (rs, rowNum) -> new Target(
+                        rs.getInt("index"),
+                        rs.getString("target")),
+                targetIndex
+        );
+    }
+
+    public Chain getChainInfo(String chain){
+        String getChainInfoQuery = "select * from chain where name=?";
+        return this.jdbcTemplate.queryForObject(getChainInfoQuery,
+                (rs, rowNum) -> new Chain(
+                        rs.getString("name"),
+                        rs.getString("image"),
+                        rs.getInt("index")),
+                chain
+        );
+    }
+    public WalletInfo getWalletInfo(String walletAddress){
+        String getWalletInfoQuery = "select wallet.address, wallet.walletType, walletType.icon " +
+                                    "from wallet INNER JOIN walletType ON wallet.walletType=walletType.name " +
+                                    "where wallet.address = ?";
+        return this.jdbcTemplate.queryForObject(getWalletInfoQuery,
+                (rs, rowNum) -> new WalletInfo(
+                        rs.getString("address"),
+                        rs.getString("walletType"),
+                        rs.getString("icon")),
+                walletAddress
+        );
+
     }
 
     // 초, 분, 시, 일, 월, 주 순서

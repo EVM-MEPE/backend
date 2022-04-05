@@ -28,7 +28,6 @@ public class BadgeDao {
                         rs.getString("explanation"),
                         rs.getTimestamp("createdAt"),
                         rs.getString("chain"),
-                        rs.getInt("target"),
                         rs.getInt("index")
                 ),
                 getBadgeInfoParam);

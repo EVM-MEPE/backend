@@ -6,8 +6,8 @@ import lombok.*;
 @Setter
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class BadgeTarget {
-    private int index;
-    private String badgeName;
-    private int targetIdx;
+public class WalletInfo {
+    private String address;
+    private String walletType;
+    private String walletTypeImage;
 }

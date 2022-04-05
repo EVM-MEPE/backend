@@ -128,9 +128,35 @@ public class UserProvider {
         }
     }
 
-    public List<UserWallet> getAllUserWalletByUserId(String userId) throws BaseException{
+    public List<Map<String, Object>> getAllUserWalletByUserId(String userId) throws BaseException{
         try{
-            return userDao.getAllUserWalletByUserId(userId);
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            List<UserWallet> userWallets = userDao.getAllUserWalletByUserId(userId);
+            List<Map<String, Object>> allUserWallets = new ArrayList<>();
+            System.out.println("aaa1");
+            for(UserWallet userWallet: userWallets){
+                String walletAddress = userWallet.getWalletAddress();
+                String walletChain = userWallet.getChain();
+
+                Chain chain = userDao.getChainInfo(walletChain);
+                System.out.println("aaa2");
+                WalletInfo walletInfo = userDao.getWalletInfo(walletAddress);
+                System.out.println("aaa3");
+
+                Map<String, Object> userWalletMap = objectMapper.convertValue(userWallet, Map.class);
+                Map<String, Object> chianMap = objectMapper.convertValue(chain, Map.class);
+                Map<String, Object> walletInfoMap = objectMapper.convertValue(walletInfo, Map.class);
+                System.out.println("aaa4");
+
+                userWalletMap.replace("chain",chianMap);
+                userWalletMap.replace("walletAddress",walletInfoMap);
+
+                allUserWallets.add(userWalletMap);
+            }
+            System.out.println("size:"+allUserWallets.size());
+            return allUserWallets;
+
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
@@ -147,17 +173,8 @@ public class UserProvider {
                 String badgeName = badgeWallet.getBadgeName();
                 Badge badge = userDao.getBadge(badgeName);
 
-                // 뱃지에 참여중인 사람의 수도 같이 return
-                List<BadgeWallet> badgeWallets = userDao.getBadgeWalletByBadgeName(badgeName);
-
-                Map<String, Object> tmp = new HashMap<>();
-                tmp.put("name", badge.getName());
-                tmp.put("image", badge.getImage());
-                tmp.put("explanation", badge.getExplanation());
-                tmp.put("createdAt", badge.getCreatedAt());
-                tmp.put("joinedWalletCount", badgeWallets.size());
-
-                allBadge.add(tmp);
+                Map<String, Object> badgeMap = getBadgeInfo(badgeName);
+                allBadge.add(badgeMap);
             }
             return allBadge;
         } catch(Exception exception){
@@ -221,13 +238,24 @@ public class UserProvider {
 
         Badge badge = userDao.getBadge(badgeName);
         Chain chain = userDao.getChain(badge.getChain());
-        BadgeTarget badgeTarget = userDao.getBadgeTarget(badge.getTarget());
+        List<BadgeTarget> badgeTargets = userDao.getBadgeTarget(badgeName);
+
+        Map<String, String> targetMap = new HashMap<>();
+
+        for(BadgeTarget badgeTarget:badgeTargets){
+            Target target = userDao.getTarget(badgeTarget.getTargetIdx());
+            targetMap.put("target", target.getTarget());
+        }
+
+        List<BadgeWallet> badgeWallets = userDao.getBadgeWalletByBadgeName(badgeName);  // 뱃지에 참여중인 사람의 수도 같이 return
 
         Map<String, Object> badge_map = objectMapper.convertValue(badge, Map.class);
         Map<String, Object> chain_map = objectMapper.convertValue(chain, Map.class);
-        Map<String, Object> target_map = objectMapper.convertValue(badgeTarget, Map.class);
+
+
         badge_map.replace("chain",chain_map);
-        badge_map.replace("target",target_map);
+        badge_map.put("targets",targetMap);
+        badge_map.put("joinedWalletCount", badgeWallets.size());
 
         return badge_map;
     }

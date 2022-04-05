@@ -14,6 +14,5 @@ public class Badge {
     private String explanation;
     private Timestamp createdAt;
     private String chain;
-    private int target;
     private int index;
 }

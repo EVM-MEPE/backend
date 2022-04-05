@@ -13,5 +13,6 @@ public class User {
     private String introduction;
     private String url;
     private int hits;
+    private int todayHits;
     private Timestamp createdAt;
 }

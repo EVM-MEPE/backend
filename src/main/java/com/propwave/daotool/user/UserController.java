@@ -221,39 +221,45 @@ public class UserController {
         // 해당 주소에 연결된 user의 모든 정보 가져오기
         List<UserWallet> userWalletList = userProvider.getAllUserWalletByWallet(walletAddress.get("walletAddress"));
         String userId = null;
-        User user = null;
+        //User user = null;
         for (UserWallet userWallet : userWalletList) {
             if (userWallet.isLoginAvailable()) {
                 userId = userWallet.getUser();
-                userService.addHit(userId);
-                user = userProvider.getUser(userId);
+                //userService.addHit(userId);
+                //user = userProvider.getUser(userId);
                 break;
             }
         }
         // 해당 user의 모든 지갑 정보 가져오기
-        List<UserWallet> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
+        List<Map<String, Object>> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
 
         // 유저의 viewDataAvailable이 true인 친구들의 뱃지 데려오기... 힘들다 힘들어
-        List<Map<String, Object>> badges = new ArrayList<>();
-        List<Map<String, Object>> badgeTmp = new ArrayList<>();
-        for (UserWallet userWallet : userWalletListByUser) {
-            System.out.println(userWallet.isViewDataAvailable());
-            if (userWallet.isViewDataAvailable()) {
-                badgeTmp = userProvider.getAllBadge(userWallet.getWalletAddress());
-                badges.addAll(badgeTmp);
-            }
-        }
-        // 뱃지 중복 제거
-        HashSet<Map<String, Object>> set = new HashSet<Map<String, Object>>(badges);
-        List<Map<String, Object>> newAllBadge = new ArrayList<Map<String, Object>>(set);
+//        List<Map<String, Object>> badges = new ArrayList<>();
+//        List<Map<String, Object>> badgeTmp = new ArrayList<>();
+//        System.out.println(userWalletListByUser);
+//        for (Map<String, Object> userWallet : userWalletListByUser) {
+//            System.out.println(userWallet);
+//            System.out.println(userWallet.get("loginAvailable"));
+//            if ((boolean)userWallet.get("viewDataAvailable")) {
+//                Map<String, String> walletInfo = (Map<String, String>) userWallet.get("walletAddress");
+//                badgeTmp = userProvider.getAllBadge((String)walletInfo.get("address"));
+//                badges.addAll(badgeTmp);
+//            }
+//        }
+//        // 뱃지 중복 제거
+//        HashSet<Map<String, Object>> set = new HashSet<Map<String, Object>>(badges);
+//        List<Map<String, Object>> newAllBadge = new ArrayList<Map<String, Object>>(set);
 
-        String token = securityService.createToken(user.getId(), (120*1000*60)); // 토큰 유효시간 2시간
+        String token = securityService.createToken(userId, (120*1000*60*3)); // 토큰 유효시간 6시간
 
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("user", user);
+        //result.put("user", user);
         result.put("token", token);
-        result.put("wallets", userWalletListByUser);
-        result.put("badges", newAllBadge);
+        //result.put("wallets", userWalletListByUser);
+        //result.put("badges", newAllBadge);
+
+        result.put("userID", userId);
+        result.put("walletAddress", walletAddress.get("walletAddress"));
 
         return new BaseResponse<>(result);
     }
@@ -267,15 +273,17 @@ public class UserController {
         User user = userProvider.getUser(userId);
 
         // 해당 주소에 연결된 user의 모든 정보 가져오기
-        List<UserWallet> userWalletList = userProvider.getAllUserWalletByUserId(userId);
+        List<Map<String, Object>> userWalletList = userProvider.getAllUserWalletByUserId(userId);
 
         // 유저의 viewDataAvailable이 true인 친구들의 뱃지 데려오기... 힘들다 힘들어
         List<Map<String, Object>> badges = new ArrayList<>();
         List<Map<String, Object>> badgeTmp = new ArrayList<>();
-        for (UserWallet userWallet : userWalletList) {
-            System.out.println(userWallet.isViewDataAvailable());
-            if (userWallet.isViewDataAvailable()) {
-                badgeTmp = userProvider.getAllBadge(userWallet.getWalletAddress());
+        for (Map<String, Object> userWallet : userWalletList) {
+            System.out.println(userWallet);
+            System.out.println(userWallet.get("loginAvailable"));
+            if ((boolean)userWallet.get("viewDataAvailable")) {
+                Map<String, String> walletInfo = (Map<String, String>) userWallet.get("walletAddress");
+                badgeTmp = userProvider.getAllBadge((String)walletInfo.get("address"));
                 badges.addAll(badgeTmp);
             }
         }
@@ -364,13 +372,13 @@ public class UserController {
         }
 
         // 해당 user의 모든 지갑 정보 가져오기
-        List<UserWallet> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
+        List<Map<String, Object>> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
 
         List<GetBadgesRes> getBadgesResList = new ArrayList<>();
-        for (UserWallet userWallet : userWalletListByUser) {
+        for (Map<String, Object> userWallet : userWalletListByUser) {
             System.out.println(userWallet);
-            if (userWallet.isViewDataAvailable()) {
-                getBadgesResList.addAll(userProvider.getBadges(userWallet.getWalletAddress()));
+            if ((boolean)userWallet.get("isViewDataAvailable")) {
+                getBadgesResList.addAll(userProvider.getBadges((String) userWallet.get("walletAddress")));
             }
         }
         return new BaseResponse<>(getBadgesResList);
