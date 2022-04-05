@@ -47,7 +47,9 @@ public class BadgeDao {
                         rs.getInt("index"),
                         rs.getString("walletAddress"),
                         rs.getString("badgeName"),
-                        rs.getTimestamp("joinedAt")),
+                        rs.getTimestamp("joinedAt"),
+                        rs.getInt("hide")),
+
                 getBadgeWalletParam
         );
     }

@@ -171,9 +171,10 @@ public class UserProvider {
             List<Map<String, Object>> allBadge = new ArrayList<>();
             for(BadgeWallet badgeWallet: allBadgeWallet){
                 String badgeName = badgeWallet.getBadgeName();
-                Badge badge = userDao.getBadge(badgeName);
+                //Badge badge = userDao.getBadge(badgeName);
 
                 Map<String, Object> badgeMap = getBadgeInfo(badgeName);
+                badgeMap.put("hide", badgeWallet.getHide());
                 allBadge.add(badgeMap);
             }
             return allBadge;

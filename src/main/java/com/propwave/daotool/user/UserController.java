@@ -364,7 +364,7 @@ public class UserController {
 
     //사용자가 가진 뱃지 불러오기
     @GetMapping("/users/badges")
-    public BaseResponse<List<GetBadgesRes>> getBadges(@RequestParam("userId") String userId) throws BaseException
+    public BaseResponse<List<Map<String, Object>>> getBadges(@RequestParam("userId") String userId) throws BaseException
     {
         System.out.println("#06 - get user badges api start");
         if(userProvider.checkUser(userId)==0){
@@ -374,11 +374,13 @@ public class UserController {
         // 해당 user의 모든 지갑 정보 가져오기
         List<Map<String, Object>> userWalletListByUser = userProvider.getAllUserWalletByUserId(userId);
 
-        List<GetBadgesRes> getBadgesResList = new ArrayList<>();
+        //List<GetBadgesRes> getBadgesResList = new ArrayList<>();
+        List<Map<String, Object>> getBadgesResList = new ArrayList<>();
         for (Map<String, Object> userWallet : userWalletListByUser) {
             System.out.println(userWallet);
-            if ((boolean)userWallet.get("isViewDataAvailable")) {
-                getBadgesResList.addAll(userProvider.getBadges((String) userWallet.get("walletAddress")));
+            if ((boolean)userWallet.get("viewDataAvailable")) {
+                Map<String, String> wallet = (Map<String, String>) userWallet.get("walletAddress");
+                getBadgesResList.addAll(userProvider.getAllBadge(wallet.get("address")));
             }
         }
         return new BaseResponse<>(getBadgesResList);

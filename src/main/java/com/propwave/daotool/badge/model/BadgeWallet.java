@@ -13,4 +13,5 @@ public class BadgeWallet {
     private String walletAddress;
     private String badgeName;
     private Timestamp joinedAt;
+    private int hide;
 }

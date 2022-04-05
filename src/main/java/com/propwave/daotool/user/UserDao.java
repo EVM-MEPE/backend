@@ -220,8 +220,8 @@ public class UserDao {
                         rs.getInt("index"),
                         rs.getString("walletAddress"),
                         rs.getString("badgeName"),
-                        rs.getTimestamp("joinedAt")
-                ),
+                        rs.getTimestamp("joinedAt"),
+                        rs.getInt("hide")),
                 walletAddress
         );
     }
@@ -233,7 +233,8 @@ public class UserDao {
                         rs.getInt("index"),
                         rs.getString("walletAddress"),
                         rs.getString("badgeName"),
-                        rs.getTimestamp("joinedAt")),
+                        rs.getTimestamp("joinedAt"),
+                        rs.getInt("hide")),
                 BadgeName
         );
     }
@@ -407,7 +408,8 @@ public class UserDao {
                         rs.getInt("index"),
                         rs.getString("walletAddress"),
                         rs.getString("badgeName"),
-                        rs.getTimestamp("joinedAt")),
+                        rs.getTimestamp("joinedAt"),
+                        rs.getInt("hide")),
                 index
         );
     }
