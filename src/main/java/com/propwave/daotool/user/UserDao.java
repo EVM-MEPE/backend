@@ -41,7 +41,6 @@ public class UserDao {
     }
 
     public User editUser(Map<String, String> userInfo){
-        //userInfo.replace("profileImage", profileImageS3Path);
         String editUserQuery = "UPDATE user SET id=?, profileImage=?, introduction=?, url=? WHERE id = ?";
         Object[] editUserParams = new Object[]{userInfo.get("changedId"), userInfo.get("profileImage"), userInfo.get("introduction"), userInfo.get("url"), userInfo.get("preId")};
         this.jdbcTemplate.update(editUserQuery, editUserParams);
@@ -194,26 +193,25 @@ public class UserDao {
         return (String)wallet.get("walletAddress");
     }
 
-    public String createUserWallet(WalletSignupReq wallet, String userId){
-        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, walletIcon, loginAvailable, viewDataAvailable) VALUES(?,?,?,?,?,?)";
-        Object[] createUserWalletParam = new Object[]{userId, wallet.getWalletAddress(), wallet.getWalletName(), wallet.getWalletIcon(), wallet.getLoginAvailable(), wallet.getViewDataAvailable()};
-        this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
-        return (String)wallet.getWalletAddress();
-    }
+//    public String createUserWallet(WalletSignupReq wallet, String userId){
+//        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, walletIcon, loginAvailable, viewDataAvailable) VALUES(?,?,?,?,?,?)";
+//        Object[] createUserWalletParam = new Object[]{userId, wallet.getWalletAddress(), wallet.getWalletName(), wallet.getWalletIcon(), wallet.getLoginAvailable(), wallet.getViewDataAvailable()};
+//        this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
+//        return (String)wallet.getWalletAddress();
+//    }
 
     public String createUserWallet(Map<String, Object> wallet){
-        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, walletIcon, loginAvailable, viewDataAvailable) VALUES(?,?,?,?,?,?)";
-        Object[] createUserWalletParam = new Object[]{wallet.get("user"), wallet.get("walletAddress"), wallet.get("walletName"), wallet.get("walletIcon"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable")};
+        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, loginAvailable, viewDataAvailable, chain) VALUES(?,?,?,?,?,?)";
+        Object[] createUserWalletParam = new Object[]{wallet.get("user"), wallet.get("walletAddress"), wallet.get("walletName"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable"), wallet.get("walletChain")};
         this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
         return (String)wallet.get("address");
     }
 
     public int editUserWallet(Map<String, Object> wallet){
-        String editUserWalletQuery = "UPDATE userWallet SET walletName = ?, walletIcon = ? WHERE user=? and walletAddress=?";
-        Object[] editUserWalletParams = new Object[] {wallet.get("walletName"), wallet.get("walletIcon"), wallet.get("user"), wallet.get("walletAddress")};
+        String editUserWalletQuery = "UPDATE userWallet SET walletName = ?, chain = ? WHERE user=? and walletAddress=?";
+        Object[] editUserWalletParams = new Object[] {wallet.get("walletName"), wallet.get("walletChain"), wallet.get("user"), wallet.get("walletAddress")};
         return this.jdbcTemplate.update(editUserWalletQuery, editUserWalletParams);
     }
-
 
 
     public List<BadgeWallet> getAllBadgeWallet(String walletAddress){

@@ -220,6 +220,7 @@ public class UserController {
         // 유저가 로그인하면 줄거? token, user 모든 정보, 연결된 지갑들의 모든 뱃지
         // 1. 유저 정보
         // 해당 주소에 연결된 user의 모든 정보 가져오기
+
         List<UserWallet> userWalletList = userProvider.getAllUserWalletByWallet(walletAddress.get("walletAddress"));
         String userId = null;
         //User user = null;
@@ -301,8 +302,13 @@ public class UserController {
     }
 
     @PatchMapping("/users/mypage")
-    public BaseResponse<Map<String, String>> editUserProfile(@RequestBody Map<String, Object> request) throws BaseException, IOException {
+    public BaseResponse<Map<String, String>> editUserProfile(@RequestParam("profileImageChanged") int profileImageChanged, @RequestParam(value = "newProfileImage", required = false) MultipartFile profileImage, @RequestParam("json") String json) throws BaseException, IOException {
         System.out.println("#05 - mypage update api start");
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+        Map<String,Object> request = objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+        System.out.println(request);
+
         //1. 토큰 검증
         String token = (String) request.get("userToken");
         String subject = securityService.getSubject(token);
@@ -321,19 +327,18 @@ public class UserController {
         String newToken = securityService.createToken(userInfo.get("changedId"), (120*1000*60));
         //2-1. 이미가 변경되었다면 이미지 올리기
         //2-1-1. 이미지 변경 여부 확인
-        String newUserImage = userInfo.get("profileImage");
-        if(newUserImage.equals("")){
-            newUserImage = DEFAULT_USER_PROFILE_IMAGE;
+        String newImagePath;
+        if(profileImageChanged == 0){
+            newImagePath = userProvider.getUserImagePath(userInfo.get("changedId"));
         }
-        String nowProfileImagePath = userProvider.getUserImagePath(userInfo.get("preId"));
-        if(!nowProfileImagePath.equals(newUserImage)){
-            // 둘이 다르면 이미지 업로드
-            // default -> 업로드 필요 없음
-            if(!newUserImage.equals(DEFAULT_USER_PROFILE_IMAGE)){
-                newUserImage = S3ImageUploadAtLocal(newUserImage, "media/user/profileImage");
-            }
+        else if(profileImage.getSize()==0){  // 프로필 안변함
+            newImagePath = DEFAULT_USER_PROFILE_IMAGE;
         }
-        User newUser = userService.editUser(userInfo, newUserImage);
+        else{
+            newImagePath = s3Uploader.upload(profileImage, "media/user/profileImage");
+        }
+        User newUser = userService.editUser(userInfo, newImagePath);
+
         //3. 지갑 처리하기
         List<Map<String, Object>> wallets = (List<Map<String, Object>>) request.get("wallets");
         for(Map<String, Object> wallet:wallets){

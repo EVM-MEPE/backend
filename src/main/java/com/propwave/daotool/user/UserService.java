@@ -54,7 +54,6 @@ public class UserService {
             System.out.println(userInfo);
             System.out.println(profileImageS3Path);
             userInfo.put("profileImage", profileImageS3Path);
-            System.out.println(userInfo);
             return userDao.editUser(userInfo);
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
@@ -117,14 +116,14 @@ public class UserService {
         }
     }
 
-    public String createUserWallet(WalletSignupReq wallet, String userId) throws BaseException {
-        try{
-            String newUserWallet = userDao.createUserWallet(wallet, userId);
-            return newUserWallet;
-        }catch(Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
-    }
+//    public String createUserWallet(WalletSignupReq wallet, String userId) throws BaseException {
+//        try{
+//            String newUserWallet = userDao.createUserWallet(wallet, userId);
+//            return newUserWallet;
+//        }catch(Exception exception){
+//            throw new BaseException(DATABASE_ERROR);
+//        }
+//    }
 
     public void addHit(String userId) throws BaseException{
         try{

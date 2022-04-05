@@ -12,4 +12,5 @@ public class WalletSignupReq {
     String walletIcon;
     String loginAvailable;
     String viewDataAvailable;
+    String chain;
 }
