@@ -110,6 +110,7 @@ public class UserService {
 
     public String createUserWallet(Map<String, Object> wallet, String userId) throws BaseException {
         try{
+            System.out.println(wallet);
             return userDao.createUserWallet(wallet, userId);
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);

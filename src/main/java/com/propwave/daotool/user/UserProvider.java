@@ -9,6 +9,7 @@ import static com.propwave.daotool.config.BaseResponseStatus.*;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.UserWalletDao;
 import com.propwave.daotool.wallet.model.UserWallet;
+import com.propwave.daotool.wallet.model.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -260,6 +261,14 @@ public class UserProvider {
         badge_map.put("joinedWalletCount", badgeWallets.size());
 
         return badge_map;
+    }
+
+    public WalletInfo getWallet(String walletAddress) throws BaseException {
+        try{
+            return userDao.getWalletInfo(walletAddress);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
     }
 
 }

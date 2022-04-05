@@ -186,6 +186,9 @@ public class UserDao {
 
     public String createUserWallet(Map<String, Object> wallet, String userId){
         String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, loginAvailable, viewDataAvailable, chain) VALUES(?,?,?,?,?,?)";
+        if(!wallet.containsKey("walletChain")){
+            wallet.put("walletChain", "default");
+        }
         Object[] createUserWalletParam = new Object[]{userId, wallet.get("walletAddress"), wallet.get("walletName"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable"), wallet.get("walletChain")};
         this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
         return (String)wallet.get("walletAddress");

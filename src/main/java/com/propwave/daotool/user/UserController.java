@@ -11,6 +11,7 @@ import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.model.UserWallet;
+import com.propwave.daotool.wallet.model.Wallet;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -414,6 +415,7 @@ public class UserController {
                 String walletType = (String) request.get("walletType");
                 userService.createWallet(newWalletAddress, walletType);
                 //2. userWallet 만들기
+                request.put("walletAddress", newWalletAddress);
                 request.put("walletName", "");
                 request.put("loginAvailable", true);
                 request.put("viewDataAvailable", false);
@@ -432,9 +434,12 @@ public class UserController {
                 if(userProvider.isUserWalletByWalletAddressAndUserIdExist(user, newWalletAddress)==0){
                     //2. userWallet 만들기
                     System.out.println("경우2");
+                    WalletInfo walletInfo = userProvider.getWallet(newWalletAddress);
+                    request.put("walletAddress", newWalletAddress);
                     request.put("walletName", "");
                     request.put("loginAvailable", true);
                     request.put("viewDataAvailable", false);
+                    //request.put("")
                     userService.createUserWallet(request, (String) request.get("user"));
                     return new BaseResponse<>("로그인 지갑이 추가되었습니다.");
                 }
