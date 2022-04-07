@@ -116,7 +116,6 @@ public class UserController {
     @PostMapping("/users/signup/user")
     public BaseResponse<Map<String, Object>> UserSignUp(@RequestParam("profileImage") MultipartFile profileImage, @RequestParam("json") String json) throws BaseException, JsonProcessingException {
         System.out.println("#02-1 - signup userCreate api start");
-        logger.debug("json text = {}", json);
 
         // 받은 내용 user로 object 변형하기
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
@@ -132,7 +131,7 @@ public class UserController {
             // image S3에 올리기 -> 일단 예시로 한것임...! (test용)
             // image upload 하기
             String imagePath = s3Uploader.upload(profileImage, "media/user/profileImage");
-            logger.debug("image upload url = {}", imagePath);
+            System.out.println(imagePath);
             User newUser = userService.createUser(userSignupReq, imagePath);
 
             //newUser의 JWT 토큰 만들기
@@ -160,7 +159,7 @@ public class UserController {
         Map<String, Object> json_map = (Map<String, Object>) json;
         String userId = (String) json_map.get("user");
         List<Map<String, Object>> wallets = (List<Map<String, Object>>) json_map.get("wallets");
-        List<String> successWallets = userService.createWallet(userId, wallets);
+        List<String> successWallets = userService.addWalletWhenSignUp(userId, wallets);
 
 //        List<String> successWallets = new ArrayList<>();
 //        try{

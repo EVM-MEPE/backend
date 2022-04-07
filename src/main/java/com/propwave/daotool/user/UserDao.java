@@ -110,6 +110,23 @@ public class UserDao {
         );
     }
 
+    public UserWallet getUserWalletByIndex(int index){
+        String getUserWalletByWalletAddressAndUserIdQuery = "select * from userWallet where `index`=?";
+        return this.jdbcTemplate.queryForObject(getUserWalletByWalletAddressAndUserIdQuery,
+                (rs, rowNum) -> new UserWallet(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("walletAddress"),
+                        rs.getBoolean("loginAvailable"),
+                        rs.getBoolean("viewDataAvailable"),
+                        rs.getString("walletName"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("chain")
+                ),
+                index
+        );
+    }
+
     public UserWallet getUserWalletByWalletAddressAndUserId(String userId, String walletAddress){
         String getUserWalletByWalletAddressAndUserIdQuery = "select * from userWallet where user=? and walletAddress=?";
         Object[] getUserWalletByWalletAddressAndUserIdParam = new Object[]{userId, walletAddress};
@@ -189,10 +206,28 @@ public class UserDao {
         if(!wallet.containsKey("walletChain")){
             wallet.put("walletChain", "default");
         }
+        System.out.println(wallet);
+        System.out.println(userId);
         Object[] createUserWalletParam = new Object[]{userId, wallet.get("walletAddress"), wallet.get("walletName"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable"), wallet.get("walletChain")};
         this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
         return (String)wallet.get("walletAddress");
     }
+
+    public String createUserWalletForLogin(Map<String, Object> wallet, String userId){
+        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, loginAvailable, viewDataAvailable, chain) VALUES(?,?,?,?,?,?)";
+        System.out.println(userId+"         "+ wallet.get("walletAddress")+"         "+  wallet.get("walletName")+"         ");
+        Object[] createUserWalletParam = new Object[]{userId, wallet.get("walletAddress"), wallet.get("walletName"), wallet.get("loginAvailable"), wallet.get("viewDataAvailable"), wallet.get("chain")};
+        this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
+        return (String)wallet.get("walletAddress");
+    }
+
+    public String createUserWalletForDashBoard(Map<String, Object> wallet, String userId){
+        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, loginAvailable, viewDataAvailable, chain) VALUES(?,?,?,?,?,?)";
+        Object[] createUserWalletParam = new Object[]{userId, wallet.get("walletAddress"), wallet.get("walletName"), 0, 1, wallet.get("walletChain")};
+        this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
+        return (String)wallet.get("walletAddress");
+    }
+
 
 //    public String createUserWallet(WalletSignupReq wallet, String userId){
 //        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress, walletName, walletIcon, loginAvailable, viewDataAvailable) VALUES(?,?,?,?,?,?)";
@@ -209,8 +244,8 @@ public class UserDao {
     }
 
     public int editUserWallet(Map<String, Object> wallet){
-        String editUserWalletQuery = "UPDATE userWallet SET walletName = ?, chain = ? WHERE user=? and walletAddress=?";
-        Object[] editUserWalletParams = new Object[] {wallet.get("walletName"), wallet.get("walletChain"), wallet.get("user"), wallet.get("walletAddress")};
+        String editUserWalletQuery = "UPDATE userWallet SET walletName = ?, chain = ? walletAddress=? WHERE `index`=?";
+        Object[] editUserWalletParams = new Object[] {wallet.get("walletName"), wallet.get("walletChain"), wallet.get("walletAddress"), wallet.get("walletIndex")};
         return this.jdbcTemplate.update(editUserWalletQuery, editUserWalletParams);
     }
 
@@ -326,10 +361,16 @@ public class UserDao {
         return this.jdbcTemplate.update(deleteUserWalletQuery, deleteUserWalletParams);
     }
 
+    public int deleteUserWallet(int index) {
+        String deleteUserWalletQuery = "delete from userWallet where `index`=?";
+        return this.jdbcTemplate.update(deleteUserWalletQuery, index);
+    }
+
     public int deleteWallet(String walletAddress){
         String deleteWalletQuery = "delete from wallet where address=?";
         return this.jdbcTemplate.update(deleteWalletQuery, walletAddress);
     }
+
 
     public int makeViewDataAvailable(String userId, String walletAddress) {
         String makeViewDataAvailableQuery = "update userWallet set viewDataAvailable = true where user=? and walletAddress=?";
@@ -341,6 +382,11 @@ public class UserDao {
         String makeViewDataUnavailableQuery = "update userWallet set viewDataAvailable = false where user=? and walletAddress=?";
         Object[] makeViewDataUnavailableParams = new Object[] {userId, walletAddress};
         return this.jdbcTemplate.update(makeViewDataUnavailableQuery, makeViewDataUnavailableParams);
+    }
+
+    public int makeViewDataUnavailable(int walletIndex) {
+        String makeViewDataUnavailableQuery = "update userWallet set viewDataAvailable = false where `index`=?";
+        return this.jdbcTemplate.update(makeViewDataUnavailableQuery, walletIndex);
     }
 
     // AdminReqeust 생성하기

@@ -6,6 +6,7 @@ import com.propwave.daotool.user.model.BadgeRequest;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.user.model.UserSignupReq;
 import com.propwave.daotool.user.model.WalletSignupReq;
+import com.propwave.daotool.wallet.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -68,7 +69,7 @@ public class UserService {
         }
     }
 
-    public List<String> createWallet(String userId, List<Map<String, Object>> wallets) throws BaseException {
+    public List<String> createWallet(String userId, List<Map<String, Object>> wallets, String when) throws BaseException {
         List<String> successWallets = new ArrayList<>();
         try {
             // 2. 지갑 만들기
@@ -88,9 +89,44 @@ public class UserService {
                 System.out.println("out if, create userwallet");
                 //2. userWallet 만들기
                 System.out.println(wallet.get("walletAddress"));
-                userDao.createUserWallet(wallet, userId);
+                if (when.equals("login")){
+                    userDao.createUserWalletForLogin(wallet, userId);
+                }else{
+                    userDao.createUserWalletForDashBoard(wallet, userId);
+                }
+
                 successWallets.add(walletAddress);
             }
+            return successWallets;
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public List<String> addWalletWhenSignUp(String userId, List<Map<String, Object>> wallets) throws BaseException {
+        List<String> successWallets = new ArrayList<>();
+        try {
+            // 2. 지갑 만들기
+            for (Map<String, Object> wallet : wallets) {
+                //1. 지갑 만들기
+                System.out.println(wallet.get("walletAddress"));
+                String walletAddress = (String) wallet.get("walletAddress");
+                String walletType = (String) wallet.get("walletType");
+                System.out.println(userDao.isWalletExist(walletAddress));
+
+                if (userDao.isWalletExist(walletAddress) == 0) {
+                    //없으면 객체 만들기
+                    System.out.println("지갑 객체 없음");
+                    userDao.createWallet(walletAddress, walletType);
+                    System.out.println("in if, create wallet success");
+                }
+                System.out.println("out if, create userwallet");
+                //2. userWallet 만들기
+                System.out.println(wallet.get("walletAddress"));
+                userDao.createUserWallet(wallet, userId);
+
+            successWallets.add(walletAddress);
+        }
             return successWallets;
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
@@ -171,34 +207,41 @@ public class UserService {
         wallet.put("loginAvailable", false);
         wallet.put("viewDataAvailable", true);
         wallet.put("user", userId);
-        int isUserWalletExistMe = userDao.isUserWalletExist(userId, walletAddress);
-        System.out.println(isUserWalletExistMe);
-        int isUserWalletExistOther = userDao.isUserWalletExist(walletAddress);
-        System.out.println(isUserWalletExistOther);
-        // 1. 나게에 있는지 여부 확인
-        if (userDao.isUserWalletExist(userId, walletAddress)==1){
-            // 나에게 있는 경우 -> 대시보드용으로 추가하기
-            System.out.println("경우 3. 나에게 지갑이 있는 경우 -> 대시보드용으로 추가하기!");
-            return userDao.makeViewDataAvailable(userId, walletAddress);
-        }
-        // 2. 나에게 없다면, 남에게 있는지 확인
-        else if (userDao.isUserWalletExist(walletAddress)==1){
-            // 남에게 있는 경우 -> 나의 UserWallet 생성하기
-            System.out.println("경우 2. 나에게 지갑이 없고 남에게 있는 경우 -> UserWallet 추가");
-            userDao.createUserWallet(wallet);
-            return 1;
-        }
-        else if (userDao.isUserWalletExist(walletAddress)==0){
-            // 남에게도 없는 경우 -> wallet 생성, userWallet 생성
-            System.out.println("경우 1. 나에게도, 남에게도 지갑이 없는 경우 -> UserWallet, Wallet 추가");
+//        int isUserWalletExistMe = userDao.isUserWalletExist(userId, walletAddress);
+//        System.out.println(isUserWalletExistMe);
+//        int isUserWalletExistOther = userDao.isUserWalletExist(walletAddress);
+//        System.out.println(isUserWalletExistOther);
+        // 걍 1. 지갑 존재 여부 존재?-> wallet 객체 안만듦 이거만 하면 되는거 아닌가?
+        if(userDao.isWalletExist(walletAddress)==0){
             userDao.createWallet(walletAddress, (String)wallet.get("walletType"));
-            userDao.createUserWallet(wallet);
-            return 1;
         }
-        else{
-            System.out.println("경우 없는 경우");
-            throw new BaseException(RESPONSE_ERROR);
-        }
+        userDao.createUserWalletForDashBoard(wallet, userId);
+        return 1;
+
+//        // 1. 나게에 있는지 여부 확인
+//        if (userDao.isUserWalletExist(userId, walletAddress)==1){
+//            // 나에게 있는 경우 -> 대시보드용으로 추가하기
+//            System.out.println("경우 3. 나에게 지갑이 있는 경우 -> 대시보드용으로 추가하기!");
+//            return userDao.makeViewDataAvailable(userId, walletAddress);
+//        }
+//        // 2. 나에게 없다면, 남에게 있는지 확인
+//        else if (userDao.isUserWalletExist(walletAddress)==1){
+//            // 남에게 있는 경우 -> 나의 UserWallet 생성하기
+//            System.out.println("경우 2. 나에게 지갑이 없고 남에게 있는 경우 -> UserWallet 추가");
+//            userDao.createUserWallet(wallet);
+//            return 1;
+//        }
+//        else if (userDao.isUserWalletExist(walletAddress)==0){
+//            // 남에게도 없는 경우 -> wallet 생성, userWallet 생성
+//            System.out.println("경우 1. 나에게도, 남에게도 지갑이 없는 경우 -> UserWallet, Wallet 추가");
+//            userDao.createWallet(walletAddress, (String)wallet.get("walletType"));
+//            userDao.createUserWallet(wallet);
+//            return 1;
+//        }
+//        else{
+//            System.out.println("경우 없는 경우");
+//            throw new BaseException(RESPONSE_ERROR);
+//        }
     }
 
     // 대시보드용 지갑 수정하기
@@ -213,39 +256,55 @@ public class UserService {
 
     // 대시보드용 지갑 삭제하기
     public int deleteDashboardWallet(String userId, Map<String, Object> wallet) throws BaseException{
+        System.out.println("service getin");
         wallet.put("user", userId);
-        String walletAddress = (String) wallet.get("walletAddress");
-        // 1. 지갑이 남에게 있는지 여부
-        int isWalletSomeoneElse = userProvider.isWalletSomeoneElse(userId, walletAddress);
-        System.out.println(isWalletSomeoneElse);
-        // 2. 나에게 로그인 용도 있는지 여부
-        int isWalletMyLogin = userDao.isWalletExistForLogin(userId, walletAddress);
-        System.out.println(isWalletMyLogin);
 
-        // 상황 1. 나에게만 지갑이 있고 Only 대시보드용
-        if (isWalletSomeoneElse==0 && isWalletMyLogin == 0){
-            // userWallet 삭제, wallet 삭제
-            System.out.println("상황 1. 나에게만 지갑이 있고 Only 대시보드용");
-            userDao.deleteUserWallet(userId, walletAddress);
-            return userDao.deleteWallet(walletAddress);
-       }
-        // 상황 2. 나에게만 지갑이 있고, 로그인도 있음 & 상황 4. 남에게 지갑이 있고, 로그인도 있음
-        else if (isWalletMyLogin == 1){
-            // userWallet의 dashboard를 0으로 변경
-            System.out.println("상황 2. 나에게만 지갑이 있고, 로그인도 있음 & 상황 4. 남에게 지갑이 있고, 로그인도 있음");
-            return userDao.makeViewDataUnavailable(userId, walletAddress);
+        int walletIndex = (int) wallet.get("walletIndex");
+        UserWallet userWallet = userDao.getUserWalletByIndex(walletIndex);
+        String orgWalletAddress = userWallet.getWalletAddress();
+//
+//
+//        // 1. 지갑이 남에게 있는지 여부
+//        int isWalletSomeoneElse = userProvider.isWalletSomeoneElse(userId, orgWalletAddress);
+//        System.out.println(isWalletSomeoneElse);
+//        // 2. 나에게 로그인 용도 있는지 여부
+//        int isWalletMyLogin = userDao.isWalletExistForLogin(userId, orgWalletAddress);
+//        System.out.println(isWalletMyLogin);
+//
+//        // 상황 1. 나에게만 지갑이 있고 Only 대시보드용
+//        if (isWalletSomeoneElse==0 && isWalletMyLogin == 0){
+//            // userWallet 삭제, wallet 삭제
+//            System.out.println("상황 1. 나에게만 지갑이 있고 Only 대시보드용");
+//            userDao.deleteUserWallet(walletIndex);
+//            if(userDao.isUserWalletExist(orgWalletAddress)==1){
+//                return 1;
+//            }
+//            return userDao.deleteWallet(orgWalletAddress);
+//       }
+//        // 상황 2. 나에게만 지갑이 있고, 로그인도 있음 & 상황 4. 남에게 지갑이 있고, 로그인도 있음
+//        else if (isWalletMyLogin == 1){
+//            // userWallet의 dashboard를 0으로 변경
+//            System.out.println("상황 2. 나에게만 지갑이 있고, 로그인도 있음 & 상황 4. 남에게 지갑이 있고, 로그인도 있음");
+//            return userDao.makeViewDataUnavailable(walletIndex);
+//        }
+//        // 상황 3. 남에게 지갑이 있고, 나에게 Only 대시보드용
+//        else if (isWalletSomeoneElse==1 && isWalletMyLogin == 0){
+//            System.out.println("상황 3. 남에게 지갑이 있고, 나에게 Only 대시보드용");
+//            // 내 userWallet 삭제
+//            return userDao.deleteUserWallet(walletIndex);
+//        }
+//        // 그 외
+//        else {
+//            System.out.println("경우 없는 경우...");
+//            throw new BaseException(RESPONSE_ERROR);
+//        }
+
+        // index 해당하는거 지우고 userWallet 남아있으면 wallet 냅두고!
+        userDao.deleteUserWallet(walletIndex);
+        if(userDao.isUserWalletExist(orgWalletAddress)==0){
+            userDao.deleteWallet(orgWalletAddress);
         }
-        // 상황 3. 남에게 지갑이 있고, 나에게 Only 대시보드용
-        else if (isWalletSomeoneElse==1 && isWalletMyLogin == 0){
-            System.out.println("상황 3. 남에게 지갑이 있고, 나에게 Only 대시보드용");
-            // 내 userWallet 삭제
-            return userDao.deleteUserWallet(userId, walletAddress);
-        }
-        // 그 외
-        else {
-            System.out.println("경우 없는 경우...");
-            throw new BaseException(RESPONSE_ERROR);
-        }
+        return 1;
     }
 
     public BadgeRequest createBadgeRequest(String badgeName, Map<String, String> request){
