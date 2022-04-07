@@ -15,4 +15,5 @@ public class User {
     private int hits;
     private int todayHits;
     private Timestamp createdAt;
+    private int nftRefreshLeft;
 }

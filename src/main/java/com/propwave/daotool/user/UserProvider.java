@@ -134,11 +134,14 @@ public class UserProvider {
             ObjectMapper objectMapper = new ObjectMapper();
 
             List<UserWallet> userWallets = userDao.getAllUserWalletByUserId(userId);
+            System.out.println(userId);
+            System.out.println(userWallets);
             List<Map<String, Object>> allUserWallets = new ArrayList<>();
             System.out.println("aaa1");
             for(UserWallet userWallet: userWallets){
                 String walletAddress = userWallet.getWalletAddress();
                 String walletChain = userWallet.getChain();
+                System.out.println(walletAddress+"       d        "+walletChain);
 
                 Chain chain = userDao.getChainInfo(walletChain);
                 System.out.println("aaa2");

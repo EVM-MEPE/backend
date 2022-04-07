@@ -62,7 +62,8 @@ public class UserDao {
                         rs.getString("url"),
                         rs.getInt("hits"),
                         rs.getInt("todayHits"),
-                        rs.getTimestamp("createdAt")
+                        rs.getTimestamp("createdAt"),
+                        rs.getInt("nftRefreshLeft")
                 ),
                 id
         );
@@ -488,18 +489,18 @@ public class UserDao {
     }
 
     // 초, 분, 시, 일, 월, 주 순서
-    @Scheduled(cron = "0 45 0 * * *")
-    public void updatePrice() throws InterruptedException {
+    @Scheduled(cron = "0 0 0 * * *")
+    public void initTodayHits() throws InterruptedException {
         System.out.println("today hit 초기화");
         // 저장된 모든 관심상품을 조회합니다.
 
         String editUserQuery = "UPDATE user SET todayHits=? where true";
         this.jdbcTemplate.update(editUserQuery, 0);
 
-//        String getUsersQuery = "select id from user";
-//        List<String> users =  this.jdbcTemplate.query(getUsersQuery,
-//                (rs, rowNum) -> new String(rs.getString("id"))
-//        );
+        System.out.println("refresh nft 초기화");
+        String refreshCollectionQuery = "UPDATE user SET collectionRefresh=? where true";
+        this.jdbcTemplate.update(refreshCollectionQuery, 10);
+
     }
 
 }
