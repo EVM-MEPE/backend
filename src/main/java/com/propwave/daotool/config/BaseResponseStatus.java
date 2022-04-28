@@ -22,7 +22,7 @@ public enum BaseResponseStatus {
     //badge
     NO_BADGE_EXIST(false, 401, "해당하는 뱃지가 없습니다."),
     WALLET_ALREADY_EXIST_FOR_LOGIN(false, 401, "지갑이 이미 로그인용으로 등록되어있습니다."),
-
+    NOT_SUPPORTED_CHAIN(false, 401, "지원하지 않는 chain입니다."),
     /**
      * 4000 : Database, Server 오류
      */

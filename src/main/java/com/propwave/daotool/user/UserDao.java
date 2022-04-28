@@ -5,7 +5,10 @@ import com.propwave.daotool.badge.model.BadgeJoinedAt;
 import com.propwave.daotool.badge.model.BadgeNameImage;
 import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.user.model.*;
+import com.propwave.daotool.utils.GetNFT;
 import com.propwave.daotool.wallet.model.UserWallet;
+import lombok.RequiredArgsConstructor;
+import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -17,6 +20,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
+@RequiredArgsConstructor
 @EnableScheduling
 @Repository
 public class UserDao {
@@ -24,6 +28,9 @@ public class UserDao {
 
     @Autowired
     public void setDataSource(DataSource dataSource){this.jdbcTemplate = new JdbcTemplate(dataSource);}
+
+    @Autowired
+    private final GetNFT getNFT;
 
     public User createUser(Map<String, Object> userInfo){
         String createUserQuery = "INSERT INTO user(id, profileImage, introduction, url) VALUES(?,?,?,?)";
@@ -244,7 +251,7 @@ public class UserDao {
     }
 
     public int editUserWallet(Map<String, Object> wallet){
-        String editUserWalletQuery = "UPDATE userWallet SET walletName = ?, chain = ? walletAddress=? WHERE `index`=?";
+        String editUserWalletQuery = "UPDATE userWallet SET walletName = ?, chain = ?, walletAddress=? WHERE `index`=?";
         Object[] editUserWalletParams = new Object[] {wallet.get("walletName"), wallet.get("walletChain"), wallet.get("walletAddress"), wallet.get("walletIndex")};
         return this.jdbcTemplate.update(editUserWalletQuery, editUserWalletParams);
     }
@@ -547,6 +554,127 @@ public class UserDao {
         String refreshCollectionQuery = "UPDATE user SET collectionRefresh=? where true";
         this.jdbcTemplate.update(refreshCollectionQuery, 10);
 
+    }
+
+    public List<UserWallet> getAllUserWalletForDashBoardByUserId(String userId){
+        String getUserWallet = "select * from userWallet where user=? and viewDataAvailable=1";
+        return this.jdbcTemplate.query(getUserWallet,
+                (rs, rowNum) -> new UserWallet(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("walletAddress"),
+                        rs.getBoolean("loginAvailable"),
+                        rs.getBoolean("viewDataAvailable"),
+                        rs.getString("walletName"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("chain")
+                ),
+                userId
+        );
+    }
+
+    // ********************************************************** NFT
+
+    public int isNFTExist(String address, int tokenId){
+        String isNFTExistQuery = "select exists(select * from nft where address = ? and tokenId = ?)";
+        Object[] isNFTExistParams = new Object[]{address, tokenId};
+        return this.jdbcTemplate.queryForObject(isNFTExistQuery,
+                int.class,
+                isNFTExistParams
+        );
+    }
+
+    public Nft createNFT(JSONObject result, JSONObject metaJsonObject, String chain){
+        System.out.println("chain");
+        System.out.println("metaJsonObject\n"+metaJsonObject);
+        System.out.println("result\n"+result);
+        System.out.println(result.get("token_address") +"    1     "+ result.get("token_id") +"    2    "+ result.get("contract_type") +"    3    "+ result.get("name") +"    4    " + metaJsonObject.get("description") +"    5    "+ metaJsonObject.get("image") +"    6    "+ chain+ metaJsonObject.get("token_uri") +"    7    "+  metaJsonObject.get("dna") +"    8    "+ result.get("is_valid") +"    9    "+ metaJsonObject.get("date") );
+
+        String createNFTQuery = "INSERT INTO nft(`address` ,`tokenId` ,`contractType` ,`name` ,`description` ,`image` ,`chain` ,`tokenUri` ,`dna`,`is_valid`,`date`) VALUES(?,?,?,?,?,?,?,?,?,?,?)";
+        Object[] createNFTParams = new Object[]{result.get("token_address"), result.get("token_id"), (String) result.get("contract_type"), (String) result.get("name"), (String) metaJsonObject.get("description"), (String) metaJsonObject.get("image"), chain, (String) result.get("token_uri"), (String) metaJsonObject.get("dna"), 1, metaJsonObject.get("date") };
+        this.jdbcTemplate.update(createNFTQuery, createNFTParams);
+        String lastInsertIdQuery = "select last_insert_id()"; // 가장 마지막에 삽입된(생성된) id값은 가져온다.
+        int lastIdx = this.jdbcTemplate.queryForObject(lastInsertIdQuery, int.class);
+        System.out.println(lastIdx);
+        return getNFT(lastIdx);
+    }
+
+    public Nft getNFT(int index){
+        String getNftQuery = "select * from nft where `index`=?";
+        return this.jdbcTemplate.queryForObject(getNftQuery,
+                (rs, rowNum) -> new Nft(
+                        rs.getString("address"),
+                        rs.getInt("tokenID"),
+                        rs.getString("contractType"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getString("chain"),
+                        rs.getString("tokenUri"),
+                        rs.getString("dna"),
+                        rs.getInt("is_valid"),
+                        rs.getString("date"),
+                        rs.getInt("index")
+                ),
+                index
+        );
+    }
+
+    public Nft getNFT(String token_address, int tokenId) {
+        String getNftQuery = "select * from nft where `address`=? and `tokenId`=?";
+        Object[] getNftParams = new Object[]{token_address, tokenId};
+        return this.jdbcTemplate.queryForObject(getNftQuery,
+                (rs, rowNum) -> new Nft(
+                        rs.getString("address"),
+                        rs.getInt("tokenID"),
+                        rs.getString("contractType"),
+                        rs.getString("name"),
+                        rs.getString("description"),
+                        rs.getString("image"),
+                        rs.getString("chain"),
+                        rs.getString("tokenUri"),
+                        rs.getString("dna"),
+                        rs.getInt("is_valid"),
+                        rs.getString("date"),
+                        rs.getInt("index")
+                ),
+                getNftParams
+        );
+    }
+
+    public int isNFTWalletExist(String address, int tokenId, int userWalletIndex){
+        String isNFTWalletExistQuery = "select exists(select * from nftWallet where nftAddress = ? and nftTokenId = ? and userWalletIndex = ?)";
+        Object[] isNFTWalletExistParams = new Object[]{address, tokenId, userWalletIndex};
+        return this.jdbcTemplate.queryForObject(isNFTWalletExistQuery,
+                int.class,
+                isNFTWalletExistParams
+        );
+    }
+
+    public void createNFTWallet(String token_address,int tokenId,int userWalletIndex,int amount,int nftIndex){
+        String createNFTWalletQuery = "INSERT INTO nftWallet(nftAddress, nftTokenId, userWalletIndex, amount, nftIndex) VALUES(?,?,?,?,?)";
+        Object[] createNFTWalletParams = new Object[]{token_address, tokenId, userWalletIndex, amount, nftIndex};
+        this.jdbcTemplate.update(createNFTWalletQuery, createNFTWalletParams);
+    }
+
+    public List<NftWallet> getNftWallets(int walletIdx){
+        String getNftWaleltsQuery = "select * from nftWallet where userWalletIndex = ?";
+        return this.jdbcTemplate.query(getNftWaleltsQuery,
+                (rs, rowNum) -> new NftWallet(
+                        rs.getInt("index"),
+                        rs.getString("nftAddress"),
+                        rs.getInt("nftTokenId"),
+                        rs.getInt("userWalletIndex"),
+                        rs.getInt("amount"),
+                        rs.getInt("nftIndex")
+                ),
+                walletIdx
+        );
+    }
+
+    public void reduceRefreshNftCount(String userId){
+        String reduceRefreshNftCountQuery = "UPDATE user SET nftRefreshLeft=nftRefreshLeft+1 where id = ?";
+        this.jdbcTemplate.update(reduceRefreshNftCountQuery, userId);
     }
 
 }

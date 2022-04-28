@@ -2,13 +2,14 @@ package com.propwave.daotool.user;
 
 import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.config.BaseException;
-import com.propwave.daotool.user.model.BadgeRequest;
-import com.propwave.daotool.user.model.User;
-import com.propwave.daotool.user.model.UserSignupReq;
-import com.propwave.daotool.user.model.WalletSignupReq;
+import com.propwave.daotool.user.model.*;
+import com.propwave.daotool.utils.GetNFT;
 import com.propwave.daotool.wallet.model.UserWallet;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,10 +22,13 @@ public class UserService {
 
     private final UserDao userDao;
     private final UserProvider userProvider;
+    @Autowired
+    private final GetNFT getNFT;
 
-    public UserService(UserDao userDao, UserProvider userProvider){
+    public UserService(GetNFT getNFT, UserDao userDao, UserProvider userProvider){
         this.userDao = userDao;
         this.userProvider = userProvider;
+        this.getNFT = getNFT;
     }
 
     public User createUser(Map<String, Object> userInfo, String profileImageS3Path) throws BaseException{
@@ -325,5 +329,43 @@ public class UserService {
         }catch(Exception exception){
             throw new BaseException(RESPONSE_ERROR);
         }
+    }
+
+    public void getNFTRefresh(String walletAddress, String api_chain, String chain, int userWalletIndex) throws ParseException {
+        String nftResult = getNFT.getNft(api_chain, walletAddress);
+        JSONObject jsonObject = getNFT.fromJSONtoNFT(nftResult);
+
+        // 이미 있는 NFT인지 확인하기
+        System.out.println("total NFT : "+jsonObject.get("total"));
+        List<JSONObject> results = (List<JSONObject>) jsonObject.get("result");
+        int newNffIdx;
+
+        for(JSONObject result: results){
+            String token_address = (String) result.get("token_address");
+            int tokenId =  Integer.parseInt((String)result.get("token_id"));
+            if(userDao.isNFTExist(token_address, tokenId)==0){
+                System.out.println("Not Existed NFT");
+                String tokenUri = (String) result.get("token_uri");
+                String metaData = getNFT.getNftMetaData(tokenUri);
+                JSONObject metaJsonObject = getNFT.fromJSONtoNFT(metaData);
+
+                Nft newNft = userDao.createNFT(result, metaJsonObject, chain);
+                newNffIdx = newNft.getIndex();
             }
+            else{
+                Nft newNft = userDao.getNFT(token_address, tokenId);
+                newNffIdx = newNft.getIndex();
+            }
+            if(userDao.isNFTWalletExist(token_address, tokenId, userWalletIndex)==0){
+                System.out.println("Not Existed wallet");
+                userDao.createNFTWallet(token_address, tokenId, userWalletIndex, Integer.parseInt((String) result.get("amount")) , newNffIdx);
+            }
+            System.out.println("Already exists");
+
+        }
+    }
+
+    public void reduceRefreshNftCount(String userId){
+        userDao.reduceRefreshNftCount(userId);
+    }
 }

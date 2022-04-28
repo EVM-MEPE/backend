@@ -10,9 +10,12 @@ import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
+import com.propwave.daotool.utils.GetNFT;
 import com.propwave.daotool.wallet.model.UserWallet;
 import com.propwave.daotool.wallet.model.Wallet;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.io.IOUtils;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +24,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.awt.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -42,12 +46,16 @@ public class UserController {
     private final UserService userService;
     @Autowired
     private SecurityService securityService;
+    @Autowired
+    private final GetNFT getNFT;
 
-    public UserController(S3Uploader s3Uploader, UserProvider userProvider, UserService userService, SecurityService securityService){
+
+    public UserController(GetNFT getNFT, S3Uploader s3Uploader, UserProvider userProvider, UserService userService, SecurityService securityService){
         this.s3Uploader = s3Uploader;
         this.userProvider = userProvider;
         this.userService = userService;
         this.securityService = securityService;
+        this.getNFT = getNFT;
     }
 
     // ---------------------------------------------------- 로그인, 회원가입 ----------------------------------------------------
@@ -556,6 +564,42 @@ public class UserController {
         return new BaseResponse<>(imgUrl);
     }
 
-    //@Get
+
+    @GetMapping("nft/refresh")
+    public BaseResponse<String> getNftRefresh(@RequestParam("userId") String userId) throws ParseException {
+        //1. 이 인간의 Dashboard 지갑 다불러오기
+        List<UserWallet> userWallets =  userProvider.getAllUserWalletForDashBoardByUserId(userId);
+        for(UserWallet userWallet:userWallets){
+            String walletAddress = userWallet.getWalletAddress();
+            String chain = userWallet.getChain();
+            System.out.println(chain);
+            String api_chain;
+            if(chain.equals("Polygon")){
+                api_chain = "polygon";
+            }
+            else if(chain.equals("Ethereum")){
+                api_chain = "eth";
+            }
+            else if(chain.equals("Ethereum")){
+                api_chain = "eth";
+            }
+            else if(chain.equals("Avalanche")){
+                api_chain = "avalanche";
+            }
+            else{
+                return new BaseResponse<>(NOT_SUPPORTED_CHAIN);
+            }
+            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
+            userService.reduceRefreshNftCount(userId);
+        }
+        return new BaseResponse<>("refresh success");
+    }
+
+    @GetMapping("nft")
+    public BaseResponse<List<Nft>> getMyNfts(@RequestParam("walletIdx") int walletIdx) throws ParseException {
+        //1. 이 인간의 NFT 다불러오기
+        List<Nft> nftList = userProvider.getNftsBywalletIdx(walletIdx);
+        return new BaseResponse<>(nftList);
+    }
 
 }

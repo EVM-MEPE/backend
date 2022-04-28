@@ -1,13 +1,16 @@
 package com.propwave.daotool.utils;
-
-import com.propwave.daotool.user.model.Nft;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.ParseException;
 import org.springframework.http.*;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-
+@Component
 public class GetNFT {
-    public void getEthNft(String chain, String walletAddress){
+    public String getNft(String chain, String walletAddress){
+        System.out.println("getEthNft");
+        System.out.println(chain+"::"+ walletAddress);
         RestTemplate rest = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.add("x-api-key", "Fqy1IZbNGAK0zhZqzcHFiKe3jvTEyGAr2QNW6mZOzbfudyqZlmELouMzTNGSBl6d");
@@ -20,25 +23,29 @@ public class GetNFT {
         String response = responseEntity.getBody();
         System.out.println("Response status: " + status);
         System.out.println(response);
+
+        return response;
     }
 
-//    public Nft fromJSONtoNFT(String result) {
-//
-//        JSONObject rjson = new JSONObject(result);
-//        JSONArray items  = rjson.getJSONArray("items");
-//        List<ItemDto> ret = new ArrayList<>();
-//        for (int i=0; i<items.length(); i++) {
-//            JSONObject itemJson = items.getJSONObject(i);
-//            System.out.println(itemJson);
-//            ItemDto itemDto = new ItemDto(itemJson);
-//            ret.add(itemDto);
-//        }
-//        return ret;
-//    }
+    public String getNftMetaData(String tokenUri){
+        RestTemplate rest = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        String body = "";
 
+        HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
+        ResponseEntity<String> responseEntity = rest.exchange(tokenUri, HttpMethod.GET, requestEntity, String.class);
+        HttpStatus httpStatus = responseEntity.getStatusCode();
+        int status = httpStatus.value();
+        String response = responseEntity.getBody();
+        System.out.println("Response status: " + status);
+        System.out.println(response);
+        return response;
+    }
 
-//    public static void main(String[] args){
-//        GetNFT getNFT = new GetNFT();
-//        getNFT.getEthNft("polygon", "0x07B0ea6D444B9B66F3A7709FB1fA75BcDCD67A16");
-//    }
+    public JSONObject fromJSONtoNFT(String result) throws ParseException {
+
+        JSONParser jsonParser = new JSONParser();
+        Object obj = jsonParser.parse(result);
+        return (JSONObject) obj;
+    }
 }

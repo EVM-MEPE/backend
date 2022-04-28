@@ -204,6 +204,10 @@ public class UserProvider {
         return getBadgesRes;
     }
 
+    public List<UserWallet> getAllUserWalletForDashBoardByUserId(String userId){
+        return userDao.getAllUserWalletForDashBoardByUserId(userId);
+    }
+
     public int checkUser(String userId){
         return userDao.checkUser(userId);
     }
@@ -272,6 +276,18 @@ public class UserProvider {
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
+    }
+
+    public List<Nft> getNftsBywalletIdx(int walletIdx){
+        List<NftWallet> nftWallets = userDao.getNftWallets(walletIdx);
+        List<Nft> nfts = new ArrayList<>();
+        for(NftWallet nftWallet:nftWallets){
+            int nftIdx = nftWallet.getNftIndex();
+            Nft nft = userDao.getNFT(nftIdx);
+            nfts.add(nft);
+        }
+
+        return nfts;
     }
 
 }
