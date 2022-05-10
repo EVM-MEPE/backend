@@ -677,4 +677,9 @@ public class UserDao {
         this.jdbcTemplate.update(reduceRefreshNftCountQuery, userId);
     }
 
+    public void hideBadge(String userId){
+        String reduceRefreshNftCountQuery = "UPDATE user SET nftRefreshLeft=nftRefreshLeft+1 where id = ?";
+        this.jdbcTemplate.update(reduceRefreshNftCountQuery, userId);
+    }
+
 }

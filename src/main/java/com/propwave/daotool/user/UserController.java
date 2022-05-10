@@ -602,4 +602,6 @@ public class UserController {
         return new BaseResponse<>(nftList);
     }
 
+
+    //public hideBadge
 }

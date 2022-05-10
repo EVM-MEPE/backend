@@ -16,4 +16,7 @@ public class User {
     private int todayHits;
     private Timestamp createdAt;
     private int nftRefreshLeft;
+    private String backImage;
+    private String nickname;
+    private int index;
 }
