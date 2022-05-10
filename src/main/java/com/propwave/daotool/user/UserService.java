@@ -1,5 +1,8 @@
 package com.propwave.daotool.user;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.user.model.*;
@@ -12,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.xml.crypto.Data;
 import java.util.*;
 
 import static com.propwave.daotool.config.BaseResponseStatus.*;
@@ -29,6 +33,46 @@ public class UserService {
         this.userDao = userDao;
         this.userProvider = userProvider;
         this.getNFT = getNFT;
+    }
+
+    public User createUser(String userID) throws BaseException{
+        try{
+            return userDao.createUser(userID);
+        } catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public UserSocial editUserProfileAndSocial(String userID, String json) throws BaseException {
+        try{
+            ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+            Map<String, String> req = objectMapper.readValue(json, new TypeReference<>() {});
+
+            User changedUser = userDao.editUserProfile(userID, req.get("profileName"), req.get("introduction"), req.get("url"));
+            Social changedSocial = userDao.createUserSocial(userID, req.get("twitter"), req.get("facebook"), req.get("discord"), req.get("link"));
+
+            return new UserSocial(changedUser.getId(), changedUser.getProfileImage(), changedUser.getIntroduction(), changedUser.getUrl(), changedUser.getHits(), changedUser.getTodayHits(), changedUser.getCreatedAt(), changedUser.getNftRefreshLeft(), changedUser.getBackImage(), changedUser.getNickname(), changedUser.getIndex(),
+                    changedSocial.getTwitter(), changedSocial.getFacebook(), changedSocial.getDiscord(), changedSocial.getLink());
+
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+}
+
+    public int editUserProfileImg(String userID, String profileImagePath) throws BaseException {
+        try{
+            return userDao.editUserProfileImg(userID, profileImagePath);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public int editUserBackImg(String userID, String backImagePath) throws BaseException {
+        try{
+            return userDao.editUserBackImg(userID, backImagePath);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
     }
 
     public User createUser(Map<String, Object> userInfo, String profileImageS3Path) throws BaseException{
@@ -63,6 +107,16 @@ public class UserService {
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
+    }
+
+    public int addWalletToUser(Map<String, String> req){
+        //이미 있는 지갑인지 확인하기
+        int walletExist = userDao.isWalletExist(req.get("walletAddress"));
+
+        if(walletExist == 0){
+            userDao.createWallet(req.get("walletAddress"), req.get("walletType"));
+        }
+        return userDao.createUserWallet(req.get("userID"), req.get("walletAddress"));
     }
 
     public int deleteUser(String userId) throws BaseException{

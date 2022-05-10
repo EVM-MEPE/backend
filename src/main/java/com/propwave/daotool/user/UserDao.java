@@ -36,30 +36,16 @@ public class UserDao {
         String createUserQuery = "INSERT INTO user(id, profileImage, introduction, url) VALUES(?,?,?,?)";
         Object[] createUserParams = new Object[]{userInfo.get("id"), userInfo.get("profileImage"), userInfo.get("introduction"), userInfo.get("url")};
         this.jdbcTemplate.update(createUserQuery, createUserParams);
-        return getUserAllInfo((String)userInfo.get("id"));
+        return getUserInfo((String)userInfo.get("id"));
     }
 
-    public int checkUserIdExist(String userId){
-        String checkUserIdExistQuery = "select exists(select * from user where id = ?)";
-        return this.jdbcTemplate.queryForObject(checkUserIdExistQuery,
-                int.class,
-                userId
-        );
+    public User createUser(String userID){
+        String createUserQuery = "INSERT INTO user(id) VALUES (?)";
+        this.jdbcTemplate.update(createUserQuery, userID);
+        return getUserInfo(userID);
     }
 
-    public User editUser(Map<String, String> userInfo){
-        String editUserQuery = "UPDATE user SET id=?, profileImage=?, introduction=?, url=? WHERE id = ?";
-        Object[] editUserParams = new Object[]{userInfo.get("changedId"), userInfo.get("profileImage"), userInfo.get("introduction"), userInfo.get("url"), userInfo.get("preId")};
-        this.jdbcTemplate.update(editUserQuery, editUserParams);
-        return getUserAllInfo(userInfo.get("changedId"));
-    }
-
-    public int deleteUser(String userId){
-        String deleteUserQuery = "delete from user where id=?";
-        return this.jdbcTemplate.update(deleteUserQuery, userId);
-    }
-
-    public User getUserAllInfo(String id){
+    public User getUserInfo(String id){
         String getUserQuery = "select * from user where id=?";
         return this.jdbcTemplate.queryForObject(getUserQuery,
                 (rs, rowNum) -> new User(
@@ -70,10 +56,73 @@ public class UserDao {
                         rs.getInt("hits"),
                         rs.getInt("todayHits"),
                         rs.getTimestamp("createdAt"),
-                        rs.getInt("nftRefreshLeft")
+                        rs.getInt("nftRefreshLeft"),
+                        rs.getString("backImage"),
+                        rs.getString("nickname"),
+                        rs.getInt("index")
                 ),
                 id
         );
+    }
+
+    public int checkUserIdExist(String userId){
+        String checkUserIdExistQuery = "select exists(select * from user where id = ?)";
+        return this.jdbcTemplate.queryForObject(checkUserIdExistQuery,
+                int.class,
+                userId
+        );
+    }
+
+    public int editUserProfileImg(String userID, String profileImagePath){
+        String editUserProfileImgQuery = "UPDATE user SET profileImage=? WHERE id = ?";
+        Object[] editUserProfileImgParams = new Object[]{profileImagePath, userID};
+        return this.jdbcTemplate.update(editUserProfileImgQuery, editUserProfileImgParams);
+    }
+
+    public int editUserBackImg(String userID, String backImagePath){
+        String editUserBackImgQuery = "UPDATE user SET backImage=? WHERE id = ?";
+        Object[] editUserBackImgParams = new Object[]{backImagePath, userID};
+        return this.jdbcTemplate.update(editUserBackImgQuery, editUserBackImgParams);
+    }
+
+    public User editUserProfile(String userID, String profileName, String introduction, String url){
+        String editUserQuery = "UPDATE user SET nickname=?, introduction=?, url=? WHERE id = ?";
+        Object[] editUserParams = new Object[]{profileName, introduction, url, userID};
+        this.jdbcTemplate.update(editUserQuery, editUserParams);
+        return getUserInfo(userID);
+    }
+
+    public Social createUserSocial(String userID, String twitter, String facebook, String discord, String link){
+        String createUserSocialQuery = "INSERT INTO social(userId, twitter, facebook, discord, link) VALUES(?,?,?,?,?)";
+        Object[] createUserSocialParam = new Object[]{userID, twitter, facebook, discord, link};
+        this.jdbcTemplate.update(createUserSocialQuery, createUserSocialParam);
+        return getUserSocial(userID);
+    }
+
+    public Social getUserSocial(String userID){
+        String getUserSocialQuery = "select * from social where userId = ?";
+        return this.jdbcTemplate.queryForObject(getUserSocialQuery,
+                (rs, rowNum) -> new Social(
+                        rs.getString("userId"),
+                        rs.getString("twitter"),
+                        rs.getString("facebook"),
+                        rs.getString("discord"),
+                        rs.getString("link")
+                ),
+                userID
+        );
+    }
+
+    public User editUser(Map<String, String> userInfo){
+        String editUserQuery = "UPDATE user SET id=?, profileImage=?, introduction=?, url=? WHERE id = ?";
+        Object[] editUserParams = new Object[]{userInfo.get("changedId"), userInfo.get("profileImage"), userInfo.get("introduction"), userInfo.get("url"), userInfo.get("preId")};
+        this.jdbcTemplate.update(editUserQuery, editUserParams);
+        return getUserInfo(userInfo.get("changedId"));
+    }
+
+    public int deleteUser(String userId){
+        String deleteUserQuery = "delete from user where id=?";
+        return this.jdbcTemplate.update(deleteUserQuery, userId);
     }
 
     //user의 프로필 이미지 주소 가져오기
@@ -90,11 +139,8 @@ public class UserDao {
                         rs.getInt("index"),
                         rs.getString("user"),
                         rs.getString("walletAddress"),
-                        rs.getBoolean("loginAvailable"),
-                        rs.getBoolean("viewDataAvailable"),
-                        rs.getString("walletName"),
-                        rs.getTimestamp("createdAt"),
-                        rs.getString("chain")
+                        rs.getString("chain"),
+                        rs.getTimestamp("createdAt")
                 ),
                 walletAddress
         );
@@ -107,11 +153,8 @@ public class UserDao {
                         rs.getInt("index"),
                         rs.getString("user"),
                         rs.getString("walletAddress"),
-                        rs.getBoolean("loginAvailable"),
-                        rs.getBoolean("viewDataAvailable"),
-                        rs.getString("walletName"),
-                        rs.getTimestamp("createdAt"),
-                        rs.getString("chain")
+                        rs.getString("chain"),
+                        rs.getTimestamp("createdAt")
                 ),
                 userId
         );
@@ -124,11 +167,8 @@ public class UserDao {
                         rs.getInt("index"),
                         rs.getString("user"),
                         rs.getString("walletAddress"),
-                        rs.getBoolean("loginAvailable"),
-                        rs.getBoolean("viewDataAvailable"),
-                        rs.getString("walletName"),
-                        rs.getTimestamp("createdAt"),
-                        rs.getString("chain")
+                        rs.getString("chain"),
+                        rs.getTimestamp("createdAt")
                 ),
                 index
         );
@@ -142,11 +182,8 @@ public class UserDao {
                         rs.getInt("index"),
                         rs.getString("user"),
                         rs.getString("walletAddress"),
-                        rs.getBoolean("loginAvailable"),
-                        rs.getBoolean("viewDataAvailable"),
-                        rs.getString("walletName"),
-                        rs.getTimestamp("createdAt"),
-                        rs.getString("chain")
+                        rs.getString("chain"),
+                        rs.getTimestamp("createdAt")
                 ),
                 getUserWalletByWalletAddressAndUserIdParam
         );
@@ -206,6 +243,12 @@ public class UserDao {
         Object[] walletCreateParam = new Object[]{walletAddress, walletType};
         this.jdbcTemplate.update(walletCreateQuery, walletCreateParam);
         return walletAddress;
+    }
+
+    public int createUserWallet(String userID, String walletAddress){
+        String createUserWalletQuery = "INSERT INTO userWallet(user, walletAddress) VALUES(?,?)";
+        Object[] createUserWalletParam = new Object[]{userID, walletAddress};
+        return this.jdbcTemplate.update(createUserWalletQuery, createUserWalletParam);
     }
 
     public String createUserWallet(Map<String, Object> wallet, String userId){
@@ -563,11 +606,8 @@ public class UserDao {
                         rs.getInt("index"),
                         rs.getString("user"),
                         rs.getString("walletAddress"),
-                        rs.getBoolean("loginAvailable"),
-                        rs.getBoolean("viewDataAvailable"),
-                        rs.getString("walletName"),
-                        rs.getTimestamp("createdAt"),
-                        rs.getString("chain")
+                        rs.getString("chain"),
+                        rs.getTimestamp("createdAt")
                 ),
                 userId
         );

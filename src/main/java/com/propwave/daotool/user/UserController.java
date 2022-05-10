@@ -1,35 +1,23 @@
 package com.propwave.daotool.user;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.propwave.daotool.badge.model.GetBadgesRes;
 import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
-import com.propwave.daotool.wallet.model.UserWallet;
-import com.propwave.daotool.wallet.model.Wallet;
-import lombok.RequiredArgsConstructor;
-import org.apache.commons.io.IOUtils;
-import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.awt.*;
-import java.io.*;
+import java.io.IOException;
 import java.util.*;
 import java.util.List;
-
-import static com.propwave.daotool.config.BaseResponseStatus.*;
 
 @RestController
 @CrossOrigin(origins="*")
@@ -69,11 +57,51 @@ public class UserController {
 //    }
 
     // 회원가입: id 중복 체크
-    @PostMapping("/users/check")
+    @GetMapping("/users/check")
     public BaseResponse<Integer> checkUserExist(@RequestParam("userID") String userID) throws BaseException {
         System.out.println("\n Check user Exist \n");
         int result = userProvider.checkUserIdExist(userID);
         return new BaseResponse<>(result);
+    }
+
+    @GetMapping("users/create")
+    public BaseResponse<User> createUser(@RequestParam("userID") String userID) throws BaseException{
+        System.out.println("\n Create user\n");
+        User newUser = userService.createUser(userID);
+        return new BaseResponse<>(newUser);
+    }
+
+    @PostMapping("wallets/create")
+    public BaseResponse<String> addWalletToUser(@RequestBody Map<String, String> req){
+        System.out.println("\n Create Wallet \n");
+        userService.addWalletToUser(req);
+        return new BaseResponse<>("success add wallet to user");
+    }
+
+    @GetMapping("users/login")
+    public BaseResponse<List<UserWalletAndInfo>> login(@RequestParam("userID") String userID) throws BaseException {
+        System.out.println("\n Login \n");
+        List<UserWalletAndInfo> userWalletList = userProvider.getAllUserWalletByUserId(userID);
+        return new BaseResponse<>(userWalletList);
+    }
+
+    @PatchMapping("users/profile")
+    public BaseResponse<UserSocial> editProfile(@RequestParam(value= "userID") String userID,
+                                            @RequestParam(value = "profileImage", required = false) MultipartFile profileImage,
+                                            @RequestParam(value = "backImage", required = false) MultipartFile backImage,
+                                            @RequestParam(value = "json") String json) throws IOException, BaseException {
+        System.out.println("\n edit Profile \n");
+        if(!profileImage.isEmpty()){
+            String profileImagePath = s3Uploader.upload(profileImage, "media/user/profileImage");
+            userService.editUserProfileImg(userID, profileImagePath);
+        }
+        if(!backImage.isEmpty()){
+            String backImagePath = s3Uploader.upload(backImage, "media/user/backImage");
+            userService.editUserBackImg(userID, backImagePath);
+        }
+        UserSocial userSocial = userService.editUserProfileAndSocial(userID, json);
+
+        return new BaseResponse<>(userSocial);
     }
 
 //    // 회원가입 -> 사용자 정보 생성하기

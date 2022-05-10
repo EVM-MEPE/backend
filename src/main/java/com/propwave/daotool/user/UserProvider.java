@@ -9,7 +9,6 @@ import static com.propwave.daotool.config.BaseResponseStatus.*;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.UserWalletDao;
 import com.propwave.daotool.wallet.model.UserWallet;
-import com.propwave.daotool.wallet.model.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,19 +27,6 @@ public class UserProvider {
         this.userDao = userDao;
     }
 
-    //회원가입 여부 확인
-    public int checkUserSignupAlready(String walletAddress) throws BaseException {
-        List<UserWallet> userWallets = userDao.getAllUserWalletByWalletId(walletAddress);
-        int login = 0;
-        for (UserWallet userWallet : userWallets) {
-            if (userWallet.isLoginAvailable()) {
-                login = 1;
-                return login;
-            }
-        }
-        return login;
-    }
-
     public int checkUserIdExist(String id) throws BaseException{
         try{
             return userDao.checkUserIdExist(id);
@@ -52,7 +38,7 @@ public class UserProvider {
     //User 정보 불러오기 -> ID로
     public User getUser(String id) throws BaseException{
         try{
-            return userDao.getUserAllInfo(id);
+            return userDao.getUserInfo(id);
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
@@ -129,42 +115,61 @@ public class UserProvider {
         }
     }
 
-    public List<Map<String, Object>> getAllUserWalletByUserId(String userId) throws BaseException{
+    public List<UserWalletAndInfo> getAllUserWalletByUserId(String userId) throws BaseException{
         try{
-            ObjectMapper objectMapper = new ObjectMapper();
-
             List<UserWallet> userWallets = userDao.getAllUserWalletByUserId(userId);
-            System.out.println(userId);
-            System.out.println(userWallets);
-            List<Map<String, Object>> allUserWallets = new ArrayList<>();
-            System.out.println("aaa1");
+            List<UserWalletAndInfo> userWalletsWithInfo = new ArrayList<>();
+
             for(UserWallet userWallet: userWallets){
                 String walletAddress = userWallet.getWalletAddress();
-                String walletChain = userWallet.getChain();
-                System.out.println(walletAddress+"       d        "+walletChain);
-
-                Chain chain = userDao.getChainInfo(walletChain);
-                System.out.println("aaa2");
                 WalletInfo walletInfo = userDao.getWalletInfo(walletAddress);
-                System.out.println("aaa3");
 
-                Map<String, Object> userWalletMap = objectMapper.convertValue(userWallet, Map.class);
-                Map<String, Object> chianMap = objectMapper.convertValue(chain, Map.class);
-                Map<String, Object> walletInfoMap = objectMapper.convertValue(walletInfo, Map.class);
-                System.out.println("aaa4");
-
-                userWalletMap.replace("chain",chianMap);
-                userWalletMap.replace("walletAddress",walletInfoMap);
-
-                allUserWallets.add(userWalletMap);
+                UserWalletAndInfo tmp = new UserWalletAndInfo(userWallet.getIndex(), userWallet.getUser(), userWallet.getWalletAddress(), walletInfo.getWalletType(), walletInfo.getWalletTypeImage(), userWallet.getCreatedAt());
+                userWalletsWithInfo.add(tmp);
             }
-            System.out.println("size:"+allUserWallets.size());
-            return allUserWallets;
+            return userWalletsWithInfo;
 
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
     }
+
+//    public List<Map<String, Object>> getAllUserWalletByUserId(String userId) throws BaseException{
+//        try{
+//            ObjectMapper objectMapper = new ObjectMapper();
+//
+//            List<UserWallet> userWallets = userDao.getAllUserWalletByUserId(userId);
+//            System.out.println(userId);
+//            System.out.println(userWallets);
+//            List<Map<String, Object>> allUserWallets = new ArrayList<>();
+//            System.out.println("aaa1");
+//            for(UserWallet userWallet: userWallets){
+//                String walletAddress = userWallet.getWalletAddress();
+//                String walletChain = userWallet.getChain();
+//                System.out.println(walletAddress+"       d        "+walletChain);
+//
+//                Chain chain = userDao.getChainInfo(walletChain);
+//                System.out.println("aaa2");
+//                WalletInfo walletInfo = userDao.getWalletInfo(walletAddress);
+//                System.out.println("aaa3");
+//
+//                Map<String, Object> userWalletMap = objectMapper.convertValue(userWallet, Map.class);
+//                Map<String, Object> chianMap = objectMapper.convertValue(chain, Map.class);
+//                Map<String, Object> walletInfoMap = objectMapper.convertValue(walletInfo, Map.class);
+//                System.out.println("aaa4");
+//
+//                userWalletMap.replace("chain",chianMap);
+//                userWalletMap.replace("walletAddress",walletInfoMap);
+//
+//                allUserWallets.add(userWalletMap);
+//            }
+//            System.out.println("size:"+allUserWallets.size());
+//            return allUserWallets;
+//
+//        } catch(Exception exception){
+//            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+//        }
+//    }
 
 
     public List<Map<String, Object>> getAllBadge(String walletAddress) throws BaseException{
