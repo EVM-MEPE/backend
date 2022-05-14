@@ -43,38 +43,6 @@ public class UserService {
         }
     }
 
-    public UserSocial editUserProfileAndSocial(String userID, String json) throws BaseException {
-        try{
-            ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
-            Map<String, String> req = objectMapper.readValue(json, new TypeReference<>() {});
-
-            User changedUser = userDao.editUserProfile(userID, req.get("profileName"), req.get("introduction"), req.get("url"));
-            Social changedSocial = userDao.createUserSocial(userID, req.get("twitter"), req.get("facebook"), req.get("discord"), req.get("link"));
-
-            return new UserSocial(changedUser.getId(), changedUser.getProfileImage(), changedUser.getIntroduction(), changedUser.getUrl(), changedUser.getHits(), changedUser.getTodayHits(), changedUser.getCreatedAt(), changedUser.getNftRefreshLeft(), changedUser.getBackImage(), changedUser.getNickname(), changedUser.getIndex(),
-                    changedSocial.getTwitter(), changedSocial.getFacebook(), changedSocial.getDiscord(), changedSocial.getLink());
-
-        }catch(Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
-}
-
-    public int editUserProfileImg(String userID, String profileImagePath) throws BaseException {
-        try{
-            return userDao.editUserProfileImg(userID, profileImagePath);
-        }catch(Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
-    }
-
-    public int editUserBackImg(String userID, String backImagePath) throws BaseException {
-        try{
-            return userDao.editUserBackImg(userID, backImagePath);
-        }catch(Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
-    }
-
     public User createUser(Map<String, Object> userInfo, String profileImageS3Path) throws BaseException{
         try{
             userInfo.replace("profileImage", profileImageS3Path);
@@ -109,6 +77,40 @@ public class UserService {
         }
     }
 
+    public UserSocial editUserProfileAndSocial(String userID, String json) throws BaseException {
+        try{
+            ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+            Map<String, String> req = objectMapper.readValue(json, new TypeReference<>() {});
+
+            User changedUser = userDao.editUserProfile(userID, req.get("profileName"), req.get("introduction"), req.get("url"));
+            Social changedSocial = userDao.createUserSocial(userID, req.get("twitter"), req.get("facebook"), req.get("discord"), req.get("link"));
+
+            return new UserSocial(changedUser.getId(), changedUser.getProfileImage(), changedUser.getIntroduction(), changedUser.getUrl(), changedUser.getHits(), changedUser.getTodayHits(), changedUser.getCreatedAt(), changedUser.getNftRefreshLeft(), changedUser.getBackImage(), changedUser.getNickname(), changedUser.getIndex(),
+                    changedSocial.getTwitter(), changedSocial.getFacebook(), changedSocial.getDiscord(), changedSocial.getLink());
+
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+}
+
+    public int editUserProfileImg(String userID, String profileImagePath) throws BaseException {
+        try{
+            return userDao.editUserProfileImg(userID, profileImagePath);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public int editUserBackImg(String userID, String backImagePath) throws BaseException {
+        try{
+            return userDao.editUserBackImg(userID, backImagePath);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+
+
     public int addWalletToUser(Map<String, String> req){
         //이미 있는 지갑인지 확인하기
         int walletExist = userDao.isWalletExist(req.get("walletAddress"));
@@ -126,6 +128,43 @@ public class UserService {
             throw new BaseException(DATABASE_ERROR);
         }
     }
+
+    public int createFriendReq(String reqTo, String reqFrom, String reqNickname) throws BaseException {
+        try{
+            // make friendReq record
+            return userDao.createFriendReq(reqTo, reqFrom, reqNickname);
+
+            // make alarm to reqTo
+            //userDao.createAlarm();
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public int acceptFriend(boolean accepted, String reqTo, String reqFrom, String toNickname) throws BaseException {
+        try{
+            if(accepted){
+                //1. friend Req accept로 바꾸기
+                userDao.updateFriendReq(reqTo, reqFrom);
+                //2. friend record 만들기
+                String fromNickname = userDao.getFriendReqNickname(reqFrom, reqTo);
+                userDao.createFriend(reqTo, reqFrom, toNickname);   // to에게 from이라는 친구가 to Nickname 이라는 이름으로 생김
+                return userDao.createFriend(reqFrom, reqTo, fromNickname);
+                //3. 알람 만들기
+            } else{
+                return userDao.deleteFriendReq(reqFrom, reqTo);
+            }
+        }catch(Exception exception) {
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public Friend editFriendNickname(String user, String friend, String newNickname){
+        return userDao.editFriendNickname(user, friend, newNickname);
+    }
+
+
+    // ----------------------------------------------
 
     public List<String> createWallet(String userId, List<Map<String, Object>> wallets, String when) throws BaseException {
         List<String> successWallets = new ArrayList<>();

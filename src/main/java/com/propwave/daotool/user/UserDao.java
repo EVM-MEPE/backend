@@ -120,6 +120,20 @@ public class UserDao {
         return getUserInfo(userInfo.get("changedId"));
     }
 
+    public List<UserWallet> getAllUserByWallet(String walletAddress){
+    String getAllUserByWalletQuery = "select * from userWallet where walletAddress=?";
+        return this.jdbcTemplate.query(getAllUserByWalletQuery,
+                (rs, rowNum) -> new UserWallet(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("walletAddress"),
+                        rs.getString("chain"),
+                        rs.getTimestamp("createdAt")
+                ),
+                walletAddress
+        );
+    }
+
     public int deleteUser(String userId){
         String deleteUserQuery = "delete from user where id=?";
         return this.jdbcTemplate.update(deleteUserQuery, userId);
@@ -145,6 +159,106 @@ public class UserDao {
                 walletAddress
         );
     }
+
+    public int createFriendReq(String reqTo, String reqFrom, String reqNickname){
+        String createFriendReqQuery = "INSERT INTO friendReq(reqFrom, reqTo, reqNickname) VALUES(?,?,?)";
+        Object[] createFriendReqParam = new Object[]{reqFrom, reqTo, reqNickname};
+        return this.jdbcTemplate.update(createFriendReqQuery, createFriendReqParam);
+    }
+
+    public int updateFriendReq(String reqTo, String reqFrom){
+        String updateFriendReqQuery;
+        Object[] updateFriendReqParam;
+        //if(accepted){
+        updateFriendReqQuery = "UPDATE friendReq SET isAccepted = true WHERE reqFrom=? and reqTo = ?";
+//        }else{
+//            updateFriendReqQuery = "UPDATE friendReq SET isRejected = true WHERE reqFrom=? and reqTo = ?";
+//        }
+        updateFriendReqParam = new Object[]{reqFrom, reqTo};
+        return this.jdbcTemplate.update(updateFriendReqQuery, updateFriendReqParam);
+    }
+
+    // user1에게 user2라는 친구가 nickname 이라는 닉네임으로 생김
+    public int createFriend(String user1, String user2, String nickname){
+        String createFriendQuery = "INSERT INTO friend(user, friend, friendName) VALUES(?,?,?)";
+        Object[] createFriendParam = new Object[]{user1, user2, nickname};
+        return this.jdbcTemplate.update(createFriendQuery, createFriendParam);
+    }
+
+    public String getFriendReqNickname(String reqFrom, String reqTo){
+        String getFriendReqNicknameQuery = "SELECT reqNickname FROM friendReq WHERE reqFrom=? and reqTo=?";
+        Object[] getFriendReqNicknameParam = new Object[]{reqFrom, reqTo};
+        return this.jdbcTemplate.queryForObject(getFriendReqNicknameQuery, String.class, getFriendReqNicknameParam);
+    }
+
+    public int deleteFriendReq(String reqFrom, String reqTo){
+        String deleteFriendReqQuery = "delete from friendReq where reqFrom = ? and reqTo = ?";
+        Object[] deleteFriendReqParams = new Object[] {reqFrom, reqTo};
+        return this.jdbcTemplate.update(deleteFriendReqQuery, deleteFriendReqParams);
+    }
+
+    public Friend editFriendNickname(String user, String friend, String newNickname){
+        String editFriendNicknameQuery = "UPDATE friend SET friendName=? WHERE user=? and friend=?";
+        Object[] editFriendNicknameParam = new Object[]{newNickname, user, friend};
+        this.jdbcTemplate.update(editFriendNicknameQuery, editFriendNicknameParam);
+        return getFriend(user, friend);
+    }
+
+    public Friend getFriend(String user, String friend){
+        String getFriendQuery = "SELECT * FROM friend WHERE user=? and friend=?";
+        Object[] getFriendParam = new Object[]{user, friend};
+        return this.jdbcTemplate.queryForObject(getFriendQuery,
+                (rs, rowNum) -> new Friend(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("friend"),
+                        rs.getString("friendName"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getFriendParam
+        );
+    }
+
+    public List<Friend> getAllFriends(String userId){
+        String getFriendQuery = "SELECT * FROM friend WHERE user=?";
+        Object[] getFriendParam = new Object[]{userId};
+        return this.jdbcTemplate.query(getFriendQuery,
+                (rs, rowNum) -> new Friend(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("friend"),
+                        rs.getString("friendName"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getFriendParam
+        );
+    }
+
+    public int getFriendsCount(String userId){
+        String getFriendsCountQuery = "SELECT COUNT(*) FROM friend WHERE user=?";
+        return this.jdbcTemplate.queryForObject(getFriendsCountQuery, int.class, userId);
+    }
+
+    public FriendReq getFriendReq(String reqFrom, String reqTo){
+        String getFriendReqQuery = "SELECT * FROM friendReq WHERE reqFrom=? and reqTo=?";
+        Object[] getFriendReqParam = new Object[]{reqFrom, reqTo};
+        return this.jdbcTemplate.queryForObject(getFriendReqQuery,
+                (rs, rowNum) -> new FriendReq(
+                        rs.getInt("index"),
+                        rs.getString("reqFrom"),
+                        rs.getString("reqTo"),
+                        rs.getString("reqNickname"),
+                        rs.getBoolean("isAccepted"),
+                        rs.getBoolean("isRejected"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getFriendReqParam
+        );
+    }
+
+
+
+    // ------------------------------------------
 
     public List<UserWallet> getAllUserWalletByUserId(String userId){
         String getUserWalletQuery = "select * from userWallet where user=?";

@@ -11,6 +11,7 @@ import com.propwave.daotool.wallet.UserWalletDao;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -78,6 +79,45 @@ public class UserProvider {
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
     }
+
+    public List<String> getAllUserByWallet(String walletAddress) throws BaseException {
+        try{
+            List<UserWallet> userWallets = userDao.getAllUserByWallet(walletAddress);
+            List<String> users = new ArrayList<String>();
+            for(UserWallet userWallet:userWallets){
+                users.add(userWallet.getUser());
+            }
+            return users;
+
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+    }
+
+    public List<Friend> getAllFriends(String userId){
+        return userDao.getAllFriends(userId);
+    }
+
+    public int getFriendsCount(String userId){
+        return userDao.getFriendsCount(userId);
+    }
+
+    public String getStatusOfFriendReq(String reqFrom, String reqTo) throws BaseException {
+        try{
+            FriendReq friendReq = userDao.getFriendReq(reqFrom, reqTo);
+            if(friendReq.isAccepted()){
+                return "friend";
+            }else{
+                return "wait";
+            }
+        }catch(EmptyResultDataAccessException e){
+            return "none";
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
+
+    }
+
 
     // 지갑 주소가 userWallet에서 로그인 용으로 이미 있는지 확인
     public int isWalletExistForLogin(String walletAddress) throws BaseException{

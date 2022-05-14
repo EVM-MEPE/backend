@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
+import static com.propwave.daotool.config.BaseResponseStatus.*;
+
 @RestController
 @CrossOrigin(origins="*")
 public class UserController {
@@ -75,7 +77,7 @@ public class UserController {
     public BaseResponse<String> addWalletToUser(@RequestBody Map<String, String> req){
         System.out.println("\n Create Wallet \n");
         userService.addWalletToUser(req);
-        return new BaseResponse<>("success add wallet to user");
+        return new BaseResponse<>("successfully add wallet to user");
     }
 
     @GetMapping("users/login")
@@ -102,6 +104,57 @@ public class UserController {
         UserSocial userSocial = userService.editUserProfileAndSocial(userID, json);
 
         return new BaseResponse<>(userSocial);
+    }
+
+    // 유저의 지갑을 모두 불러옴
+    @GetMapping("wallets/users")
+    public BaseResponse<List<String>> getUsersfromWallet(@RequestParam("walletAddress") String walletAddress) throws BaseException {
+        System.out.println("\n Get users from wallet \n");
+        if(userProvider.isWalletExist(walletAddress)==0){
+            return new BaseResponse<>(NO_WALLET_EXIST);
+        }
+        else{
+            List<String> users = userProvider.getAllUserByWallet(walletAddress);
+            return new BaseResponse<>(users);
+        }
+    }
+
+    //친구
+
+    @PostMapping("friends/request")
+    public BaseResponse<String> requestFriend(@RequestParam("user") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
+        userService.createFriendReq(reqTo, json.get("reqFrom"), json.get("reqNickname"));
+        return new BaseResponse<>("successfully make friend request");
+    }
+
+    @PatchMapping("friends/request")
+    public BaseResponse<String> friendRequestProcess(@RequestParam("accept") boolean isAccepted, @RequestBody Map<String, String> json) throws BaseException {
+        userService.acceptFriend(isAccepted, json.get("reqTo"), json.get("reqFrom"), json.get("reqNickname"));
+        return new BaseResponse<>("successfully process friend request");
+    }
+
+    @PatchMapping("friends/nickname")
+    public BaseResponse<Friend> editFriendNickname(@RequestBody Map<String, String> json){
+        Friend newNickname = userService.editFriendNickname(json.get("user"), json.get("friend"), json.get("newNickname"));
+        return new BaseResponse<>(newNickname);
+    }
+
+    @GetMapping("friends")
+    public BaseResponse<List<Friend>> getAllFriendsList(@RequestParam("userID") String userId){
+        List<Friend> friendList = userProvider.getAllFriends(userId);
+        return new BaseResponse<>(friendList);
+    }
+
+    @GetMapping("friends/number")
+    public BaseResponse<Integer> getFriendsCount(@RequestParam("userID") String userId){
+        int friendsCount = userProvider.getFriendsCount(userId);
+        return new BaseResponse<>(friendsCount);
+    }
+
+    @GetMapping("friends/request/status")
+    public BaseResponse<String> getStatusOfFriendReq(@RequestParam("reqFrom") String reqFrom, @RequestParam("reqTo") String reqTo) throws BaseException {
+        String status = userProvider.getStatusOfFriendReq(reqFrom, reqTo);
+        return new BaseResponse<>(status);
     }
 
 //    // 회원가입 -> 사용자 정보 생성하기
