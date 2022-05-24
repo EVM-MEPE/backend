@@ -765,7 +765,6 @@ public class UserDao {
                         rs.getString("image"),
                         rs.getString("chain"),
                         rs.getString("tokenUri"),
-                        rs.getString("dna"),
                         rs.getInt("is_valid"),
                         rs.getString("date"),
                         rs.getInt("index")
@@ -787,7 +786,6 @@ public class UserDao {
                         rs.getString("image"),
                         rs.getString("chain"),
                         rs.getString("tokenUri"),
-                        rs.getString("dna"),
                         rs.getInt("is_valid"),
                         rs.getString("date"),
                         rs.getInt("index")
@@ -805,11 +803,11 @@ public class UserDao {
         );
     }
 
-    public void createNFTWallet(String token_address,int tokenId,int userWalletIndex,int amount,int nftIndex){
-        String createNFTWalletQuery = "INSERT INTO nftWallet(nftAddress, nftTokenId, userWalletIndex, amount, nftIndex) VALUES(?,?,?,?,?)";
-        Object[] createNFTWalletParams = new Object[]{token_address, tokenId, userWalletIndex, amount, nftIndex};
-        this.jdbcTemplate.update(createNFTWalletQuery, createNFTWalletParams);
-    }
+//    public void createNFTWallet(String token_address,int tokenId,int userWalletIndex,int amount,int nftIndex){
+//        String createNFTWalletQuery = "INSERT INTO nftWallet(nftAddress, nftTokenId, userWalletIndex, amount, nftIndex) VALUES(?,?,?,?,?)";
+//        Object[] createNFTWalletParams = new Object[]{token_address, tokenId, userWalletIndex, amount, nftIndex};
+//        this.jdbcTemplate.update(createNFTWalletQuery, createNFTWalletParams);
+//    }
 
     public List<NftWallet> getNftWallets(int walletIdx){
         String getNftWaleltsQuery = "select * from nftWallet where userWalletIndex = ?";
@@ -820,7 +818,7 @@ public class UserDao {
                         rs.getInt("nftTokenId"),
                         rs.getInt("userWalletIndex"),
                         rs.getInt("amount"),
-                        rs.getInt("nftIndex")
+                        rs.getBoolean("hidden")
                 ),
                 walletIdx
         );

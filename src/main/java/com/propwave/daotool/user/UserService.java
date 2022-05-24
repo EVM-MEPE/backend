@@ -424,39 +424,39 @@ public class UserService {
         }
     }
 
-    public void getNFTRefresh(String walletAddress, String api_chain, String chain, int userWalletIndex) throws ParseException {
-        String nftResult = getNFT.getNft(api_chain, walletAddress);
-        JSONObject jsonObject = getNFT.fromJSONtoNFT(nftResult);
-
-        // 이미 있는 NFT인지 확인하기
-        System.out.println("total NFT : "+jsonObject.get("total"));
-        List<JSONObject> results = (List<JSONObject>) jsonObject.get("result");
-        int newNffIdx;
-
-        for(JSONObject result: results){
-            String token_address = (String) result.get("token_address");
-            int tokenId =  Integer.parseInt((String)result.get("token_id"));
-            if(userDao.isNFTExist(token_address, tokenId)==0){
-                System.out.println("Not Existed NFT");
-                String tokenUri = (String) result.get("token_uri");
-                String metaData = getNFT.getNftMetaData(tokenUri);
-                JSONObject metaJsonObject = getNFT.fromJSONtoNFT(metaData);
-
-                Nft newNft = userDao.createNFT(result, metaJsonObject, chain);
-                newNffIdx = newNft.getIndex();
-            }
-            else{
-                Nft newNft = userDao.getNFT(token_address, tokenId);
-                newNffIdx = newNft.getIndex();
-            }
-            if(userDao.isNFTWalletExist(token_address, tokenId, userWalletIndex)==0){
-                System.out.println("Not Existed wallet");
-                userDao.createNFTWallet(token_address, tokenId, userWalletIndex, Integer.parseInt((String) result.get("amount")) , newNffIdx);
-            }
-            System.out.println("Already exists");
-
-        }
-    }
+//    public void getNFTRefresh(String walletAddress, String api_chain, String chain, int userWalletIndex) throws ParseException {
+//        String nftResult = getNFT.getNft(api_chain, walletAddress);
+//        JSONObject jsonObject = getNFT.fromJSONtoNFT(nftResult);
+//
+//        // 이미 있는 NFT인지 확인하기
+//        System.out.println("total NFT : "+jsonObject.get("total"));
+//        List<JSONObject> results = (List<JSONObject>) jsonObject.get("result");
+//        int newNffIdx;
+//
+//        for(JSONObject result: results){
+//            String token_address = (String) result.get("token_address");
+//            int tokenId =  Integer.parseInt((String)result.get("token_id"));
+//            if(userDao.isNFTExist(token_address, tokenId)==0){
+//                System.out.println("Not Existed NFT");
+//                String tokenUri = (String) result.get("token_uri");
+//                String metaData = getNFT.getNftMetaData(tokenUri);
+//                JSONObject metaJsonObject = getNFT.fromJSONtoNFT(metaData);
+//
+//                Nft newNft = userDao.createNFT(result, metaJsonObject, chain);
+//                newNffIdx = newNft.getIndex();
+//            }
+//            else{
+//                Nft newNft = userDao.getNFT(token_address, tokenId);
+//                newNffIdx = newNft.getIndex();
+//            }
+//            if(userDao.isNFTWalletExist(token_address, tokenId, userWalletIndex)==0){
+//                System.out.println("Not Existed wallet");
+//                userDao.createNFTWallet(token_address, tokenId, userWalletIndex, Integer.parseInt((String) result.get("amount")) , newNffIdx);
+//            }
+//            System.out.println("Already exists");
+//
+//        }
+//    }
 
     public void reduceRefreshNftCount(String userId){
         userDao.reduceRefreshNftCount(userId);

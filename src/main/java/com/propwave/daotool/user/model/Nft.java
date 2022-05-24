@@ -15,7 +15,6 @@ public class Nft {
     private String image;
     private String chain;
     private String tokenUri;
-    private String dna;
     private int is_valid;
     private String date;
     private int index;

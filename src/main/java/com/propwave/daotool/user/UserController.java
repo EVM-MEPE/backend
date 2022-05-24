@@ -9,6 +9,7 @@ import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
+import com.propwave.daotool.wallet.model.UserWallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,10 @@ public class UserController {
 //            return new BaseResponse<>(result);
 //    }
 
+    /**
+     ******************************** 회원가입, 로그인 ********************************
+     **/
+
     // 회원가입: id 중복 체크
     @GetMapping("/users/check")
     public BaseResponse<Integer> checkUserExist(@RequestParam("userID") String userID) throws BaseException {
@@ -72,6 +77,15 @@ public class UserController {
         User newUser = userService.createUser(userID);
         return new BaseResponse<>(newUser);
     }
+
+    @PostMapping("users/create")
+    public BaseResponse<User> createUserWithWallet(@RequestParam("userID") String userID, @RequestBody Map<String, String> req) throws BaseException{
+        System.out.println("\n Create user with one wallet\n");
+        User newUser = userService.createUser(userID);
+        userService.addWalletToUser(req);
+        return new BaseResponse<>(newUser);
+    }
+
 
     @PostMapping("wallets/create")
     public BaseResponse<String> addWalletToUser(@RequestBody Map<String, String> req){
@@ -119,7 +133,9 @@ public class UserController {
         }
     }
 
-    //친구
+    /**
+     ******************************** friend ********************************
+     **/
 
     @PostMapping("friends/request")
     public BaseResponse<String> requestFriend(@RequestParam("user") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
@@ -156,6 +172,54 @@ public class UserController {
         String status = userProvider.getStatusOfFriendReq(reqFrom, reqTo);
         return new BaseResponse<>(status);
     }
+
+    /**
+    ******************************** nft ********************************
+    **/
+
+//    @GetMapping("nft/refresh")
+//    public BaseResponse<String> getNftRefresh(@RequestParam("userId") String userId) throws ParseException {
+//        //1. 이 인간의 Dashboard 지갑 다불러오기
+//        List<UserWallet> userWallets =  userProvider.getAllUserWalletForDashBoardByUserId(userId);
+//        for(UserWallet userWallet:userWallets){
+//            String walletAddress = userWallet.getWalletAddress();
+//            String chain = userWallet.getChain();
+//            System.out.println(chain);
+//            String api_chain;
+//            if(chain.equals("Polygon")){
+//                api_chain = "polygon";
+//            }
+//            else if(chain.equals("Ethereum")){
+//                api_chain = "eth";
+//            }
+//            else if(chain.equals("Ethereum")){
+//                api_chain = "eth";
+//            }
+//            else if(chain.equals("Avalanche")){
+//                api_chain = "avalanche";
+//            }
+//            else{
+//                return new BaseResponse<>(NOT_SUPPORTED_CHAIN);
+//            }
+//            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
+//            userService.reduceRefreshNftCount(userId);
+//        }
+//        return new BaseResponse<>("refresh success");
+//    }
+
+    @GetMapping("nfts")
+    public BaseResponse<List<NftForDashboard>> getMyNfts(@RequestParam("userId") String userId){
+        // 유저의 모든 nftWallet 불러오기
+        List<NftForDashboard> nftForDashboardList = userProvider.getNftDashboardInfoByUserId(userId);
+        return new BaseResponse<>(nftForDashboardList);
+    }
+
+//    public List<NftForDashboard> trimNftList(List<Nft> nftList){
+//        List<NftForDashboard> nftForDashboardList = new ArrayList<>();
+//        for(Nft nft:nftList){
+//            nft.get
+//        }
+//    }
 
 //    // 회원가입 -> 사용자 정보 생성하기
 //    @PostMapping("/users/signup/user")
@@ -558,42 +622,8 @@ public class UserController {
 //    }
 //
 //
-//    @GetMapping("nft/refresh")
-//    public BaseResponse<String> getNftRefresh(@RequestParam("userId") String userId) throws ParseException {
-//        //1. 이 인간의 Dashboard 지갑 다불러오기
-//        List<UserWallet> userWallets =  userProvider.getAllUserWalletForDashBoardByUserId(userId);
-//        for(UserWallet userWallet:userWallets){
-//            String walletAddress = userWallet.getWalletAddress();
-//            String chain = userWallet.getChain();
-//            System.out.println(chain);
-//            String api_chain;
-//            if(chain.equals("Polygon")){
-//                api_chain = "polygon";
-//            }
-//            else if(chain.equals("Ethereum")){
-//                api_chain = "eth";
-//            }
-//            else if(chain.equals("Ethereum")){
-//                api_chain = "eth";
-//            }
-//            else if(chain.equals("Avalanche")){
-//                api_chain = "avalanche";
-//            }
-//            else{
-//                return new BaseResponse<>(NOT_SUPPORTED_CHAIN);
-//            }
-//            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
-//            userService.reduceRefreshNftCount(userId);
-//        }
-//        return new BaseResponse<>("refresh success");
-//    }
-//
-//    @GetMapping("nft")
-//    public BaseResponse<List<Nft>> getMyNfts(@RequestParam("walletIdx") int walletIdx) throws ParseException {
-//        //1. 이 인간의 NFT 다불러오기
-//        List<Nft> nftList = userProvider.getNftsBywalletIdx(walletIdx);
-//        return new BaseResponse<>(nftList);
-//    }
+
+
 //
 //
 //    //public hideBadge

@@ -323,16 +323,47 @@ public class UserProvider {
         }
     }
 
-    public List<Nft> getNftsBywalletIdx(int walletIdx){
-        List<NftWallet> nftWallets = userDao.getNftWallets(walletIdx);
-        List<Nft> nfts = new ArrayList<>();
-        for(NftWallet nftWallet:nftWallets){
-            int nftIdx = nftWallet.getNftIndex();
-            Nft nft = userDao.getNFT(nftIdx);
-            nfts.add(nft);
-        }
+//    public List<Nft> getNftsBywalletIdx(int walletIdx){
+//        List<NftWallet> nftWallets = userDao.getNftWallets(walletIdx);
+//        List<Nft> nfts = new ArrayList<>();
+//        for(NftWallet nftWallet:nftWallets){
+//            int nftIdx = nftWallet.getNftIndex();
+//            Nft nft = userDao.getNFT(nftIdx);
+//            nfts.add(nft);
+//        }
+//
+//        return nfts;
+//    }
 
-        return nfts;
+    public List<NftForDashboard> getNftDashboardInfoByUserId(String userId){
+        // get all user's userWallet
+        List<UserWallet> userWalletList = userDao.getAllUserWalletByUserId(userId);
+        List<NftForDashboard> nftForDashboardList = new ArrayList<>();
+        // get wallets' all nfts
+        for(UserWallet userWallet:userWalletList){
+            List<NftWallet> nftWalletList = userDao.getNftWallets(userWallet.getIndex());
+                for(NftWallet nftWallet:nftWalletList){
+                Nft nft = userDao.getNFT(nftWallet.getNftAddress(), nftWallet.getNftTokenId());
+                NftForDashboard nftForDashboard = new NftForDashboard(nft.getIndex(), nftWallet.getIndex(), nft.getAddress(), nft.getTokenID(), nftWallet.isHidden(), nft.getImage());
+                nftForDashboardList.add(nftForDashboard);
+            }
+        }
+        return removeNftDashboardDuplicated(nftForDashboardList);
+    }
+
+    // util
+    public List<NftForDashboard> removeNftDashboardDuplicated(List<NftForDashboard> nftForDashboardList){
+        List<String> nftNameList = new ArrayList<>();
+        List<NftForDashboard> dupRemovedNftForDashboardList = new ArrayList<>();
+        for(NftForDashboard nftForDashboard:nftForDashboardList){
+            String name = nftForDashboard.getAddress() + " " + nftForDashboard.getTokenID();
+            if(nftNameList.contains(name)){
+                continue;
+            }
+            nftNameList.add(name);
+            dupRemovedNftForDashboardList.add(nftForDashboard);
+        }
+        return dupRemovedNftForDashboardList;
     }
 
 }

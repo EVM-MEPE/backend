@@ -6,11 +6,11 @@ import lombok.*;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class NftWallet {
-    private int index;
-    private String nftAddress;
-    private int nftTokenId;
-    private int userWalletIndex;
-    private int amount;
+public class NftForDashboard {
+    private int nftIndex;
+    private int nftWalletIndex;
+    private String address;
+    private int tokenID;
     private boolean hidden;
+    private String image;
 }
