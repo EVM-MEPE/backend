@@ -45,10 +45,20 @@ public class UserProvider {
         }
     }
 
+
+
     //User의 profileImage Path불러오기
     public String getUserImagePath(String userId) throws BaseException{
         try{
             return userDao.getUserImagePath(userId);
+        } catch(Exception exception){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
+    public Social getSocial(String userId) throws BaseException{
+        try{
+            return userDao.getSocial(userId);
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
@@ -364,6 +374,14 @@ public class UserProvider {
             dupRemovedNftForDashboardList.add(nftForDashboard);
         }
         return dupRemovedNftForDashboardList;
+    }
+
+    public int getNftRefreshLeft(String userId)throws BaseException {
+        try{
+            return userDao.getNftRefreshLeft(userId);
+        }catch(Exception exception){
+            throw new BaseException(DATABASE_ERROR);
+        }
     }
 
 }

@@ -803,11 +803,16 @@ public class UserDao {
         );
     }
 
-//    public void createNFTWallet(String token_address,int tokenId,int userWalletIndex,int amount,int nftIndex){
-//        String createNFTWalletQuery = "INSERT INTO nftWallet(nftAddress, nftTokenId, userWalletIndex, amount, nftIndex) VALUES(?,?,?,?,?)";
-//        Object[] createNFTWalletParams = new Object[]{token_address, tokenId, userWalletIndex, amount, nftIndex};
-//        this.jdbcTemplate.update(createNFTWalletQuery, createNFTWalletParams);
-//    }
+    public int getNftRefreshLeft(String userId){
+        String getNftRefreshLeftQuery = "select nftRefreshLeft from user where id=?";
+        return this.jdbcTemplate.queryForObject(getNftRefreshLeftQuery, int.class, userId);
+    }
+
+    public void createNFTWallet(String token_address,int tokenId,int userWalletIndex,int amount){
+        String createNFTWalletQuery = "INSERT INTO nftWallet(nftAddress, nftTokenId, userWalletIndex, amount) VALUES(?,?,?,?)";
+        Object[] createNFTWalletParams = new Object[]{token_address, tokenId, userWalletIndex, amount};
+        this.jdbcTemplate.update(createNFTWalletQuery, createNFTWalletParams);
+    }
 
     public List<NftWallet> getNftWallets(int walletIdx){
         String getNftWaleltsQuery = "select * from nftWallet where userWalletIndex = ?";
@@ -832,6 +837,21 @@ public class UserDao {
     public void hideBadge(String userId){
         String reduceRefreshNftCountQuery = "UPDATE user SET nftRefreshLeft=nftRefreshLeft+1 where id = ?";
         this.jdbcTemplate.update(reduceRefreshNftCountQuery, userId);
+    }
+
+    public Social getSocial(String userId){
+        String getSocialQuery = "SELECT * FROM social WHERE userId=?";
+        return this.jdbcTemplate.queryForObject(getSocialQuery,
+                (rs, rowNum) -> new Social(
+                        rs.getString("userId"),
+                        rs.getString("twitter"),
+                        rs.getString("facebook"),
+                        rs.getString("discord"),
+                        rs.getString("link")
+                ),
+                userId
+        );
+
     }
 
 }

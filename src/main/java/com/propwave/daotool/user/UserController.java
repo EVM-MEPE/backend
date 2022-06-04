@@ -10,6 +10,7 @@ import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
 import com.propwave.daotool.wallet.model.UserWallet;
+import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,6 +95,13 @@ public class UserController {
         return new BaseResponse<>("successfully add wallet to user");
     }
 
+    @PostMapping("wallets/delete")
+    public BaseResponse<String> deleteWalletToUser(@RequestBody Map<String, String> req) throws BaseException {
+        System.out.println("\n Delete Wallet \n");
+        userService.deleteUserWallet(req.get("userID"), req.get("walletAddress"));
+        return new BaseResponse<>("successfully delete wallet to user");
+    }
+
     @GetMapping("users/login")
     public BaseResponse<List<UserWalletAndInfo>> login(@RequestParam("userID") String userID) throws BaseException {
         System.out.println("\n Login \n");
@@ -132,6 +140,31 @@ public class UserController {
             return new BaseResponse<>(users);
         }
     }
+
+    /**
+     ******************************** mypage ********************************
+     **/
+    @GetMapping("mypage")
+    public BaseResponse<Map<String, Object>> getUserInfo(@RequestParam("userID") String userID) throws BaseException {
+        User user = userProvider.getUser(userID);
+        int friendCount = userProvider.getFriendsCount(userID);
+        Social social = userProvider.getSocial(userID);
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+        Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
+        Map<String, Object> socialMap = objectMapper.convertValue(social, Map.class);
+
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("user", userMap);
+        result.put("friendCount", friendCount);
+        result.put("social", socialMap);
+
+        return new BaseResponse<>(result);
+    }
+
+
+
 
     /**
      ******************************** friend ********************************
@@ -177,35 +210,30 @@ public class UserController {
     ******************************** nft ********************************
     **/
 
-//    @GetMapping("nft/refresh")
-//    public BaseResponse<String> getNftRefresh(@RequestParam("userId") String userId) throws ParseException {
-//        //1. 이 인간의 Dashboard 지갑 다불러오기
-//        List<UserWallet> userWallets =  userProvider.getAllUserWalletForDashBoardByUserId(userId);
-//        for(UserWallet userWallet:userWallets){
-//            String walletAddress = userWallet.getWalletAddress();
-//            String chain = userWallet.getChain();
-//            System.out.println(chain);
-//            String api_chain;
-//            if(chain.equals("Polygon")){
-//                api_chain = "polygon";
-//            }
-//            else if(chain.equals("Ethereum")){
-//                api_chain = "eth";
-//            }
-//            else if(chain.equals("Ethereum")){
-//                api_chain = "eth";
-//            }
-//            else if(chain.equals("Avalanche")){
-//                api_chain = "avalanche";
-//            }
-//            else{
-//                return new BaseResponse<>(NOT_SUPPORTED_CHAIN);
-//            }
-//            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
-//            userService.reduceRefreshNftCount(userId);
-//        }
-//        return new BaseResponse<>("refresh success");
-//    }
+    @GetMapping("nfts/refresh")
+    public BaseResponse<String> getNftRefresh(@RequestParam("userId") String userId) throws BaseException, ParseException {
+        //1. 이 인간의 Dashboard 지갑 다불러오기
+        List<UserWalletAndInfo> userWallets =  userProvider.getAllUserWalletByUserId(userId);
+        for(UserWalletAndInfo userWallet:userWallets){
+            String walletAddress = userWallet.getWalletAddress();
+
+            String api_chain = "polygon";
+            String chain = "Polygon";
+            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
+
+            api_chain = "eth";
+            chain = "Ethereum";
+            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
+
+            api_chain = "avalanche";
+            chain = "Avalanche";
+            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
+
+            userService.reduceRefreshNftCount(userId);
+        }
+        return new BaseResponse<>("refresh success");
+    }
+
 
     @GetMapping("nfts")
     public BaseResponse<List<NftForDashboard>> getMyNfts(@RequestParam("userId") String userId){
@@ -214,12 +242,11 @@ public class UserController {
         return new BaseResponse<>(nftForDashboardList);
     }
 
-//    public List<NftForDashboard> trimNftList(List<Nft> nftList){
-//        List<NftForDashboard> nftForDashboardList = new ArrayList<>();
-//        for(Nft nft:nftList){
-//            nft.get
-//        }
-//    }
+    @GetMapping("nfts/refreshLeft")
+    public BaseResponse<Integer> getNftRefreshLeft(@RequestParam("userId") String userId) throws BaseException {
+        int nftRefreshLeft = userProvider.getNftRefreshLeft(userId);
+        return new BaseResponse<>(nftRefreshLeft);
+    }
 
 //    // 회원가입 -> 사용자 정보 생성하기
 //    @PostMapping("/users/signup/user")
