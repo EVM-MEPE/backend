@@ -43,6 +43,7 @@ public class UserService {
             //newUser의 JWT 토큰 만들기
             String jwtToken = securityService.createToken(userID, (360*1000*60)); // 토큰 유효시간 6시간
             User newUser = userDao.createUser(userID);
+            System.out.println(newUser);
 
             ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
             Map<String, Object> res = objectMapper.convertValue(newUser, Map.class);
@@ -122,14 +123,14 @@ public class UserService {
 
 
 
-    public int addWalletToUser(Map<String, String> req){
+    public int addWalletToUser(String userID, String walletAddress, String walletType){
         //이미 있는 지갑인지 확인하기
-        int walletExist = userDao.isWalletExist(req.get("walletAddress"));
+        int walletExist = userDao.isWalletExist(walletAddress);
 
         if(walletExist == 0){
-            userDao.createWallet(req.get("walletAddress"), req.get("walletType"));
+            userDao.createWallet(walletAddress, walletType);
         }
-        return userDao.createUserWallet(req.get("userID"), req.get("walletAddress"));
+        return userDao.createUserWallet(userID, walletAddress);
     }
 
     public int deleteUser(String userId) throws BaseException{

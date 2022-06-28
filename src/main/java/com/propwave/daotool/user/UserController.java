@@ -83,7 +83,7 @@ public class UserController {
     public BaseResponse<Map<String, Object>> createUserWithAWallet(@RequestParam("userID") String userID, @RequestBody Map<String, String> req) throws BaseException{
         System.out.println("\n Create user with one wallet\n");
         Map<String, Object> newUser = userService.createUser(userID);
-        userService.addWalletToUser(req);
+        userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
         return new BaseResponse<>(newUser);
     }
 
@@ -96,12 +96,11 @@ public class UserController {
         String jwtToken = req.get("jwtToken");
         String userID = req.get("userID");
         String subject = securityService.getSubject(jwtToken);
-
         if(!subject.equals(userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
-        userService.addWalletToUser(req);
+        userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
         return new BaseResponse<>("successfully add wallet to user");
     }
 
