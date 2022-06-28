@@ -39,9 +39,10 @@ public class UserDao {
         return getUserInfo((String)userInfo.get("id"));
     }
 
-    public User createUser(String userID){
-        String createUserQuery = "INSERT INTO user(id) VALUES (?)";
-        this.jdbcTemplate.update(createUserQuery, userID);
+    public User createUser(String userID, String jwtToken){
+        String createUserQuery = "INSERT INTO user(id, jwtToken) VALUES (?, ?)";
+        Object[] createUserParam = new Object[]{userID, jwtToken};
+        this.jdbcTemplate.update(createUserQuery, createUserParam);
         return getUserInfo(userID);
     }
 
@@ -59,7 +60,8 @@ public class UserDao {
                         rs.getInt("nftRefreshLeft"),
                         rs.getString("backImage"),
                         rs.getString("nickname"),
-                        rs.getInt("index")
+                        rs.getInt("index"),
+                        rs.getString("jwtToken")
                 ),
                 id
         );

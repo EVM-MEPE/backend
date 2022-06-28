@@ -72,15 +72,15 @@ public class UserController {
         return new BaseResponse<>(result);
     }
 
-    @GetMapping("users/create")
-    public BaseResponse<User> createUser(@RequestParam("userID") String userID) throws BaseException{
-        System.out.println("\n Create user\n");
-        User newUser = userService.createUser(userID);
-        return new BaseResponse<>(newUser);
-    }
+//    @GetMapping("users/create")
+//    public BaseResponse<User> createUser(@RequestParam("userID") String userID) throws BaseException{
+//        System.out.println("\n Create user\n");
+//        User newUser = userService.createUser(userID);
+//        return new BaseResponse<>(newUser);
+//    }
 
     @PostMapping("users/create")
-    public BaseResponse<User> createUserWithWallet(@RequestParam("userID") String userID, @RequestBody Map<String, String> req) throws BaseException{
+    public BaseResponse<User> createUserWithAWallet(@RequestParam("userID") String userID, @RequestBody Map<String, String> req) throws BaseException{
         System.out.println("\n Create user with one wallet\n");
         User newUser = userService.createUser(userID);
         userService.addWalletToUser(req);
@@ -90,7 +90,7 @@ public class UserController {
 
     @PostMapping("wallets/create")
     public BaseResponse<String> addWalletToUser(@RequestBody Map<String, String> req){
-        System.out.println("\n Create Wallet \n");
+        System.out.println("\n Add Wallet \n");
         userService.addWalletToUser(req);
         return new BaseResponse<>("successfully add wallet to user");
     }

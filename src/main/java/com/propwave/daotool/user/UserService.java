@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.config.BaseException;
+import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
 import com.propwave.daotool.wallet.model.UserWallet;
@@ -28,16 +29,20 @@ public class UserService {
     private final UserProvider userProvider;
     @Autowired
     private final GetNFT getNFT;
+    private final SecurityService securityService;
 
-    public UserService(GetNFT getNFT, UserDao userDao, UserProvider userProvider){
+    public UserService(GetNFT getNFT, UserDao userDao, UserProvider userProvider, SecurityService securityService){
         this.userDao = userDao;
         this.userProvider = userProvider;
         this.getNFT = getNFT;
+        this.securityService = securityService;
     }
 
     public User createUser(String userID) throws BaseException{
         try{
-            return userDao.createUser(userID);
+            //newUser의 JWT 토큰 만들기
+            String jwtToken = securityService.createToken(userID, (360*1000*60)); // 토큰 유효시간 6시간
+            return userDao.createUser(userID, jwtToken);
         } catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
