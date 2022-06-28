@@ -19,5 +19,4 @@ public class User {
     private String backImage;
     private String nickname;
     private int index;
-    private String token;
 }

@@ -38,11 +38,17 @@ public class UserService {
         this.securityService = securityService;
     }
 
-    public User createUser(String userID) throws BaseException{
+    public Map<String, Object> createUser(String userID) throws BaseException{
         try{
             //newUser의 JWT 토큰 만들기
             String jwtToken = securityService.createToken(userID, (360*1000*60)); // 토큰 유효시간 6시간
-            return userDao.createUser(userID, jwtToken);
+            User newUser = userDao.createUser(userID);
+
+            ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+            Map<String, Object> res = objectMapper.convertValue(newUser, Map.class);
+            res.put("jwtToken", jwtToken);
+
+            return res;
         } catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }

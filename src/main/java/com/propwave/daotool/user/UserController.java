@@ -80,9 +80,9 @@ public class UserController {
 //    }
 
     @PostMapping("users/create")
-    public BaseResponse<User> createUserWithAWallet(@RequestParam("userID") String userID, @RequestBody Map<String, String> req) throws BaseException{
+    public BaseResponse<Map<String, Object>> createUserWithAWallet(@RequestParam("userID") String userID, @RequestBody Map<String, String> req) throws BaseException{
         System.out.println("\n Create user with one wallet\n");
-        User newUser = userService.createUser(userID);
+        Map<String, Object> newUser = userService.createUser(userID);
         userService.addWalletToUser(req);
         return new BaseResponse<>(newUser);
     }
@@ -91,6 +91,16 @@ public class UserController {
     @PostMapping("wallets/create")
     public BaseResponse<String> addWalletToUser(@RequestBody Map<String, String> req){
         System.out.println("\n Add Wallet \n");
+
+        // check jwt token
+        String jwtToken = req.get("jwtToken");
+        String userID = req.get("userID");
+        String subject = securityService.getSubject(jwtToken);
+
+        if(!subject.equals(userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
         userService.addWalletToUser(req);
         return new BaseResponse<>("successfully add wallet to user");
     }
