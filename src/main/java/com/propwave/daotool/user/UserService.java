@@ -1,10 +1,12 @@
 package com.propwave.daotool.user;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.propwave.daotool.badge.model.BadgeWallet;
 import com.propwave.daotool.config.BaseException;
+import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
@@ -89,21 +91,28 @@ public class UserService {
         }
     }
 
-    public UserSocial editUserProfileAndSocial(String userID, String json) throws BaseException {
+    public UserSocial editUserProfileAndSocial(String userID, String json) throws BaseException, JsonProcessingException {
         try{
             ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
             Map<String, String> req = objectMapper.readValue(json, new TypeReference<>() {});
 
             User changedUser = userDao.editUserProfile(userID, req.get("profileName"), req.get("introduction"), req.get("url"));
-            Social changedSocial = userDao.createUserSocial(userID, req.get("twitter"), req.get("facebook"), req.get("discord"), req.get("link"));
+            // 사용자 social이 이미 있느지 확인하고, 없으면 새로만드는 방식으로 가야함!!!
+            Social social = userDao.getSocial(userID);
+            Social changedSocial;
+            if(social == null){
+                changedSocial = userDao.createUserSocial(userID, req.get("twitter"), req.get("facebook"), req.get("discord"), req.get("link"));
+            }
+            else{
+                changedSocial = userDao.changeUserSocial(userID, req.get("twitter"), req.get("facebook"), req.get("discord"), req.get("link"));
+            }
 
             return new UserSocial(changedUser.getId(), changedUser.getProfileImage(), changedUser.getIntroduction(), changedUser.getUrl(), changedUser.getHits(), changedUser.getTodayHits(), changedUser.getCreatedAt(), changedUser.getNftRefreshLeft(), changedUser.getBackImage(), changedUser.getNickname(), changedUser.getIndex(),
                     changedSocial.getTwitter(), changedSocial.getFacebook(), changedSocial.getDiscord(), changedSocial.getLink());
-
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
-}
+    }
 
     public int editUserProfileImg(String userID, String profileImagePath) throws BaseException {
         try{
@@ -126,6 +135,11 @@ public class UserService {
     public int addWalletToUser(String userID, String walletAddress, String walletType){
         //이미 있는 지갑인지 확인하기
         int walletExist = userDao.isWalletExist(walletAddress);
+        //이미 나에게 있는 지갑인지 확인하기
+        int walletExistToMe = userDao.isUserWalletExist(userID, walletAddress);
+        if(walletExistToMe==1){
+            return -1;
+        }
 
         if(walletExist == 0){
             userDao.createWallet(walletAddress, walletType);

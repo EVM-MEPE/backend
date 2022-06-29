@@ -10,6 +10,7 @@ import com.propwave.daotool.wallet.model.UserWallet;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -74,6 +75,7 @@ public class UserDao {
     }
 
     public int editUserProfileImg(String userID, String profileImagePath){
+        System.out.println(profileImagePath);
         String editUserProfileImgQuery = "UPDATE user SET profileImage=? WHERE id = ?";
         Object[] editUserProfileImgParams = new Object[]{profileImagePath, userID};
         return this.jdbcTemplate.update(editUserProfileImgQuery, editUserProfileImgParams);
@@ -96,6 +98,13 @@ public class UserDao {
         String createUserSocialQuery = "INSERT INTO social(userId, twitter, facebook, discord, link) VALUES(?,?,?,?,?)";
         Object[] createUserSocialParam = new Object[]{userID, twitter, facebook, discord, link};
         this.jdbcTemplate.update(createUserSocialQuery, createUserSocialParam);
+        return getUserSocial(userID);
+    }
+
+    public Social changeUserSocial(String userID, String twitter, String facebook, String discord, String link){
+        String changeUserSocial = "UPDATE social SET twitter=?, facebook=?, discord=?, link=? WHERE userId=?";
+        Object[] createUserSocialParam = new Object[]{twitter, facebook, discord, link, userID};
+        this.jdbcTemplate.update(changeUserSocial, createUserSocialParam);
         return getUserSocial(userID);
     }
 
@@ -840,18 +849,21 @@ public class UserDao {
     }
 
     public Social getSocial(String userId){
-        String getSocialQuery = "SELECT * FROM social WHERE userId=?";
-        return this.jdbcTemplate.queryForObject(getSocialQuery,
-                (rs, rowNum) -> new Social(
-                        rs.getString("userId"),
-                        rs.getString("twitter"),
-                        rs.getString("facebook"),
-                        rs.getString("discord"),
-                        rs.getString("link")
-                ),
-                userId
-        );
-
+        try{
+            String getSocialQuery = "SELECT * FROM social WHERE userId=?";
+            return this.jdbcTemplate.queryForObject(getSocialQuery,
+                    (rs, rowNum) -> new Social(
+                            rs.getString("userId"),
+                            rs.getString("twitter"),
+                            rs.getString("facebook"),
+                            rs.getString("discord"),
+                            rs.getString("link")
+                    ),
+                    userId
+            );
+        }catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
 }

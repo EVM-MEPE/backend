@@ -13,7 +13,7 @@ public enum BaseResponseStatus {
     REQUEST_ERROR(false, 404, "입력값을 확인해주세요."),
 
     USER_NOT_EXISTS(false, 401, "존재하지 않는 유저입니다."),
-    USER_TOKEN_WRONG(false, 401, "토큰 값이 맞지 않습니다."),
+    USER_TOKEN_WRONG(false, 404, "토큰 값이 맞지 않습니다."),
     USER_ID_ALREADY_EXIST(false, 402, "이미 존재하는 유저 이름입니다."),
     PASSWORD_WRONG(false, 404, "비밀번호가 틀렸습니다."),
 
@@ -21,7 +21,7 @@ public enum BaseResponseStatus {
 
     //badge
     NO_BADGE_EXIST(false, 401, "해당하는 뱃지가 없습니다."),
-    WALLET_ALREADY_EXIST_FOR_LOGIN(false, 401, "지갑이 이미 로그인용으로 등록되어있습니다."),
+    WALLET_ALREADY_EXIST_TO_USER(false, 403, "지갑이 이미 유저에게 등록되어 있습니다."),
     NOT_SUPPORTED_CHAIN(false, 401, "지원하지 않는 chain입니다."),
     NO_WALLET_EXIST(false, 404, "해당하는 지갑이 없습니다."),
     /**

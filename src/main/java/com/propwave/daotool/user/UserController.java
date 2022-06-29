@@ -84,6 +84,7 @@ public class UserController {
         System.out.println("\n Create user with one wallet\n");
         Map<String, Object> newUser = userService.createUser(userID);
         userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
+
         return new BaseResponse<>(newUser);
     }
 
@@ -95,12 +96,16 @@ public class UserController {
         // check jwt token
         String jwtToken = req.get("jwtToken");
         String userID = req.get("userID");
-        String subject = securityService.getSubject(jwtToken);
-        if(!subject.equals(userID)){
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
-        userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
+        int result = userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
+        if(result==-1){
+            return new BaseResponse<>(WALLET_ALREADY_EXIST_TO_USER);
+        }
+
         return new BaseResponse<>("successfully add wallet to user");
     }
 
@@ -112,13 +117,18 @@ public class UserController {
     }
 
     @GetMapping("users/login")
-    public BaseResponse<List<UserWalletAndInfo>> login(@RequestParam("userID") String userID) throws BaseException {
+    public BaseResponse<Map<String, Object>> login(@RequestParam("userID") String userID) throws BaseException {
         System.out.println("\n Login \n");
         List<UserWalletAndInfo> userWalletList = userProvider.getAllUserWalletByUserId(userID);
 
+        //User의 JWT 토큰 만들기
+        String jwtToken = securityService.createToken(userID, (360*1000*60)); // 토큰 유효시간 6시간
 
+        Map<String, Object> res = new HashMap<>();
+        res.put("userWallets", userWalletList);
+        res.put("userToken", jwtToken);
 
-        return new BaseResponse<>(userWalletList);
+        return new BaseResponse<>(res);
     }
 
     @PatchMapping("users/profile")
@@ -127,6 +137,25 @@ public class UserController {
                                             @RequestParam(value = "backImage", required = false) MultipartFile backImage,
                                             @RequestParam(value = "json") String json) throws IOException, BaseException {
         System.out.println("\n edit Profile \n");
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+        Map<String, String> req = objectMapper.readValue(json, new TypeReference<>() {});
+
+        // check jwt token
+        String jwtToken = req.get("jwtToken");
+        String subject;
+        try{
+            subject = securityService.getSubject(jwtToken);
+        } catch(Exception e){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        if(!subject.equals(userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        UserSocial userSocial = userService.editUserProfileAndSocial(userID, json);
+
         if(!profileImage.isEmpty()){
             String profileImagePath = s3Uploader.upload(profileImage, "media/user/profileImage");
             userService.editUserProfileImg(userID, profileImagePath);
@@ -135,7 +164,6 @@ public class UserController {
             String backImagePath = s3Uploader.upload(backImage, "media/user/backImage");
             userService.editUserBackImg(userID, backImagePath);
         }
-        UserSocial userSocial = userService.editUserProfileAndSocial(userID, json);
 
         return new BaseResponse<>(userSocial);
     }
@@ -666,4 +694,17 @@ public class UserController {
 //
 //
 //    //public hideBadge
+    public boolean isUserJwtTokenAvailable(String jwtToken, String userID){
+        // check jwt token
+        String subject;
+        try{
+            subject = securityService.getSubject(jwtToken);
+        } catch(Exception e){
+            return false;
+        }
+
+        return subject.equals(userID);
+    }
 }
+
+
