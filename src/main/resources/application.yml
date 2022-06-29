@@ -23,5 +23,9 @@ spring:
         allow-bean-definition-overriding: true
     jpa:
         database-platform: org.hibernate.dialect.PostgreSQLDialect
+    servlet:
+        multipart:
+            max-file-size: 5MB
+            max-request-size: 5MB
 
 

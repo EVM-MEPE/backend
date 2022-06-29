@@ -112,6 +112,15 @@ public class UserController {
     @PostMapping("wallets/delete")
     public BaseResponse<String> deleteWalletToUser(@RequestBody Map<String, String> req) throws BaseException {
         System.out.println("\n Delete Wallet \n");
+
+        // check jwt token
+        String jwtToken = req.get("jwtToken");
+        String userID = req.get("userID");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
         userService.deleteUserWallet(req.get("userID"), req.get("walletAddress"));
         return new BaseResponse<>("successfully delete wallet to user");
     }
@@ -143,14 +152,8 @@ public class UserController {
 
         // check jwt token
         String jwtToken = req.get("jwtToken");
-        String subject;
-        try{
-            subject = securityService.getSubject(jwtToken);
-        } catch(Exception e){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
 
-        if(!subject.equals(userID)){
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -158,10 +161,12 @@ public class UserController {
 
         if(!profileImage.isEmpty()){
             String profileImagePath = s3Uploader.upload(profileImage, "media/user/profileImage");
+            System.out.println(profileImagePath);
             userService.editUserProfileImg(userID, profileImagePath);
         }
         if(!backImage.isEmpty()){
             String backImagePath = s3Uploader.upload(backImage, "media/user/backImage");
+            System.out.println(backImagePath);
             userService.editUserBackImg(userID, backImagePath);
         }
 
@@ -212,18 +217,41 @@ public class UserController {
 
     @PostMapping("friends/request")
     public BaseResponse<String> requestFriend(@RequestParam("user") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
+        // check jwt token
+        String jwtToken = json.get("jwtToken");
+        String userID = json.get("reqFrom");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
         userService.createFriendReq(reqTo, json.get("reqFrom"), json.get("reqNickname"));
         return new BaseResponse<>("successfully make friend request");
     }
 
     @PatchMapping("friends/request")
     public BaseResponse<String> friendRequestProcess(@RequestParam("accept") boolean isAccepted, @RequestBody Map<String, String> json) throws BaseException {
+        // check jwt token
+        String jwtToken = json.get("jwtToken");
+        String userID = json.get("reqTo");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
         userService.acceptFriend(isAccepted, json.get("reqTo"), json.get("reqFrom"), json.get("reqNickname"));
         return new BaseResponse<>("successfully process friend request");
     }
 
     @PatchMapping("friends/nickname")
     public BaseResponse<Friend> editFriendNickname(@RequestBody Map<String, String> json){
+        // check jwt token
+        String jwtToken = json.get("jwtToken");
+        String userID = json.get("user");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
         Friend newNickname = userService.editFriendNickname(json.get("user"), json.get("friend"), json.get("newNickname"));
         return new BaseResponse<>(newNickname);
     }
@@ -240,8 +268,14 @@ public class UserController {
         return new BaseResponse<>(friendsCount);
     }
 
-    @GetMapping("friends/request/status")
-    public BaseResponse<String> getStatusOfFriendReq(@RequestParam("reqFrom") String reqFrom, @RequestParam("reqTo") String reqTo) throws BaseException {
+    @PostMapping("friends/request/status")
+    public BaseResponse<String> getStatusOfFriendReq(@RequestParam("reqFrom") String reqFrom, @RequestParam("reqTo") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
+        // check jwt token
+        String jwtToken = json.get("jwtToken");
+
+        if(!isUserJwtTokenAvailable(jwtToken, reqFrom)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
         String status = userProvider.getStatusOfFriendReq(reqFrom, reqTo);
         return new BaseResponse<>(status);
     }
