@@ -866,6 +866,12 @@ public class UserDao {
         }
     }
 
+    public int isFollowExist(String reqTo, String reqFrom){
+        String isFollowExistQuery = "SELECT EXISTS(SELECT * FROM follow WHERE user=? AND following=?)";
+        Object[] isFollowExistParams = new Object[]{reqFrom, reqTo};
+        return this.jdbcTemplate.queryForObject(isFollowExistQuery, int.class, isFollowExistParams);
+    }
+
     public int createFollow(String reqTo, String reqFrom){
         String createFollowQuery = "INSERT INTO follow(user, following) VALUES(?,?)";
         Object[] createFollowParams = new Object[]{reqFrom, reqTo};
@@ -889,6 +895,29 @@ public class UserDao {
                 ),
                 userID
         );
+    }
+
+    public List<Follow> getFollowerList(String userID){
+        String getFollowingList = "SELECT * FROM follow WHERE following=?";
+        return this.jdbcTemplate.query(getFollowingList,
+                (rs, rowNum) -> new Follow(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("following"),
+                        rs.getTimestamp("createdAt")
+                ),
+                userID
+        );
+    }
+
+    public int getFollowerCount(String userID){
+        String getFollowerCountQuery = "SELECT COUNT(*) FROM follow WHERE following=?";
+        return this.jdbcTemplate.queryForObject(getFollowerCountQuery, int.class, userID);
+    }
+
+    public int getFollowingCount(String userID){
+        String getFollowingCountQuery = "SELECT COUNT(*) FROM follow WHERE user=?";
+        return this.jdbcTemplate.queryForObject(getFollowingCountQuery, int.class, userID);
     }
 
 }

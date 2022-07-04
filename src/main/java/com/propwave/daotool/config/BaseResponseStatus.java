@@ -28,7 +28,9 @@ public enum BaseResponseStatus {
      * 4000 : Database, Server 오류
      */
     DATABASE_ERROR(false, 500, "데이터베이스 연결에 실패하였습니다."),
-    S3_UPLOAD_ERROR(false, 401, "이미지 업로드에 실패했습니다.");
+    S3_UPLOAD_ERROR(false, 401, "이미지 업로드에 실패했습니다."),
+
+    FOLLOW_ALREADY_EXIST(false, 403, "이미 존재하는 팔로우입니다.");
 
 
 

@@ -385,14 +385,33 @@ public class UserProvider {
     }
 
     public List<User> getFollowingList(String userID){
-        List<Follow> followList = userDao.getFollowingList(userID);
-        List<User> followListWithUserInfo = new ArrayList<>();
-        for(Follow follow:followList){
+        List<Follow> followingList = userDao.getFollowingList(userID);
+        List<User> followingListWithUserInfo = new ArrayList<>();
+        for(Follow follow:followingList){
             String following = follow.getFollowing();
             User user = userDao.getUserInfo(following);
-            followListWithUserInfo.add(user);
+            followingListWithUserInfo.add(user);
         }
-        return followListWithUserInfo;
+        return followingListWithUserInfo;
+    }
+
+    public List<User> getFollowerList(String userID){
+        List<Follow> followerList = userDao.getFollowerList(userID);
+        List<User> followerListWithUserInfo = new ArrayList<>();
+        for(Follow follow:followerList){
+            String follower = follow.getUser();
+            User user = userDao.getUserInfo(follower);
+            followerListWithUserInfo.add(user);
+        }
+        return followerListWithUserInfo;
+    }
+
+    public int getFollowerCount(String userID){
+        return userDao.getFollowerCount(userID);
+    }
+
+    public int getFollowingCount(String userID){
+        return userDao.getFollowingCount(userID);
     }
 
 }

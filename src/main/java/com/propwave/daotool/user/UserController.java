@@ -193,6 +193,8 @@ public class UserController {
     public BaseResponse<Map<String, Object>> getUserInfo(@RequestParam("userID") String userID) throws BaseException {
         User user = userProvider.getUser(userID);
         int friendCount = userProvider.getFriendsCount(userID);
+        int followerCount = userProvider.getFollowerCount(userID);
+        int followingCount = userProvider.getFollowingCount(userID);
         Social social = userProvider.getSocial(userID);
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
@@ -203,6 +205,8 @@ public class UserController {
         Map<String, Object> result = new HashMap<>();
         result.put("user", userMap);
         result.put("friendCount", friendCount);
+        result.put("followerCount", followerCount);
+        result.put("followingCount", followingCount);
         result.put("social", socialMap);
 
         return new BaseResponse<>(result);
@@ -336,7 +340,10 @@ public class UserController {
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
-        userService.createFollow(reqTo, json.get("reqFrom"));
+        int result = userService.createFollow(reqTo, json.get("reqFrom"));
+        if(result==-2){
+            return new BaseResponse<>(FOLLOW_ALREADY_EXIST);
+        }
         return new BaseResponse<>("successfully follow " + reqTo);
     }
 
@@ -358,6 +365,12 @@ public class UserController {
     public BaseResponse<List<User>> getFollowingList(@RequestParam("userID") String userID){
         List<User> followingList= userProvider.getFollowingList(userID);
         return new BaseResponse<>(followingList);
+    }
+
+    @GetMapping("following/follower")
+    public BaseResponse<List<User>> getFollowerList(@RequestParam("userID") String userID){
+        List<User> followerList= userProvider.getFollowerList(userID);
+        return new BaseResponse<>(followerList);
     }
 
 //    // 회원가입 -> 사용자 정보 생성하기

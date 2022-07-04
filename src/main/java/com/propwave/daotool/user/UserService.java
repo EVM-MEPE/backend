@@ -190,6 +190,10 @@ public class UserService {
     }
 
     public int createFollow(String reqTo, String reqFrom){
+        int checkFollowExist = userDao.isFollowExist(reqTo, reqFrom);
+        if(checkFollowExist == 1){
+            return -2;
+        }
         return userDao.createFollow(reqTo, reqFrom);
     }
 
