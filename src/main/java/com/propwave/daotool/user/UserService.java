@@ -189,6 +189,10 @@ public class UserService {
         return userDao.editFriendNickname(user, friend, newNickname);
     }
 
+    public int createFollow(String reqTo, String reqFrom){
+        return userDao.createFollow(reqTo, reqFrom);
+    }
+
 
     // ----------------------------------------------
 

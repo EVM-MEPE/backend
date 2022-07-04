@@ -322,6 +322,24 @@ public class UserController {
         return new BaseResponse<>(nftRefreshLeft);
     }
 
+    /**
+     ******************************** follow ********************************
+     **/
+
+    @PostMapping("following/request")
+    public BaseResponse<String> requestFollow(@RequestParam("userID") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
+        // check jwt token
+        String jwtToken = json.get("jwtToken");
+        String reqFrom = json.get("reqFrom");
+
+        if(!isUserJwtTokenAvailable(jwtToken, reqFrom)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        userService.createFollow(reqTo, json.get("reqFrom"));
+        return new BaseResponse<>("successfully follow " + reqTo);
+    }
+
 //    // 회원가입 -> 사용자 정보 생성하기
 //    @PostMapping("/users/signup/user")
 //    public BaseResponse<Map<String, Object>> UserSignUp(@RequestParam("profileImage") MultipartFile profileImage, @RequestParam("json") String json) throws BaseException, JsonProcessingException {

@@ -866,4 +866,10 @@ public class UserDao {
         }
     }
 
+    public int createFollow(String reqTo, String reqFrom){
+        String createFollowQuery = "INSERT INTO follow(user, following) VALUES(?,?)";
+        Object[] createFollowParams = new Object[]{reqFrom, reqTo};
+        return this.jdbcTemplate.update(createFollowQuery, createFollowParams);
+    }
+
 }
