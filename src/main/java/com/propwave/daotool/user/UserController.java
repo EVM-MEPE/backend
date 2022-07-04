@@ -354,7 +354,11 @@ public class UserController {
         return new BaseResponse<>("successfully delete follow " + reqTo);
     }
 
-
+    @GetMapping("following/following")
+    public BaseResponse<List<User>> getFollowingList(@RequestParam("userID") String userID){
+        List<User> followingList= userProvider.getFollowingList(userID);
+        return new BaseResponse<>(followingList);
+    }
 
 //    // 회원가입 -> 사용자 정보 생성하기
 //    @PostMapping("/users/signup/user")

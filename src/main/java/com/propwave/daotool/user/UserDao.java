@@ -878,4 +878,17 @@ public class UserDao {
         return this.jdbcTemplate.update(deleteFollowQuery, deleteFollowParams);
     }
 
+    public List<Follow> getFollowingList(String userID){
+        String getFollowingList = "SELECT * FROM follow WHERE user=?";
+        return this.jdbcTemplate.query(getFollowingList,
+                (rs, rowNum) -> new Follow(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("following"),
+                        rs.getTimestamp("createdAt")
+                ),
+                userID
+        );
+    }
+
 }

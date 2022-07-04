@@ -384,4 +384,15 @@ public class UserProvider {
         }
     }
 
+    public List<User> getFollowingList(String userID){
+        List<Follow> followList = userDao.getFollowingList(userID);
+        List<User> followListWithUserInfo = new ArrayList<>();
+        for(Follow follow:followList){
+            String following = follow.getFollowing();
+            User user = userDao.getUserInfo(following);
+            followListWithUserInfo.add(user);
+        }
+        return followListWithUserInfo;
+    }
+
 }
