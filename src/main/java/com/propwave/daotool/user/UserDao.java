@@ -872,4 +872,10 @@ public class UserDao {
         return this.jdbcTemplate.update(createFollowQuery, createFollowParams);
     }
 
+    public int deleteFollow(String reqTo, String reqFrom){
+        String deleteFollowQuery = "DELETE FROM follow WHERE user=? AND following=?";
+        Object[] deleteFollowParams = new Object[]{reqFrom, reqTo};
+        return this.jdbcTemplate.update(deleteFollowQuery, deleteFollowParams);
+    }
+
 }

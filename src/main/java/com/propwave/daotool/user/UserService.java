@@ -193,6 +193,10 @@ public class UserService {
         return userDao.createFollow(reqTo, reqFrom);
     }
 
+    public int deleteFollow(String reqTo, String reqFrom){
+        return userDao.deleteFollow(reqTo, reqFrom);
+    }
+
 
     // ----------------------------------------------
 
