@@ -10,6 +10,7 @@ import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
 import com.propwave.daotool.wallet.model.UserWallet;
+import com.propwave.daotool.wallet.model.Wallet;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -196,6 +197,7 @@ public class UserController {
         int followerCount = userProvider.getFollowerCount(userID);
         int followingCount = userProvider.getFollowingCount(userID);
         Social social = userProvider.getSocial(userID);
+        List<UserWalletAndInfo> walletLists = userProvider.getAllUserWalletByUserId(userID);
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
         Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
@@ -208,6 +210,7 @@ public class UserController {
         result.put("followerCount", followerCount);
         result.put("followingCount", followingCount);
         result.put("social", socialMap);
+        result.put("walletList", walletLists);
 
         return new BaseResponse<>(result);
     }
