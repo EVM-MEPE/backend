@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.xml.crypto.Data;
+import java.sql.Timestamp;
 import java.util.*;
 
 import static com.propwave.daotool.config.BaseResponseStatus.*;
@@ -45,10 +46,13 @@ public class UserService {
             //newUser의 JWT 토큰 만들기
             String jwtToken = securityService.createToken(userID, (360*1000*60)); // 토큰 유효시간 6시간
             User newUser = userDao.createUser(userID);
-            System.out.println(newUser);
 
             ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
             Map<String, Object> res = objectMapper.convertValue(newUser, Map.class);
+
+            Timestamp userCreatedAt = newUser.getCreatedAt();
+            res.replace("createdAt", userCreatedAt);
+
             res.put("jwtToken", jwtToken);
 
             return res;

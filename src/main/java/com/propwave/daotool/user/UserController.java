@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.List;
 
@@ -84,8 +85,8 @@ public class UserController {
     public BaseResponse<Map<String, Object>> createUserWithAWallet(@RequestParam("userID") String userID, @RequestBody Map<String, String> req) throws BaseException{
         System.out.println("\n Create user with one wallet\n");
         Map<String, Object> newUser = userService.createUser(userID);
-        userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
 
+        userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
         return new BaseResponse<>(newUser);
     }
 
@@ -202,6 +203,9 @@ public class UserController {
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
         Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
         Map<String, Object> socialMap = objectMapper.convertValue(social, Map.class);
+
+        Timestamp userCreatedAt = user.getCreatedAt();
+        userMap.replace("createdAt", userCreatedAt);
 
 
         Map<String, Object> result = new HashMap<>();
