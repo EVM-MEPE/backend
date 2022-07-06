@@ -170,6 +170,7 @@ public class UserController {
                 userService.editUserProfileImg(userID, profileImagePath);
             }
         }catch(Exception e){
+            System.out.println(e.getMessage());
             System.out.println("Not changing profile Image");
         }
 
@@ -180,6 +181,7 @@ public class UserController {
                 userService.editUserBackImg(userID, backImagePath);
             }
         }catch(Exception e){
+            System.out.println(e.getMessage());
             System.out.println("Not changing back Image");
         }
         return new BaseResponse<>(userSocial);
@@ -225,6 +227,8 @@ public class UserController {
         result.put("followingCount", followingCount);
         result.put("social", socialMap);
         result.put("walletList", walletLists);
+
+        userService.addHit(userID);
 
         return new BaseResponse<>(result);
     }
@@ -388,6 +392,14 @@ public class UserController {
     public BaseResponse<List<User>> getFollowerList(@RequestParam("userID") String userID){
         List<User> followerList= userProvider.getFollowerList(userID);
         return new BaseResponse<>(followerList);
+    }
+
+    @GetMapping("following")
+    public BaseResponse<Boolean> isFollowing(@RequestParam("userID1") String userID1, @RequestParam("userID2") String userID2){
+        int isFollowing = userProvider.isFollowing(userID1, userID2);
+        boolean result;
+        result = isFollowing == 1;
+        return new BaseResponse<>(result);
     }
 
 //    // 회원가입 -> 사용자 정보 생성하기

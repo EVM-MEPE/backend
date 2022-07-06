@@ -414,4 +414,8 @@ public class UserProvider {
         return userDao.getFollowingCount(userID);
     }
 
+    public int isFollowing(String userID1, String userID2){
+        return userDao.isFollowExist(userID1, userID2);
+    }
+
 }
