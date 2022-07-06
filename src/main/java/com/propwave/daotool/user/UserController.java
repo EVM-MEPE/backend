@@ -161,17 +161,27 @@ public class UserController {
 
         UserSocial userSocial = userService.editUserProfileAndSocial(userID, json);
 
-        if(!profileImage.isEmpty()){
-            String profileImagePath = s3Uploader.upload(profileImage, "media/user/profileImage");
-            System.out.println(profileImagePath);
-            userService.editUserProfileImg(userID, profileImagePath);
-        }
-        if(!backImage.isEmpty()){
-            String backImagePath = s3Uploader.upload(backImage, "media/user/backImage");
-            System.out.println(backImagePath);
-            userService.editUserBackImg(userID, backImagePath);
+        System.out.println("new version 1");
+
+        try{
+            if(!profileImage.isEmpty()){
+                String profileImagePath = s3Uploader.upload(profileImage, "media/user/profileImage");
+                System.out.println(profileImagePath);
+                userService.editUserProfileImg(userID, profileImagePath);
+            }
+        }catch(Exception e){
+            System.out.println("Not changing profile Image");
         }
 
+        try{
+            if(!backImage.isEmpty()){
+                String backImagePath = s3Uploader.upload(backImage, "media/user/backImage");
+                System.out.println(backImagePath);
+                userService.editUserBackImg(userID, backImagePath);
+            }
+        }catch(Exception e){
+            System.out.println("Not changing back Image");
+        }
         return new BaseResponse<>(userSocial);
     }
 
