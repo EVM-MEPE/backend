@@ -19,6 +19,7 @@ import java.util.*;
 //Provider: Read 비즈니스 로직 처리
 @Service
 public class UserProvider {
+    final static String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/d1b5e5d6-fc89-486b-99d6-b2a6894f9eafprofileimg-default.png";
 
     private final UserDao userDao;
 
@@ -51,7 +52,9 @@ public class UserProvider {
     public String getUserImagePath(String userId) throws BaseException{
         try{
             return userDao.getUserImagePath(userId);
-        } catch(Exception exception){
+        }catch(EmptyResultDataAccessException e1){
+            return DEFAULT_USER_PROFILE_IMAGE;
+        } catch(Exception e2){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
     }

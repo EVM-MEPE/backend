@@ -111,7 +111,7 @@ public class UserService {
                 changedSocial = userDao.changeUserSocial(userID, req.get("twitter"), req.get("facebook"), req.get("discord"), req.get("link"));
             }
 
-            return new UserSocial(changedUser.getId(), changedUser.getProfileImage(), changedUser.getIntroduction(), changedUser.getUrl(), changedUser.getHits(), changedUser.getTodayHits(), changedUser.getCreatedAt(), changedUser.getNftRefreshLeft(), changedUser.getBackImage(), changedUser.getNickname(), changedUser.getIndex(),
+            return new UserSocial(changedUser.getId(), changedUser.getIntroduction(), changedUser.getUrl(), changedUser.getHits(), changedUser.getTodayHits(), changedUser.getCreatedAt(), changedUser.getNftRefreshLeft(), changedUser.getBackImage(), changedUser.getNickname(), changedUser.getIndex(),
                     changedSocial.getTwitter(), changedSocial.getFacebook(), changedSocial.getDiscord(), changedSocial.getLink());
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);

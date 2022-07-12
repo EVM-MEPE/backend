@@ -10,7 +10,7 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 public class UserSocial {
     private String id;
-    private String profileImage;
+    //private String profileImage;
     private String introduction;
     private String url;
     private int hits;

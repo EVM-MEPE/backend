@@ -51,7 +51,6 @@ public class UserDao {
         return this.jdbcTemplate.queryForObject(getUserQuery,
                 (rs, rowNum) -> new User(
                         rs.getString("id"),
-                        rs.getString("profileImage"),
                         rs.getString("introduction"),
                         rs.getString("url"),
                         rs.getInt("hits"),
@@ -76,8 +75,9 @@ public class UserDao {
 
     public int editUserProfileImg(String userID, String profileImagePath){
         System.out.println(profileImagePath);
-        String editUserProfileImgQuery = "UPDATE user SET profileImage=? WHERE id = ?";
-        Object[] editUserProfileImgParams = new Object[]{profileImagePath, userID};
+        String editUserProfileImgQuery ="INSERT INTO profileImg(user, imgUrl) VALUES(?,?)";
+        //String editUserProfileImgQuery = "UPDATE user SET profileImage=? WHERE id = ?";
+        Object[] editUserProfileImgParams = new Object[]{userID, profileImagePath};
         return this.jdbcTemplate.update(editUserProfileImgQuery, editUserProfileImgParams);
     }
 
@@ -150,7 +150,7 @@ public class UserDao {
 
     //user의 프로필 이미지 주소 가져오기
     public String getUserImagePath(String userId){
-        String getUserImageQuery = "select profileImage from user where id = ?";
+        String getUserImageQuery = "SELECT imgUrl FROM profileImg WHERE user = ? ORDER BY `index` DESC LIMIT 1";
         return this.jdbcTemplate.queryForObject(getUserImageQuery, String.class, userId);
     }
 

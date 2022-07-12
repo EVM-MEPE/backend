@@ -9,8 +9,6 @@ import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
-import com.propwave.daotool.wallet.model.UserWallet;
-import com.propwave.daotool.wallet.model.Wallet;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +26,7 @@ import static com.propwave.daotool.config.BaseResponseStatus.*;
 @RestController
 @CrossOrigin(origins="*")
 public class UserController {
-    final static String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/a9e4edcc-b426-45f9-9593-792b088bf0b2userDefaultImage.png";
-    final static String ADMIN_PASSWORD = "propwave0806!";
+    final static String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/d1b5e5d6-fc89-486b-99d6-b2a6894f9eafprofileimg-default.png";
 
     final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final S3Uploader s3Uploader;
@@ -206,6 +203,7 @@ public class UserController {
     @GetMapping("mypage")
     public BaseResponse<Map<String, Object>> getUserInfo(@RequestParam("userID") String userID) throws BaseException {
         User user = userProvider.getUser(userID);
+        String profileImg = userProvider.getUserImagePath(userID);
         int friendCount = userProvider.getFriendsCount(userID);
         int followerCount = userProvider.getFollowerCount(userID);
         int followingCount = userProvider.getFollowingCount(userID);
@@ -227,13 +225,12 @@ public class UserController {
         result.put("followingCount", followingCount);
         result.put("social", socialMap);
         result.put("walletList", walletLists);
+        result.put("profileImg", profileImg);
 
         userService.addHit(userID);
 
         return new BaseResponse<>(result);
     }
-
-
 
 
     /**
