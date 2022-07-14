@@ -154,6 +154,20 @@ public class UserDao {
         return this.jdbcTemplate.queryForObject(getUserImageQuery, String.class, userId);
     }
 
+    public List<ProfileImg> getProfileImgHistory(String userID){
+        String getProfileImgHistoryQuery = "SELECT * FROM profileImg WHERE user = ? ORDER BY `index` DESC";
+        return this.jdbcTemplate.query(getProfileImgHistoryQuery,
+                (rs, rowNum) -> new ProfileImg(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("imgUrl"),
+                        rs.getBoolean("isHide"),
+                        rs.getTimestamp("createdAt")
+                ),
+                userID
+        );
+    }
+
     public List<UserWallet> getAllUserWalletByWalletId(String walletAddress){
         // userWallet에서 지갑 주소에 해당하는 record 다 가져오기
         String getUserWalletQuery = "select * from userWallet where walletAddress=?";

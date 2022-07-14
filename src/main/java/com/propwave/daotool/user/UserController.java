@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.profiles.Profile;
 
 import java.io.IOException;
 import java.sql.Timestamp;
@@ -230,6 +231,12 @@ public class UserController {
         userService.addHit(userID);
 
         return new BaseResponse<>(result);
+    }
+
+    @GetMapping("profileHistory")
+    public BaseResponse<List<ProfileImg>> getProfileImgHistory(@RequestParam("userID") String userID) throws BaseException {
+        List<ProfileImg> profileImgList = userProvider.getProfileImgHistory(userID);
+        return new BaseResponse<>(profileImgList);
     }
 
 

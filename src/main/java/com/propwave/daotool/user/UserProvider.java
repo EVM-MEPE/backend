@@ -59,6 +59,14 @@ public class UserProvider {
         }
     }
 
+    public List<ProfileImg> getProfileImgHistory(String userID) throws BaseException {
+        try{
+            return userDao.getProfileImgHistory(userID);
+        }catch(Exception e){
+            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
+        }
+    }
+
     public Social getSocial(String userId) throws BaseException{
         try{
             return userDao.getSocial(userId);
