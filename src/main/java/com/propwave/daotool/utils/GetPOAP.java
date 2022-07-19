@@ -3,10 +3,12 @@ package com.propwave.daotool.utils;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.propwave.daotool.DaoToolApplication;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -63,6 +65,11 @@ public class GetPOAP {
         }
         return map;
     }
+//
+//    public static void main(String[] args) {
+//        GetPOAP a = new GetPOAP();
+//        a.getPOAP("0xf9F3Ea76C7Be559B4D4C9B3Ee2c3E05484A84420");
+//    }
 
 }
 
