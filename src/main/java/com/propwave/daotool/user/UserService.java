@@ -10,7 +10,9 @@ import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
+import com.propwave.daotool.utils.GetPOAP;
 import com.propwave.daotool.wallet.model.UserWallet;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
@@ -32,12 +34,15 @@ public class UserService {
     private final UserProvider userProvider;
     @Autowired
     private final GetNFT getNFT;
+    @Autowired
+    private final GetPOAP getPOAP;
     private final SecurityService securityService;
 
-    public UserService(GetNFT getNFT, UserDao userDao, UserProvider userProvider, SecurityService securityService){
+    public UserService(GetNFT getNFT, UserDao userDao, UserProvider userProvider, SecurityService securityService, GetPOAP getPOAP){
         this.userDao = userDao;
         this.userProvider = userProvider;
         this.getNFT = getNFT;
+        this.getPOAP = getPOAP;
         this.securityService = securityService;
     }
 
@@ -498,7 +503,88 @@ public class UserService {
         }
     }
 
+//    public void getPoapRefresh(String walletAddress, String userID) throws ParseException {
+//        // POAP 가져오기
+//        String poapResult = getPOAP.getPOAP(walletAddress);
+//        JSONArray jsonList = getPOAP.fromJSONtoPOAPList(poapResult);
+//
+//        // DB에 있는 내 POAP 가져오기
+//        List<PoapWithDetails> oldPoapList = userProvider.getUserPoaps(userID);
+//        List<Integer> oldTokenIDList = new ArrayList<>();
+//        oldPoapList.forEach((k) -> {
+//            oldTokenIDList.add(k.getToken_id());
+//        });
+//
+//
+//        // DB에 있는 모든 POAP
+//        List<Poap> allPoaps = userProvider.getAllPoaps();
+//        List<Integer> allEventIdList = new ArrayList<>();
+//        allPoaps.forEach((k) -> {
+//            allEventIdList.add(k.getEvent_id());
+//        });
+//
+//        // 이미 있는 포압 -> 패스, 없어진 포압 -> 디비 수정 및 삭제, 추가된 포압 -> 디비 추가 및 생성
+//        for(Object json:jsonList){
+//            JSONObject jsonObject = (JSONObject) json;
+//            // 1. 이미 있는 경우 -> list에서 삭제
+//            int new_token_id = (int) jsonObject.get("tokenId");
+//            if(oldTokenIDList.contains(new_token_id)){
+//                oldPoapList.forEach((k) -> {
+//                    if(k.getToken_id() == new_token_id){
+//                        oldPoapList.remove(k);
+//                    }
+//                });
+//            }
+//            else{
+//                // 새로운 poap
+//                // 1. pOap 자체의 존재 여부 확인 & 생성
+//                Map<Object, Object> event = (Map) jsonObject.get("event");
+//
+//                if(!allEventIdList.contains((int)event.get("id"))){
+//                    userDao.createPoap(event);
+//                }
+//                // 2. poapWallet 생성
+//                if(jsonObject.containsKey("migrated")){
+//                    userDao.createPoapWallet((int)event.get("id"), (int)jsonObject.get("tokenId"), walletAddress, (Timestamp)jsonObject.get("created"), (Timestamp)jsonObject.get("modified"));
+//                }else{
+//                    userDao.createPoapWallet((int)event.get("id"), (int)jsonObject.get("tokenId"), walletAddress, (Timestamp)jsonObject.get("created"));
+//                }
+//                // 3. uaserWalletPoap 생성
+//
+//            }
+//        }
+//        // 이미 있는 NFT인지 확인하기
+//        System.out.println("total NFT : "+jsonObject.get("total"));
+//        List<JSONObject> results = (List<JSONObject>) jsonObject.get("result");
+//        int newNffIdx;
+//
+//        for(JSONObject result: results){
+//            String token_address = (String) result.get("token_address");
+//            int tokenId =  Integer.parseInt((String)result.get("token_id"));
+//            if(userDao.isNFTExist(token_address, tokenId)==0){
+//                System.out.println("Not Existed NFT");
+//                String tokenUri = (String) result.get("token_uri");
+//                if(tokenUri.endsWith(".json")){
+//                    tokenUri = tokenUri.substring(0, tokenUri.length()-5);
+//                }
+//                String metaData = getNFT.getNftMetaData(tokenUri);
+//                JSONObject metaJsonObject = getNFT.fromJSONtoNFT(metaData);
+//
+//                userDao.createNFT(result, metaJsonObject, chain);
+//            }
+//            if(userDao.isNFTWalletExist(token_address, tokenId, userWalletIndex)==0){
+//                System.out.println("Not Existed wallet");
+//                userDao.createNFTWallet(token_address, tokenId, userWalletIndex, Integer.parseInt((String) result.get("amount")));
+//            }
+//            System.out.println("Already exists");
+//
+//        }
+//    }
+
+
     public void reduceRefreshNftCount(String userId){
         userDao.reduceRefreshNftCount(userId);
     }
+
+
 }

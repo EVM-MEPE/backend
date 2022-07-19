@@ -1,11 +1,18 @@
 package com.propwave.daotool.utils;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+
+import java.io.IOException;
+import java.util.Map;
 
 @Component
 public class GetPOAP {
@@ -28,11 +35,35 @@ public class GetPOAP {
     }
 
 
-    public JSONObject fromJSONtoPOAP(String result) throws ParseException {
+    public JSONArray fromJSONtoPOAPList(String result) throws ParseException {
         JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(result);
-        return (JSONObject) obj;
+        JSONArray obj = (JSONArray)jsonParser.parse(result);
+        return obj;
     }
+
+    /**
+     * @param JSONObject
+     * @apiNote JSONObject를 Map<String, String> 형식으로 변환처리.
+     * @return Map<String,String>
+     * **/
+    public static Map<String, Object> getMapFromJsonObject(JSONObject jsonObj){
+        Map<String, Object> map = null;
+
+        try {
+            map = new ObjectMapper().readValue(jsonObj.toString(), Map.class);
+        } catch (JsonParseException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return map;
+    }
+
 }
 
 

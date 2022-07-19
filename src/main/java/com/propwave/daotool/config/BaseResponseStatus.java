@@ -24,6 +24,8 @@ public enum BaseResponseStatus {
     WALLET_ALREADY_EXIST_TO_USER(false, 403, "지갑이 이미 유저에게 등록되어 있습니다."),
     NOT_SUPPORTED_CHAIN(false, 401, "지원하지 않는 chain입니다."),
     NO_WALLET_EXIST(false, 404, "해당하는 지갑이 없습니다."),
+
+    NO_REFRESH_LEFT(false, 403, "refresh 횟수가 모두 소모되었습니다."),
     /**
      * 4000 : Database, Server 오류
      */

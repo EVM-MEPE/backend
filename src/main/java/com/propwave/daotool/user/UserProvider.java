@@ -9,6 +9,7 @@ import static com.propwave.daotool.config.BaseResponseStatus.*;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.UserWalletDao;
 import com.propwave.daotool.wallet.model.UserWallet;
+import com.propwave.daotool.wallet.model.Wallet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -185,7 +186,7 @@ public class UserProvider {
                 String walletAddress = userWallet.getWalletAddress();
                 WalletInfo walletInfo = userDao.getWalletInfo(walletAddress);
 
-                UserWalletAndInfo tmp = new UserWalletAndInfo(userWallet.getIndex(), userWallet.getUser(), userWallet.getWalletAddress(), walletInfo.getWalletType(), walletInfo.getWalletTypeImage(), userWallet.getCreatedAt());
+                UserWalletAndInfo tmp = new UserWalletAndInfo(userWallet.getIndex(), userWallet.getUser(), userWallet.getWalletAddress(), walletInfo.getWalletType(), walletInfo.getWalletTypeImage(), userWallet.getChain(), userWallet.getCreatedAt());
                 userWalletsWithInfo.add(tmp);
             }
             return userWalletsWithInfo;
@@ -387,9 +388,9 @@ public class UserProvider {
         return dupRemovedNftForDashboardList;
     }
 
-    public int getNftRefreshLeft(String userId)throws BaseException {
+    public int getRefreshLeft(String userId)throws BaseException {
         try{
-            return userDao.getNftRefreshLeft(userId);
+            return userDao.getRefreshLeft(userId);
         }catch(Exception exception){
             throw new BaseException(DATABASE_ERROR);
         }
@@ -427,6 +428,23 @@ public class UserProvider {
 
     public int isFollowing(String userID1, String userID2){
         return userDao.isFollowExist(userID1, userID2);
+    }
+
+    public List<PoapWithDetails> getUserPoaps(String userId){
+        // 1. user의 모든 지갑 불러오기
+        List<UserWallet> userWallets = userDao.getAllUserWalletByUserId(userId);
+
+        // 2. 각 지갑에 있는 Poap 모두 가져오기
+        List<PoapWithDetails> userPoaps = new ArrayList<>();
+        for(UserWallet userWallet:userWallets){
+            List<PoapWithDetails> poaps = userDao.getPoapWithDetailsByWalletAddress(userWallet.getWalletAddress());
+            userPoaps.addAll(poaps);
+        }
+        return userPoaps;
+    }
+
+    public List<Poap> getAllPoaps(){
+        return userDao.getAllPoaps();
     }
 
 }

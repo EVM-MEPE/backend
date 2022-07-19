@@ -9,6 +9,7 @@ import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
+import com.propwave.daotool.wallet.model.UserWallet;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -313,6 +314,38 @@ public class UserController {
     ******************************** nft ********************************
     **/
 
+//    @GetMapping("mypage/refreshCollections")
+//    public BaseResponse<Map<Object, Object>> getCollectionsRefresh(@RequestParam("userID") String userId) throws ParseException, BaseException {
+//        //1. refresh가 0번 이상 남았는지 확인하기
+//        int refreshLeft = userProvider.getRefreshLeft(userId);
+//        if(refreshLeft<=0){
+//            return new BaseResponse<>(NO_REFRESH_LEFT);
+//        }
+//
+//        // 2. 이 인간의 모든 지갑 불러오기
+//        List<UserWalletAndInfo> userWallets = userProvider.getAllUserWalletByUserId(userId);
+//
+//        //3. POAP 모두 불러오기
+//        for(UserWalletAndInfo userWallet:userWallets) {
+//            userService.getPoapRefresh(userWallet.getWalletAddress(), userWallet.getUser());
+//        }
+//
+//        //4. NFT 모두 불러오기
+//
+//
+//        //5. POAP, NFT 불러온거 가져오기
+//        Map<Object, Object> result = new HashMap<>();
+//        List<Nft> nftList = userProvider.getUserNfts(userId);
+//        List<PoapWithDetails> poapList = userProvider.getUserPoaps(userId);
+//        result.put("nftList", nftList);
+//        result.put("poapList", poapList);
+//
+//        //5. 기타
+//        userService.reduceRefreshNftCount(userId);
+//
+//        return new BaseResponse<>)(result);
+//    }
+
     @GetMapping("nfts/refresh")
     public BaseResponse<String> getNftRefresh(@RequestParam("userId") String userId) throws BaseException, ParseException {
         //1. 이 인간의 Dashboard 지갑 다불러오기
@@ -347,7 +380,7 @@ public class UserController {
 
     @GetMapping("nfts/refreshLeft")
     public BaseResponse<Integer> getNftRefreshLeft(@RequestParam("userId") String userId) throws BaseException {
-        int nftRefreshLeft = userProvider.getNftRefreshLeft(userId);
+        int nftRefreshLeft = userProvider.getRefreshLeft(userId);
         return new BaseResponse<>(nftRefreshLeft);
     }
 

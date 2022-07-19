@@ -4,17 +4,16 @@ import lombok.*;
 
 import java.sql.Timestamp;
 
-
 @Getter
 @Setter
-@NoArgsConstructor(access= AccessLevel.PROTECTED)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class UserWalletAndInfo {
+public class PoapWallet {
     private int index;
-    private String user;
+    private int poap_event_id;
+    private int token_id;
     private String walletAddress;
-    private String walletType;
-    private String walletIcon;
-    private String chain;
+    private int supply_order;
     private Timestamp createdAt;
+    private Timestamp migratedAt;
 }

@@ -826,7 +826,7 @@ public class UserDao {
         );
     }
 
-    public int getNftRefreshLeft(String userId){
+    public int getRefreshLeft(String userId){
         String getNftRefreshLeftQuery = "select nftRefreshLeft from user where id=?";
         return this.jdbcTemplate.queryForObject(getNftRefreshLeftQuery, int.class, userId);
     }
@@ -932,6 +932,117 @@ public class UserDao {
     public int getFollowingCount(String userID){
         String getFollowingCountQuery = "SELECT COUNT(*) FROM follow WHERE user=?";
         return this.jdbcTemplate.queryForObject(getFollowingCountQuery, int.class, userID);
+    }
+
+    public List<Poap> getAllPoaps(){
+        String getAllPoapsQuery = "SELECT * FROM poap";
+        return this.jdbcTemplate.query(getAllPoapsQuery,
+                (rs, rowNum) -> new Poap(
+                        rs.getInt("event_id"),
+                        rs.getString("fancy_id"),
+                        rs.getString("name"),
+                        rs.getString("event_url"),
+                        rs.getString("img_url"),
+                        rs.getString("country"),
+                        rs.getString("city"),
+                        rs.getString("description"),
+                        rs.getInt("year"),
+                        rs.getDate("start_date"),
+                        rs.getDate("end_date"),
+                        rs.getDate("expiry_date"),
+                        rs.getInt("supply_total")
+                )
+        );
+    }
+
+    public List<PoapWallet> getPoapWalletByWalletAddress(String walletAddress) {
+        String getPoapsQuery = "SELECT * FROM poapWallet WHERE walletAddress=?";
+        return this.jdbcTemplate.query(getPoapsQuery,
+                (rs, rowNum) -> new PoapWallet(
+                        rs.getInt("index"),
+                        rs.getInt("poap_event_id"),
+                        rs.getInt("token_id"),
+                        rs.getString("walletAddress"),
+                        rs.getInt("supply_order"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getTimestamp("migratedAt")
+                )
+        );
+    }
+
+    public List<PoapWithDetails> getPoapWithDetailsByWalletAddress(String walletAddress) {
+        String getPoapsQuery = "SELECT P.*, W.index, W.token_id, W.walletAddress, W.supply_order, W.createdAt, W.migratedAt, U.index, U.user, U.isHide" +
+                                "FROM poapWallet W" +
+                                "INNER JOIN poap P ON W.poap_event_id = P.event_id" +
+                                "INNER JOIN userWalletPoap U ON W.token_id = U.token_id"+
+                                "WHERE W.walletAddress=?";
+        return this.jdbcTemplate.query(getPoapsQuery,
+                (rs, rowNum) -> new PoapWithDetails(
+                        rs.getInt("event_id"),
+                        rs.getString("fancy_id"),
+                        rs.getString("name"),
+                        rs.getString("event_url"),
+                        rs.getString("img_url"),
+                        rs.getString("country"),
+                        rs.getString("city"),
+                        rs.getString("description"),
+                        rs.getInt("year"),
+                        rs.getDate("start_date"),
+                        rs.getDate("end_date"),
+                        rs.getDate("expiry_date"),
+                        rs.getInt("supply_total"),
+                        rs.getInt("poapWalletIndex"),
+                        rs.getInt("token_id"),
+                        rs.getString("walletAddress"),
+                        rs.getInt("supply_order"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getTimestamp("migratedAt"),
+                        rs.getInt("userWalletPoapIndex"),
+                        rs.getString("user"),
+                        rs.getBoolean("isHide")
+                )
+        );
+    }
+
+    public Poap createPoap(Map<Object, Object> event){
+        String createPoapQuery = "INSERT INTO poap(event_id, fancy_id, name, event_url, image_url, country, city, description, year, start_date, end_date, expiry_date, supply_total) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        Object[] createPoapParams = new Object[] {event.get("id"), event.get("fancy_id"), event.get("name"), event.get("event_url"), event.get("image_url"), event.get("country"), event.get("city"), event.get("description"), event.get("year"), event.get("start_date"), event.get("end_date"), event.get("expiry_date"), event.get("supply")};
+        this.jdbcTemplate.update(createPoapQuery, createPoapParams);
+        return getPoap((int)event.get("id"));
+    }
+
+    public Poap getPoap(int event_id){
+        String getPoapQuery = "SELECT * FROM poap WHERE `event_id`=?";
+        return this.jdbcTemplate.queryForObject(getPoapQuery,
+                (rs, rowNum) -> new Poap(
+                        rs.getInt("event_id"),
+                        rs.getString("fancy_id"),
+                        rs.getString("name"),
+                        rs.getString("event_url"),
+                        rs.getString("img_url"),
+                        rs.getString("country"),
+                        rs.getString("city"),
+                        rs.getString("description"),
+                        rs.getInt("year"),
+                        rs.getDate("start_date"),
+                        rs.getDate("end_date"),
+                        rs.getDate("expiry_date"),
+                        rs.getInt("supply_total")
+                ),
+                event_id
+        );
+    }
+
+    public int createPoapWallet(int event_id, int token_id, String walletAddress, Timestamp createdAt, Timestamp modifiedAt){
+        String createPoapWalletQuery = "INSERT INTO poapWallet(poap_event_id, token_id, walletAddress, createdAt, modifiedAt) VALUES(?,?,?,?,?)";
+        Object[] createPoapWalletParams = new Object[] {event_id, token_id, walletAddress, createdAt, modifiedAt};
+        return this.jdbcTemplate.update(createPoapWalletQuery, createPoapWalletParams);
+    }
+
+    public int createPoapWallet(int event_id, int token_id, String walletAddress, Timestamp createdAt){
+        String createPoapWalletQuery = "INSERT INTO poapWallet(poap_event_id, token_id, walletAddress, createdAt) VALUES(?,?,?,?)";
+        Object[] createPoapWalletParams = new Object[] {event_id, token_id, walletAddress, createdAt};
+        return this.jdbcTemplate.update(createPoapWalletQuery, createPoapWalletParams);
     }
 
 }
