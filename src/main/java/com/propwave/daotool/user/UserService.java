@@ -635,7 +635,61 @@ public class UserService {
             result.add(0, element);
         }
 
+        if(result.size()>8){
+            result = result.subList(0,8);
+        }
+
         return result;
+    }
+
+    public List<Map<String, Object>> getNftMypageWithNoDB(String userId) throws ParseException, BaseException{
+        System.out.println("get nft!!!");
+        // user의 모든 지갑 불러오기
+        List<UserWalletAndInfo> userWalletAndInfos = userProvider.getAllUserWalletByUserId(userId);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for(UserWalletAndInfo userWallet: userWalletAndInfos){
+            // POAP 가져오기
+            String walletAddress = userWallet.getWalletAddress();
+            JSONArray jsonList = getNFT.getAllChainNft(walletAddress);
+
+            for(Object json:jsonList){
+                JSONObject jsonObject = (JSONObject) json;
+                String token_uri = (String) jsonObject.get("token_uri");
+                String metadata = (String) jsonObject.get("metadata");
+                System.out.println(metadata);
+                try{
+                    if(metadata.isEmpty()){
+                        continue;
+                    }
+                }catch(NullPointerException e){
+                    continue;
+                }
+
+                Map<String, String> metadataJson = (Map) getNFT.fromJSONtoNFT(metadata);
+                Map<String, Object> tmp = new HashMap<>();
+                tmp.put("image_url", metadataJson.get("image"));
+                tmp.put("name", metadataJson.get("name"));
+                tmp.put("createdAt", jsonObject.get("updated_at"));
+                result.add(tmp);
+            }
+
+        }
+
+
+        result.sort(new Comparator<Map<String, Object>>() {
+            @Override
+            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                return -(Float.compare(Float.parseFloat((String) o1.get("createdAt")),Float.parseFloat((String) o2.get("createdAt"))));
+            }
+        });
+
+        if(result.size()>8){
+            result = result.subList(0,8);
+        }
+
+        return result;
+
     }
 
 

@@ -1,10 +1,14 @@
 package com.propwave.daotool.utils;
+import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class GetNFT {
@@ -14,11 +18,10 @@ public class GetNFT {
 
         RestTemplate rest = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.add("x-api-key", "Fqy1IZbNGAK0zhZqzcHFiKe3jvTEyGAr2QNW6mZOzbfudyqZlmELouMzTNGSBl6d");
+        headers.add("x-api-key", Secret.NFT_API_KEY);
         String body = "";
 
         HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
-        walletAddress = "0x07b0ea6d444b9b66f3a7709fb1fa75bcdcd67a16";
         ResponseEntity<String> responseEntity = rest.exchange("https://deep-index.moralis.io/api/v2/"+walletAddress+"/nft?chain="+chain+"&format=decimal", HttpMethod.GET, requestEntity, String.class);
         HttpStatus httpStatus = responseEntity.getStatusCode();
         int status = httpStatus.value();
@@ -27,6 +30,20 @@ public class GetNFT {
         System.out.println(response);
 
         return response;
+    }
+
+    public JSONArray getAllChainNft(String walletAddress) throws ParseException {
+        ArrayList<String> chainList = new ArrayList<>();
+        chainList.add("eth");
+        chainList.add("polygon");
+
+        JSONArray result = new JSONArray();
+
+        for(String chain:chainList){
+            String res = getNft(chain, walletAddress);
+            result.addAll(fromJSONtoNftList(res));
+        }
+        return result;
     }
 
     public String getNftMetaData(String tokenUri){
@@ -50,5 +67,12 @@ public class GetNFT {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(result);
         return (JSONObject) obj;
+    }
+
+    public JSONArray fromJSONtoNftList(String result) throws ParseException {
+        JSONParser jsonParser = new JSONParser();
+        JSONObject obj = (JSONObject)jsonParser.parse(result);
+        JSONArray arr = (JSONArray) obj.get("result");
+        return arr;
     }
 }
