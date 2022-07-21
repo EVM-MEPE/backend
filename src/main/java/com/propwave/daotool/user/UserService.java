@@ -586,5 +586,60 @@ public class UserService {
         userDao.reduceRefreshNftCount(userId);
     }
 
+    public List<Map<String, Object>> getPoapMypageWithNoDB(String userId) throws ParseException, BaseException {
+        // user의 모든 지갑 불러오기
+        List<UserWalletAndInfo> userWalletAndInfos = userProvider.getAllUserWalletByUserId(userId);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        int our_event_id = 53482;
+        List<Map<String, Object>> ourPoapList = new ArrayList<>();
+
+        for(UserWalletAndInfo userWallet: userWalletAndInfos){
+            // POAP 가져오기
+            String walletAddress = userWallet.getWalletAddress();
+            String poapResult = getPOAP.getPOAP(walletAddress);
+            JSONArray jsonList = getPOAP.fromJSONtoPOAPList(poapResult);
+            for(Object json:jsonList){
+                JSONObject jsonObject = (JSONObject) json;
+                Map<Object, Object> event = (Map) jsonObject.get("event");
+                Map<String, Object> tmp = new HashMap<>();
+                Long id = (Long)event.get("id");
+
+                if(id.intValue() == our_event_id){
+                    Map<String, Object> ourPOAP = new HashMap<>();
+                    ourPOAP.put("event_id", our_event_id);
+                    ourPOAP.put("image_url", event.get("image_url"));
+                    ourPOAP.put("createdAt", jsonObject.get("created"));
+                    ourPoapList.add(ourPOAP);
+                    continue;
+                }
+
+                tmp.put("event_id", event.get("id"));
+                tmp.put("image_url", event.get("image_url"));
+                tmp.put("createdAt", jsonObject.get("created"));
+
+                result.add(tmp);
+            }
+
+        }
+
+
+        result.sort(new Comparator<Map<String, Object>>() {
+            @Override
+            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                return -(Timestamp.valueOf((String) o1.get("createdAt"))).compareTo(Timestamp.valueOf((String) o2.get("createdAt")));
+            }
+        });
+
+        for(Map<String, Object> element:ourPoapList){
+            result.add(0, element);
+        }
+
+        return result;
+    }
+
+
+
+
 
 }

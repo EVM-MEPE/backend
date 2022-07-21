@@ -203,7 +203,7 @@ public class UserController {
      ******************************** mypage ********************************
      **/
     @GetMapping("mypage")
-    public BaseResponse<Map<String, Object>> getUserInfo(@RequestParam("userID") String userID) throws BaseException {
+    public BaseResponse<Map<String, Object>> getUserInfo(@RequestParam("userID") String userID) throws BaseException, ParseException {
         User user = userProvider.getUser(userID);
         String profileImg = userProvider.getUserImagePath(userID);
         int friendCount = userProvider.getFriendsCount(userID);
@@ -211,6 +211,9 @@ public class UserController {
         int followingCount = userProvider.getFollowingCount(userID);
         Social social = userProvider.getSocial(userID);
         List<UserWalletAndInfo> walletLists = userProvider.getAllUserWalletByUserId(userID);
+
+        // mvp -> get poap list by api
+        List<Map<String, Object>> poapList = userService.getPoapMypageWithNoDB(userID);
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
         Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
@@ -228,6 +231,7 @@ public class UserController {
         result.put("social", socialMap);
         result.put("walletList", walletLists);
         result.put("profileImg", profileImg);
+        result.put("poapList", poapList);
 
         userService.addHit(userID);
 

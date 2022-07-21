@@ -975,7 +975,7 @@ public class UserDao {
                                 "FROM poapWallet W" +
                                 "INNER JOIN poap P ON W.poap_event_id = P.event_id" +
                                 "INNER JOIN userWalletPoap U ON W.token_id = U.token_id"+
-                                "WHERE W.walletAddress=?";
+                                "WHERE W.walletAddress=? ORDER BY `createdAt` DESC";
         return this.jdbcTemplate.query(getPoapsQuery,
                 (rs, rowNum) -> new PoapWithDetails(
                         rs.getInt("event_id"),
