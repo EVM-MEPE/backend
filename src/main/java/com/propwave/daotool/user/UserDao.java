@@ -81,6 +81,18 @@ public class UserDao {
         return this.jdbcTemplate.update(editUserProfileImgQuery, editUserProfileImgParams);
     }
 
+    public int deleteProfileImgHistory(String userID, int profileIndex){
+        String deleteProfileImgQuery = "DELETE FROM profileImg WHERE `user`=? AND `index`=?";
+        Object[] deleteProfileImgParam = new Object[]{userID, profileIndex};
+        return this.jdbcTemplate.update(deleteProfileImgQuery, deleteProfileImgParam);
+    }
+
+    public int hideProfileImgHistory(String userID, int profileIndex, boolean hide){
+        String hideProfileImgQuery = "UPDATE profileImg SET `isHide`=? WHERE `user`=? AND `index`=?";
+        Object[] hideProfileImgParam = new Object[]{hide, userID, profileIndex};
+        return this.jdbcTemplate.update(hideProfileImgQuery, hideProfileImgParam);
+    }
+
     public int editUserBackImg(String userID, String backImagePath){
         String editUserBackImgQuery = "UPDATE user SET backImage=? WHERE id = ?";
         Object[] editUserBackImgParams = new Object[]{backImagePath, userID};

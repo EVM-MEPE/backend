@@ -246,6 +246,34 @@ public class UserController {
         return new BaseResponse<>(profileImgList);
     }
 
+    @PostMapping("profileHistory/delete")
+    public BaseResponse<String> deleteProfileImgHistory(@RequestParam("userID") String userID, @RequestBody Map<String, Object> json) throws BaseException {
+        String jwtToken = (String) json.get("jwtToken");
+        int profileIndex = (int) json.get("profileIndex");
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        userService.deleteProfileImgHistory(userID, profileIndex);
+        return new BaseResponse<>("successfully delete profile Img");
+    }
+
+    @PostMapping("profileHistory")
+    public BaseResponse<String> hideProfileImgHistory(@RequestParam("userID") String userID, @RequestParam("profileIndex") int profileIndex, @RequestParam("hide") boolean hide, @RequestBody Map<String, String> json){
+        String jwtToken = json.get("jwtToken");
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        userService.hideProfileImgHistory(userID, profileIndex, hide);
+        if(hide){
+            return new BaseResponse<>("successfully hide profile Img");
+        }
+        return new BaseResponse<>("successfully unhide profile Img");
+    }
+
+
+
 
     /**
      ******************************** friend ********************************

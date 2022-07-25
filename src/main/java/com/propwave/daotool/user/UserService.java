@@ -123,6 +123,14 @@ public class UserService {
         }
     }
 
+    public int deleteProfileImgHistory(String userID, int profileIndex){
+        return userDao.deleteProfileImgHistory(userID, profileIndex);
+    }
+
+    public int hideProfileImgHistory(String userID, int profileIndex, boolean hide){
+        return userDao.hideProfileImgHistory(userID, profileIndex, hide);
+    }
+
     public int editUserProfileImg(String userID, String profileImagePath) throws BaseException {
         try{
             return userDao.editUserProfileImg(userID, profileImagePath);
