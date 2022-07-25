@@ -116,12 +116,28 @@ public class UserProvider {
         }
     }
 
+    public Friend getFriend(String user, String friend){
+        return userDao.getFriend(user, friend);
+    }
+
+    public Friend getFriend(int index){
+        return userDao.getFriend(index);
+    }
+
     public List<Friend> getAllFriends(String userId){
         return userDao.getAllFriends(userId);
     }
 
     public int getFriendsCount(String userId){
         return userDao.getFriendsCount(userId);
+    }
+
+    public FriendReq getFriendReq(String reqTo, String reqFrom){
+        return userDao.getFriendReq(reqTo, reqFrom);
+    }
+
+    public FriendReq getFriendReq(int index){
+        return userDao.getFriendReq(index);
     }
 
     public String getStatusOfFriendReq(String reqFrom, String reqTo) throws BaseException {
@@ -396,6 +412,14 @@ public class UserProvider {
         }
     }
 
+    public Follow getFollow(String reqTo, String reqFrom){
+        return userDao.getFollow(reqTo, reqFrom);
+    }
+
+    public Follow getFollow(int index){
+        return userDao.getFollow(index);
+    }
+
     public List<User> getFollowingList(String userID){
         List<Follow> followingList = userDao.getFollowingList(userID);
         List<User> followingListWithUserInfo = new ArrayList<>();
@@ -447,5 +471,39 @@ public class UserProvider {
         return userDao.getAllPoaps();
     }
 
+    public List<Notification> getUserNotificationList(String userID){
+        return userDao.getUserNotificationList(userID);
+    }
+
+    public boolean isUncheckedNotificationLeft(String userID){
+        return userDao.isUncheckedNotificationLeft(userID);
+    }
+
+    public Notification getNotification(int index){
+        return userDao.getNotification(index);
+    }
+
+    public Map<String, Object> getUserList(String orderBy, String userID) throws BaseException {
+        Map<String, Object> res = new HashMap<>();
+        List<Map<String, Object>> resUserList = new ArrayList<>();
+
+        List<User> userList = userDao.getUserList(orderBy);
+        int count = 1;
+        for(User user: userList){
+            Map<String, Object> map = new HashMap<>();
+            String profileImg = getUserImagePath(user.getId());
+            map.put("user", user);
+            map.put("profileImg", profileImg);
+
+            resUserList.add(map);
+            if(user.getId().equals(userID)){
+                System.out.println(count);
+                res.put("me", count);
+            }
+            count += 1;
+        }
+        res.put("list", resUserList);
+        return res;
+    }
 
 }

@@ -20,6 +20,8 @@ import software.amazon.awssdk.profiles.Profile;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
 
@@ -86,6 +88,7 @@ public class UserController {
         Map<String, Object> newUser = userService.createUser(userID);
 
         userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
+        userService.createNotification(userID, 1, -1);
         return new BaseResponse<>(newUser);
     }
 
@@ -289,6 +292,8 @@ public class UserController {
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
         userService.createFriendReq(reqTo, json.get("reqFrom"), json.get("reqNickname"));
+        FriendReq friendReq = userProvider.getFriendReq(reqTo, json.get("reqFrom"));
+        userService.createNotification(reqTo, 2, friendReq.getIndex());
         return new BaseResponse<>("successfully make friend request");
     }
 
@@ -303,6 +308,10 @@ public class UserController {
         }
 
         userService.acceptFriend(isAccepted, json.get("reqTo"), json.get("reqFrom"), json.get("reqNickname"));
+        if(isAccepted){
+            Friend friend = userProvider.getFriend(json.get("reqFrom"), json.get("reqTo"));
+            userService.createNotification(userID, 3, friend.getIndex());
+        }
         return new BaseResponse<>("successfully process friend request");
     }
 
@@ -343,6 +352,173 @@ public class UserController {
         String status = userProvider.getStatusOfFriendReq(reqFrom, reqTo);
         return new BaseResponse<>(status);
     }
+
+    /**
+     ******************************** notification ********************************
+     **/
+    @PostMapping("notification/all")
+    public BaseResponse<List<Map<String, Object>>> retrieveNotification(@RequestParam("userID") String userID, @RequestBody Map<String, String> json) throws BaseException {
+        // check jwt token
+        String jwtToken = json.get("jwtToken");
+        List<Map<String, Object>> res = new ArrayList<>();
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        List<Notification> notificationList = userProvider.getUserNotificationList(userID);
+        for(Notification notification:notificationList){
+            userService.checkNotification(notification.getIndex());
+
+            Map<String, Object> tmp = new HashMap<>();
+            User user = userProvider.getUser(notification.getUser());
+            switch(notification.getType()){
+                case 1: user = userProvider.getUser(notification.getUser());
+                        break;
+                case 2: int friendReqIndex = notification.getFriendReq();
+                        FriendReq friendReq = userProvider.getFriendReq(friendReqIndex);
+                        String reqID = friendReq.getReqFrom();
+                        user = userProvider.getUser(reqID);
+                        break;
+                case 3: int friendIndex = notification.getFriend();
+                        Friend friend = userProvider.getFriend(friendIndex);
+                        String friendID = friend.getFriend();
+                        user = userProvider.getUser(friendID);
+                        break;
+                case 4:
+                        break;
+                case 5: int followIndex = notification.getFollow();
+                        Follow follow = userProvider.getFollow(followIndex);
+                        String followID = follow.getUser();
+                        user = userProvider.getUser(followID);
+                        break;
+                default:
+                        break;
+            }
+            tmp.put("img", userProvider.getUserImagePath(user.getId()));
+            tmp.put("notification", notification);
+            Timestamp now = new Timestamp(System.currentTimeMillis());
+            LocalDateTime a = now.toLocalDateTime();
+            LocalDateTime b = notification.getCreatedAt().toLocalDateTime();
+            long minuites = ChronoUnit.MINUTES.between(b, a);
+            tmp.put("minitesAgo", minuites);
+
+            res.add(tmp);
+        }
+
+        return new BaseResponse<>(res);
+    }
+
+    @PostMapping("notification/left")
+    public BaseResponse<Boolean> checkNotificationLeft(@RequestParam("userID") String userID, @RequestBody Map<String, String> json) throws BaseException {
+        // check jwt token
+        String jwtToken = json.get("jwtToken");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        boolean res = userProvider.isUncheckedNotificationLeft(userID);
+        return new BaseResponse<>(res);
+    }
+
+    @PostMapping("notification")
+    public BaseResponse<Map<String, Object>> getOneNotification(@RequestParam("notiID") int notiID, @RequestBody Map<String, String> json) throws BaseException {
+        // check jwt token
+        String userID = json.get("userID");
+        String jwtToken = json.get("jwtToken");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        Map<String, Object> res = new HashMap<>();
+        userService.checkNotification(notiID);
+        Notification notification = userProvider.getNotification(notiID);
+
+        User user = userProvider.getUser(notification.getUser());
+        switch(notification.getType()){
+            case 1: user = userProvider.getUser(notification.getUser());
+                break;
+            case 2: int friendReqIndex = notification.getFriendReq();
+                FriendReq friendReq = userProvider.getFriendReq(friendReqIndex);
+                String reqID = friendReq.getReqFrom();
+                user = userProvider.getUser(reqID);
+                break;
+            case 3: int friendIndex = notification.getFriend();
+                Friend friend = userProvider.getFriend(friendIndex);
+                String friendID = friend.getFriend();
+                user = userProvider.getUser(friendID);
+                break;
+            case 4:
+                break;
+            case 5: int followIndex = notification.getFollow();
+                Follow follow = userProvider.getFollow(followIndex);
+                String followID = follow.getUser();
+                user = userProvider.getUser(followID);
+                break;
+            default:
+                break;
+        }
+        res.put("img", userProvider.getUserImagePath(user.getId()));
+        res.put("notification", notification);
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+        LocalDateTime a = now.toLocalDateTime();
+        LocalDateTime b = notification.getCreatedAt().toLocalDateTime();
+        long minuites = ChronoUnit.MINUTES.between(b, a);
+        res.put("minitesAgo", minuites);
+
+        return new BaseResponse<>(res);
+    }
+
+    /**
+     ******************************** userList ********************************
+     **/
+
+    @PostMapping("userList")
+    public BaseResponse<Map<String, Object>> getUserList(@RequestParam("orderBy") String orderBy, @RequestBody Map<String, String> json) throws BaseException {
+        String userID = json.get("userID");
+        String jwtToken = json.get("jwtToken");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        Map<String, Object> userListCreatedAt = userProvider.getUserList("createdAt", userID);
+        List<Map<String, Object>> listCreatedAt = (List<Map<String, Object>>) userListCreatedAt.get("list");
+        Map<String, Object> userListTodayHits = userProvider.getUserList("todayHits", userID);
+        List<Map<String, Object>> listTodayHits = (List<Map<String, Object>>) userListCreatedAt.get("list");
+        Map<String, Object> userListTodayFollows = userProvider.getUserList("todayFollows", userID);
+        List<Map<String, Object>> listTodayFollows = (List<Map<String, Object>>) userListTodayFollows.get("list");
+
+        Map<String, Object> res = new HashMap<>();
+        if(orderBy.equals("createdAt")){
+            res.put("userList", listCreatedAt);
+        }else if(orderBy.equals("todayHits")){
+            res.put("userList", listTodayHits);
+        }else if(orderBy.equals("todayFollows")){
+            res.put("userList", listTodayFollows);
+        }else{
+            return new BaseResponse<>(REQUEST_ERROR);
+        }
+        System.out.println(listCreatedAt.get(0));
+        res.put("topCreatedAt", listCreatedAt.get(0));
+        res.put("topTodayHits", listTodayHits.get(0));
+        res.put("topTodayFollows", listTodayFollows.get(0));
+
+        Map<String, Object> me = new HashMap<>();
+        me.put("createdAt", userListCreatedAt.get("me"));
+        me.put("todayHits", userListTodayHits.get("me"));
+        me.put("todayFollows", userListTodayFollows.get("me"));
+
+        res.put("myRecord", me);
+
+        return new BaseResponse<>(res);
+    }
+
+
+
+
 
     /**
     ******************************** nft ********************************
@@ -436,6 +612,9 @@ public class UserController {
         if(result==-2){
             return new BaseResponse<>(FOLLOW_ALREADY_EXIST);
         }
+        Follow follow = userProvider.getFollow(reqTo, json.get("reqFrom"));
+        userService.createNotification(reqTo, 5, follow.getIndex());
+        userService.addFollow(reqTo);
         return new BaseResponse<>("successfully follow " + reqTo);
     }
 
@@ -450,6 +629,7 @@ public class UserController {
         }
 
         userService.deleteFollow(reqTo, json.get("reqFrom"));
+        userService.reduceFollow(reqTo);
         return new BaseResponse<>("successfully delete follow " + reqTo);
     }
 

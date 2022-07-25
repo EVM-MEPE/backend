@@ -55,6 +55,7 @@ public class UserDao {
                         rs.getString("url"),
                         rs.getInt("hits"),
                         rs.getInt("todayHits"),
+                        rs.getInt("todayFollows"),
                         rs.getTimestamp("createdAt"),
                         rs.getInt("nftRefreshLeft"),
                         rs.getString("backImage"),
@@ -201,6 +202,8 @@ public class UserDao {
         return this.jdbcTemplate.update(createFriendReqQuery, createFriendReqParam);
     }
 
+
+
     public int updateFriendReq(String reqTo, String reqFrom){
         String updateFriendReqQuery;
         Object[] updateFriendReqParam;
@@ -254,6 +257,20 @@ public class UserDao {
         );
     }
 
+    public Friend getFriend(int index){
+        String getFriendQuery = "SELECT * FROM friend WHERE `index`=?";
+        return this.jdbcTemplate.queryForObject(getFriendQuery,
+                (rs, rowNum) -> new Friend(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("friend"),
+                        rs.getString("friendName"),
+                        rs.getTimestamp("createdAt")
+                ),
+                index
+        );
+    }
+
     public List<Friend> getAllFriends(String userId){
         String getFriendQuery = "SELECT * FROM friend WHERE user=?";
         Object[] getFriendParam = new Object[]{userId};
@@ -274,8 +291,26 @@ public class UserDao {
         return this.jdbcTemplate.queryForObject(getFriendsCountQuery, int.class, userId);
     }
 
-    public FriendReq getFriendReq(String reqFrom, String reqTo){
-        String getFriendReqQuery = "SELECT * FROM friendReq WHERE reqFrom=? and reqTo=?";
+//    public FriendReq getFriendReq(String reqFrom, String reqTo){
+//        String getFriendReqQuery = "SELECT * FROM friendReq WHERE reqFrom=? and reqTo=?";
+//        Object[] getFriendReqParam = new Object[]{reqFrom, reqTo};
+//        return this.jdbcTemplate.queryForObject(getFriendReqQuery,
+//                (rs, rowNum) -> new FriendReq(
+//                        rs.getInt("index"),
+//                        rs.getString("reqFrom"),
+//                        rs.getString("reqTo"),
+//                        rs.getString("reqNickname"),
+//                        rs.getBoolean("isAccepted"),
+//                        rs.getBoolean("isRejected"),
+//                        rs.getTimestamp("createdAt")
+//                ),
+//                getFriendReqParam
+//        );
+//    }
+
+    public FriendReq getFriendReq(String reqTo, String reqFrom){
+        System.out.println(reqTo + reqFrom);
+        String getFriendReqQuery = "SELECT * FROM friendReq WHERE reqFrom=? AND reqTo=? ORDER BY `index` DESC LIMIT 1";
         Object[] getFriendReqParam = new Object[]{reqFrom, reqTo};
         return this.jdbcTemplate.queryForObject(getFriendReqQuery,
                 (rs, rowNum) -> new FriendReq(
@@ -286,8 +321,24 @@ public class UserDao {
                         rs.getBoolean("isAccepted"),
                         rs.getBoolean("isRejected"),
                         rs.getTimestamp("createdAt")
+                )
+                , getFriendReqParam);
+
+    }
+
+    public FriendReq getFriendReq(int index){
+        String getFriendReqQuery = "SELECT * FROM friendReq WHERE `index`=?";
+        return this.jdbcTemplate.queryForObject(getFriendReqQuery,
+                (rs, rowNum) -> new FriendReq(
+                        rs.getInt("index"),
+                        rs.getString("reqFrom"),
+                        rs.getString("reqTo"),
+                        rs.getString("reqNickname"),
+                        rs.getBoolean("isAccepted"),
+                        rs.getBoolean("isRejected"),
+                        rs.getTimestamp("createdAt")
                 ),
-                getFriendReqParam
+                index
         );
     }
 
@@ -733,20 +784,7 @@ public class UserDao {
 
     }
 
-    // 초, 분, 시, 일, 월, 주 순서
-    @Scheduled(cron = "0 0 0 * * *", zone = "UTC")
-    public void initTodayHits() throws InterruptedException {
-        System.out.println("today hit 초기화");
-        // 저장된 모든 관심상품을 조회합니다.
 
-        String editUserQuery = "UPDATE user SET todayHits=? where true";
-        this.jdbcTemplate.update(editUserQuery, 0);
-
-        System.out.println("refresh nft 초기화");
-        String refreshCollectionQuery = "UPDATE user SET collectionRefresh=? where true";
-        this.jdbcTemplate.update(refreshCollectionQuery, 10);
-
-    }
 
     public List<UserWallet> getAllUserWalletForDashBoardByUserId(String userId){
         String getUserWallet = "select * from userWallet where user=? and viewDataAvailable=1";
@@ -890,6 +928,33 @@ public class UserDao {
         }catch (EmptyResultDataAccessException e) {
             return null;
         }
+    }
+
+    public Follow getFollow(String reqTo, String reqFrom){
+        String getFollowingQuery = "SELECT * FROM follow WHERE user=? AND following=?";
+        Object[] getFollowingParam = new Object[]{reqFrom, reqTo};
+        return this.jdbcTemplate.queryForObject(getFollowingQuery,
+                (rs, rowNum) -> new Follow(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("following"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getFollowingParam
+        );
+    }
+
+    public Follow getFollow(int index){
+        String getFollow = "SELECT * FROM follow WHERE `index`=?";
+        return this.jdbcTemplate.queryForObject(getFollow,
+                (rs, rowNum) -> new Follow(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("following"),
+                        rs.getTimestamp("createdAt")
+                ),
+                index
+        );
     }
 
     public int isFollowExist(String reqTo, String reqFrom){
@@ -1055,6 +1120,129 @@ public class UserDao {
         String createPoapWalletQuery = "INSERT INTO poapWallet(poap_event_id, token_id, walletAddress, createdAt) VALUES(?,?,?,?)";
         Object[] createPoapWalletParams = new Object[] {event_id, token_id, walletAddress, createdAt};
         return this.jdbcTemplate.update(createPoapWalletQuery, createPoapWalletParams);
+    }
+
+    public int createNotification(String userID, int type, String message, int... optionIdx){
+        switch(type){
+            case 1: String createNotificationQuery1 = "INSERT INTO notification(user, type, message) VALUES(?,?,?)";
+                    Object[] createNotificationParam1 = new Object[]{userID, type, message};
+                    return this.jdbcTemplate.update(createNotificationQuery1, createNotificationParam1);
+            case 2: String createNotificationQuery2 = "INSERT INTO notification(user, type, message, friendReq) VALUES(?,?,?,?)";
+                    Object[] createNotificationParam2 = new Object[]{userID, type, message, optionIdx[0]};
+                    return this.jdbcTemplate.update(createNotificationQuery2, createNotificationParam2);
+            case 3: String createNotificationQuery3 = "INSERT INTO notification(user, type, message, friend) VALUES(?,?,?,?)";
+                    Object[] createNotificationParam3 = new Object[]{userID, type, message, optionIdx[0]};
+                    return this.jdbcTemplate.update(createNotificationQuery3, createNotificationParam3);
+            case 4:
+                break;
+            case 5: String createNotificationQuery5 = "INSERT INTO notification(user, type, message, follow) VALUES(?,?,?,?)";
+                    Object[] createNotificationParam5 = new Object[]{userID, type, message, optionIdx[0]};
+                    return this.jdbcTemplate.update(createNotificationQuery5, createNotificationParam5);
+            default:
+                break;
+        }
+        return -1;
+    }
+
+    public List<Notification> getUserNotificationList(String userID){
+        String getUserNotificationListQuery = "SELECT * FROM notification WHERE user=? ORDER BY `index` DESC";
+        return this.jdbcTemplate.query(getUserNotificationListQuery,
+                (rs, rowNum) -> new Notification(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getInt("type"),
+                        rs.getInt("friendReq"),
+                        rs.getInt("friend"),
+                        rs.getInt("follow"),
+                        rs.getString("message"),
+                        rs.getBoolean("isChecked"),
+                        rs.getTimestamp("createdAt")
+                ),
+                userID
+        );
+    }
+
+    public int checkNotification(int index){
+        String checkNotificationQuery = "UPDATE notification SET isChecked=true where `index` = ?";
+        return this.jdbcTemplate.update(checkNotificationQuery, index);
+    }
+
+    public boolean isUncheckedNotificationLeft(String userID){
+        String isUncheckedNotificationLeftQuery = "select exists(select * from notification where user = ? AND isChecked=false)";
+        return this.jdbcTemplate.queryForObject(isUncheckedNotificationLeftQuery,
+                Boolean.class,
+                userID
+        );
+    }
+
+    public Notification getNotification(int index){
+        String getNotificationQuery = "SELECT * FROM notification WHERE `index`=?";
+        return this.jdbcTemplate.queryForObject(getNotificationQuery,
+                (rs, rowNum) -> new Notification(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getInt("type"),
+                        rs.getInt("friendReq"),
+                        rs.getInt("friend"),
+                        rs.getInt("follow"),
+                        rs.getString("message"),
+                        rs.getBoolean("isChecked"),
+                        rs.getTimestamp("createdAt")
+                ),
+                index
+        );
+    }
+
+    public List<User> getUserList(String orderBy){
+        String getUserList = "SELECT * FROM user ORDER BY `createdAt`";
+        if(orderBy.equals("todayHits")){
+            getUserList = "SELECT * FROM user ORDER BY todayHits DESC";
+        }else if(orderBy.equals("todayFollows")){
+            getUserList = "SELECT * FROM user ORDER BY todayFollows DESC";
+        }
+        return this.jdbcTemplate.query(getUserList,
+                (rs, rowNum) -> new User(
+                        rs.getString("id"),
+                        rs.getString("introduction"),
+                        rs.getString("url"),
+                        rs.getInt("hits"),
+                        rs.getInt("todayHits"),
+                        rs.getInt("todayFollows"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getInt("nftRefreshLeft"),
+                        rs.getString("backImage"),
+                        rs.getString("nickname"),
+                        rs.getInt("index")
+                )
+        );
+    }
+
+    public int addFollow(String userID){
+        String addFollowQuery = "UPDATE user SET todayFollows=todayFollows+1 where id = ?";
+        return this.jdbcTemplate.update(addFollowQuery, userID);
+    }
+
+    public int reduceFollow(String userID){
+        String reduceFollowQuery = "UPDATE user SET todayFollows=todayFollows-1 where id = ?";
+        return this.jdbcTemplate.update(reduceFollowQuery, userID);
+    }
+
+    // 초, 분, 시, 일, 월, 주 순서
+    @Scheduled(cron = "0 0 0 * * *", zone = "UTC")
+    public void initTodayHits() throws InterruptedException {
+        System.out.println("today hit 초기화");
+        // 저장된 모든 관심상품을 조회합니다.
+
+        String editUserQuery = "UPDATE user SET todayHits=? where true";
+        this.jdbcTemplate.update(editUserQuery, 0);
+
+        String editUserQuery2 = "UPDATE user SET todayFollows=? where true";
+        this.jdbcTemplate.update(editUserQuery2, 0);
+
+        System.out.println("refresh nft 초기화");
+        String refreshCollectionQuery = "UPDATE user SET collectionRefresh=? where true";
+        this.jdbcTemplate.update(refreshCollectionQuery, 10);
+
     }
 
 }

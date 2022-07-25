@@ -14,6 +14,7 @@ public class User {
     private String url;
     private int hits;
     private int todayHits;
+    private int todayFollows;
     private Timestamp createdAt;
     private int nftRefreshLeft;
     private String backImage;

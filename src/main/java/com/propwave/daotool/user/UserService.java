@@ -218,6 +218,35 @@ public class UserService {
         return userDao.deleteFollow(reqTo, reqFrom);
     }
 
+    public int createNotification(String userID, int type, int... optionIdx){
+        // type: 1 - welcome, 2 - friend req, 3 - friend ok, 4 - comment, 5 - follow
+        String message;
+        switch(type){
+            case 1: message = "Congratulations! You are now a MEPE user.";
+                    System.out.println("1 notification");
+                    return userDao.createNotification(userID, type, message);
+            case 2: FriendReq friendReq = userDao.getFriendReq(optionIdx[0]);
+                    message = "A friend request came from "+ friendReq.getReqFrom() + ". Accept the friend request and check out the nickname your friend gave you.";
+                    return userDao.createNotification(userID, type, message, optionIdx);
+            case 3: Friend friend = userDao.getFriend(optionIdx[0]);
+                    message = friend.getFriend()+" accepted your friend request. check out the nickname your friend gave you.";
+                    return userDao.createNotification(friend.getUser(), type, message, optionIdx);
+            case 4:
+                    break;
+            case 5:
+                    Follow follow = userDao.getFollow(optionIdx[0]);
+                    message = follow.getUser() + " started to follow you. check out "+ follow.getUser() +"'s page.";
+                    return userDao.createNotification(userID, type, message, optionIdx);
+            default:
+                    break;
+        }
+        return -1;
+    }
+
+    public int checkNotification(int index){
+        return userDao.checkNotification(index);
+    }
+
 
     // ----------------------------------------------
 
@@ -698,6 +727,14 @@ public class UserService {
 
         return result;
 
+    }
+
+    public int addFollow(String reqTo){
+        return userDao.addFollow(reqTo);
+    }
+
+    public int reduceFollow(String reqTo){
+        return userDao.reduceFollow(reqTo);
     }
 
 
