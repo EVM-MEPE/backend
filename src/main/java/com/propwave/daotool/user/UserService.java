@@ -222,7 +222,7 @@ public class UserService {
         // type: 1 - welcome, 2 - friend req, 3 - friend ok, 4 - comment, 5 - follow
         String message;
         switch(type){
-            case 1: message = "Congratulations! You are now a MEPE user.";
+            case 1: message = "Welcome! You are a member of MEPE from now on.";
                     System.out.println("1 notification");
                     return userDao.createNotification(userID, type, message);
             case 2: FriendReq friendReq = userDao.getFriendReq(optionIdx[0]);
@@ -235,7 +235,7 @@ public class UserService {
                     break;
             case 5:
                     Follow follow = userDao.getFollow(optionIdx[0]);
-                    message = follow.getUser() + " started to follow you. check out "+ follow.getUser() +"'s page.";
+                    message = follow.getUser() + " starts following you.";
                     return userDao.createNotification(userID, type, message, optionIdx);
             default:
                     break;
