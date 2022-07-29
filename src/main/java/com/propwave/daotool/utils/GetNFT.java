@@ -22,7 +22,13 @@ public class GetNFT {
         String body = "";
 
         HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
-        ResponseEntity<String> responseEntity = rest.exchange("https://deep-index.moralis.io/api/v2/"+walletAddress+"/nft?chain="+chain+"&format=decimal", HttpMethod.GET, requestEntity, String.class);
+
+        ResponseEntity<String> responseEntity = null;
+        try{
+            responseEntity = rest.exchange("https://deep-index.moralis.io/api/v2/"+walletAddress+"/nft?chain="+chain+"&format=decimal", HttpMethod.GET, requestEntity, String.class);
+        }catch(Exception e){
+            return "";
+        }
         HttpStatus httpStatus = responseEntity.getStatusCode();
         int status = httpStatus.value();
         String response = responseEntity.getBody();
@@ -41,6 +47,9 @@ public class GetNFT {
 
         for(String chain:chainList){
             String res = getNft(chain, walletAddress);
+            if(res.equals("")){
+                continue;
+            }
             result.addAll(fromJSONtoNftList(res));
         }
         return result;

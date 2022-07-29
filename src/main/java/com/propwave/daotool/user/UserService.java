@@ -635,6 +635,9 @@ public class UserService {
             // POAP 가져오기
             String walletAddress = userWallet.getWalletAddress();
             String poapResult = getPOAP.getPOAP(walletAddress);
+            if(poapResult.equals("")){
+                continue;
+            }
             JSONArray jsonList = getPOAP.fromJSONtoPOAPList(poapResult);
             for(Object json:jsonList){
                 JSONObject jsonObject = (JSONObject) json;

@@ -26,7 +26,13 @@ public class GetPOAP {
         String body = "";
 
         HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
-        ResponseEntity<String> responseEntity = rest.exchange("https://api.poap.tech/actions/scan/"+walletAddress, HttpMethod.GET, requestEntity, String.class);
+        ResponseEntity<String> responseEntity = null;
+        try{
+            responseEntity = rest.exchange("https://api.poap.tech/actions/scan/"+walletAddress, HttpMethod.GET, requestEntity, String.class);
+        }catch(Exception e){
+            return "";
+        }
+
         HttpStatus httpStatus = responseEntity.getStatusCode();
         int status = httpStatus.value();
         String response = responseEntity.getBody();
