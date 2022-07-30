@@ -42,7 +42,6 @@ public class GetNFT {
 
         System.out.println("getStarNft");
         walletAddress = "stars" + walletAddress.substring(6);
-        System.out.p
 
         RestTemplate rest = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
