@@ -12,7 +12,7 @@ import java.util.List;
 
 @Component
 public class GetNFT {
-    public String getNft(String chain, String walletAddress){
+    public String getEthNft(String chain, String walletAddress){
         System.out.println("getEthNft");
         System.out.println(chain+"::"+ walletAddress);
 
@@ -38,7 +38,34 @@ public class GetNFT {
         return response;
     }
 
-    public JSONArray getAllChainNft(String walletAddress) throws ParseException {
+    public String getStargazeNft(String walletAddress){
+
+        System.out.println("getStarNft");
+        walletAddress = "stars" + walletAddress.substring(6);
+        System.out.p
+
+        RestTemplate rest = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        String body = "";
+
+        HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
+        ResponseEntity<String> responseEntity = null;
+        try{
+            responseEntity = rest.exchange("https://nft-api.stargaze-apis.com/api/v1beta/profile/"+walletAddress+"/nfts", HttpMethod.GET, requestEntity, String.class);
+        }catch(Exception e){
+            return "";
+        }
+
+        HttpStatus httpStatus = responseEntity.getStatusCode();
+        int status = httpStatus.value();
+        String response = responseEntity.getBody();
+        System.out.println("Response status: " + status);
+        System.out.println(response);
+
+        return response;
+    }
+
+    public JSONArray getAllEthChainNft(String walletAddress) throws ParseException {
         ArrayList<String> chainList = new ArrayList<>();
         chainList.add("eth");
         chainList.add("polygon");
@@ -46,7 +73,8 @@ public class GetNFT {
         JSONArray result = new JSONArray();
 
         for(String chain:chainList){
-            String res = getNft(chain, walletAddress);
+            String res = getEthNft(chain, walletAddress);
+
             if(res.equals("")){
                 continue;
             }

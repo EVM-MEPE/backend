@@ -14,6 +14,7 @@ import com.propwave.daotool.utils.GetPOAP;
 import com.propwave.daotool.wallet.model.UserWallet;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -509,7 +510,7 @@ public class UserService {
     }
 
     public void getNFTRefresh(String walletAddress, String api_chain, String chain, int userWalletIndex) throws ParseException {
-        String nftResult = getNFT.getNft(api_chain, walletAddress);
+        String nftResult = getNFT.getEthNft(api_chain, walletAddress);
         JSONObject jsonObject = getNFT.fromJSONtoNFT(nftResult);
 
         // 이미 있는 NFT인지 확인하기
@@ -682,55 +683,78 @@ public class UserService {
         return result;
     }
 
-    public List<Map<String, Object>> getNftMypageWithNoDB(String userId) throws ParseException, BaseException{
+    public Map<String, Object> getNftMypageWithNoDB(String userId) throws ParseException, BaseException{
         System.out.println("get nft!!!");
         // user의 모든 지갑 불러오기
         List<UserWalletAndInfo> userWalletAndInfos = userProvider.getAllUserWalletByUserId(userId);
-        List<Map<String, Object>> result = new ArrayList<>();
+        Map<String, Object> result = new HashMap<>();
+        List<Map<String, Object>> ethR = new ArrayList<>();
+        List<Map<String, Object>> cosR = new ArrayList<>();
 
         for(UserWalletAndInfo userWallet: userWalletAndInfos){
             // POAP 가져오기
             String walletAddress = userWallet.getWalletAddress();
-            JSONArray jsonList = getNFT.getAllChainNft(walletAddress);
+            JSONArray jsonList = null;
+            if(walletAddress.startsWith("cosmos")){ // cosmos
+                System.out.println("go");
+                String res = getNFT.getStargazeNft(walletAddress);
+                JSONParser jsonParser = new JSONParser();
+                jsonList = (JSONArray)jsonParser.parse(res);
 
-            for(Object json:jsonList){
-                JSONObject jsonObject = (JSONObject) json;
-                String token_uri = (String) jsonObject.get("token_uri");
-                String metadata = (String) jsonObject.get("metadata");
-                System.out.println(metadata);
-                try{
-                    if(metadata.isEmpty()){
-                        continue;
-                    }
-                }catch(NullPointerException e){
-                    continue;
+                //jsonList = getNFT.fromJSONtoNftList(res);
+                for(Object json:jsonList){
+                    JSONObject jsonObject = (JSONObject) json;
+
+                    Map<String, Object> tmp = new HashMap<>();
+                    tmp.put("image", jsonObject.get("image"));
+                    tmp.put("name", jsonObject.get("name"));
+                    cosR.add(tmp);
                 }
 
-                Map<String, String> metadataJson = (Map) getNFT.fromJSONtoNFT(metadata);
-                Map<String, Object> tmp = new HashMap<>();
-                tmp.put("image_url", metadataJson.get("image"));
-                tmp.put("name", metadataJson.get("name"));
-                tmp.put("createdAt", jsonObject.get("updated_at"));
-                result.add(tmp);
-            }
+            }else{  // metamask, else
+                jsonList = getNFT.getAllEthChainNft(walletAddress);
+                for(Object json:jsonList){
+                    JSONObject jsonObject = (JSONObject) json;
+                    String token_uri = (String) jsonObject.get("token_uri");
+                    String metadata = (String) jsonObject.get("metadata");
+                    System.out.println(metadata);
+                    try{
+                        if(metadata.isEmpty()){
+                            continue;
+                        }
+                    }catch(NullPointerException e){
+                        continue;
+                    }
 
+                    Map<String, String> metadataJson = (Map) getNFT.fromJSONtoNFT(metadata);
+                    Map<String, Object> tmp = new HashMap<>();
+                    tmp.put("image_url", metadataJson.get("image"));
+                    tmp.put("name", metadataJson.get("name"));
+                    tmp.put("createdAt", jsonObject.get("updated_at"));
+                    ethR.add(tmp);
+                }
+            }
         }
 
 
-        result.sort(new Comparator<Map<String, Object>>() {
+            ethR.sort(new Comparator<Map<String, Object>>() {
             @Override
             public int compare(Map<String, Object> o1, Map<String, Object> o2) {
                 return -(Float.compare(Float.parseFloat((String) o1.get("createdAt")),Float.parseFloat((String) o2.get("createdAt"))));
             }
         });
 
-        if(result.size()>8){
-            result = result.subList(0,8);
+        if(ethR.size()>8){
+            ethR = ethR.subList(0,8);
         }
+
+        result.put("metamask", ethR);
+        result.put("keplr", cosR);
 
         return result;
 
     }
+
 
     public int addFollow(String reqTo){
         return userDao.addFollow(reqTo);

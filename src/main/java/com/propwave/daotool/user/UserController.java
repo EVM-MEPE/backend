@@ -217,7 +217,7 @@ public class UserController {
 
         // mvp -> get poap list by api
         List<Map<String, Object>> poapList = userService.getPoapMypageWithNoDB(userID);
-        List<Map<String, Object>> nftList = userService.getNftMypageWithNoDB(userID);
+        Map<String, Object> nftList = userService.getNftMypageWithNoDB(userID);
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
         Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
