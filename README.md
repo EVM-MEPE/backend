@@ -9,7 +9,8 @@ This git repository contains MEPE's back-end development.
 ## Installation
 To get a local copy up and running follow these simple example steps.
 ``` 
- git clone https://github.com/ziptalk/dao-tool-server ```
+ git clone https://github.com/ziptalk/dao-tool-server 
+```
 
 ## APIs
 https://www.notion.so/API-c61feb2e3a46499a93916b4ff1a752ef
