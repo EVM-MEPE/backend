@@ -38,6 +38,7 @@ out/
 
 #AWS
 aws.yml
+application.yml
 
 #Secret key
 Secret.java

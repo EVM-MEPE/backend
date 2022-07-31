@@ -707,7 +707,9 @@ public class UserService {
 
                     Map<String, Object> tmp = new HashMap<>();
                     tmp.put("image", jsonObject.get("image"));
-                    tmp.put("name", jsonObject.get("name"));
+                    tmp.put("title", jsonObject.get("name"));
+                    tmp.put("obtainedAt", "none");
+                    tmp.put("hiddle", false);
                     cosR.add(tmp);
                 }
 
@@ -728,9 +730,13 @@ public class UserService {
 
                     Map<String, String> metadataJson = (Map) getNFT.fromJSONtoNFT(metadata);
                     Map<String, Object> tmp = new HashMap<>();
-                    tmp.put("image_url", metadataJson.get("image"));
-                    tmp.put("name", metadataJson.get("name"));
-                    tmp.put("createdAt", jsonObject.get("updated_at"));
+                    tmp.put("image", metadataJson.get("image"));
+                    tmp.put("title", metadataJson.get("name"));
+//                    String stringToConvert = String.valueOf();
+//                    Long convertedLong = Long.parseLong(stringToConvert);
+//                    Timestamp createdAt = new Timestamp(convertedLong);
+                    tmp.put("obtainedAt", jsonObject.get("updated_at"));
+                    tmp.put("hidden", false);
                     ethR.add(tmp);
                 }
             }
