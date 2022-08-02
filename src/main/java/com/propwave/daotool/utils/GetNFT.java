@@ -70,6 +70,8 @@ public class GetNFT {
         chainList.add("polygon");
 
         JSONArray result = new JSONArray();
+        JSONArray ethR = new JSONArray();
+        JSONArray polyR = new JSONArray();
 
         for(String chain:chainList){
             String res = getEthNft(chain, walletAddress);
@@ -77,7 +79,10 @@ public class GetNFT {
             if(res.equals("")){
                 continue;
             }
-            result.addAll(fromJSONtoNftList(res));
+            if(chain.equals("eth")){
+                result.addAll(fromJSONtoNftList(res));
+            }
+
         }
         return result;
     }
@@ -89,7 +94,14 @@ public class GetNFT {
         System.out.println(tokenUri);
 
         HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
-        ResponseEntity<String> responseEntity = rest.exchange(tokenUri, HttpMethod.GET, requestEntity, String.class);
+        ResponseEntity<String> responseEntity = null;
+
+        try{
+            responseEntity = rest.exchange(tokenUri, HttpMethod.GET, requestEntity, String.class);
+        }catch(Exception e){
+            return "";
+        }
+
         HttpStatus httpStatus = responseEntity.getStatusCode();
         int status = httpStatus.value();
         String response = responseEntity.getBody();
@@ -107,6 +119,7 @@ public class GetNFT {
 
     public JSONArray fromJSONtoNftList(String result) throws ParseException {
         JSONParser jsonParser = new JSONParser();
+        System.out.println("reeeeeeeeeesult"+result);
         JSONObject obj = (JSONObject)jsonParser.parse(result);
         JSONArray arr = (JSONArray) obj.get("result");
         return arr;

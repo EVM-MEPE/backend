@@ -629,7 +629,7 @@ public class UserService {
         List<UserWalletAndInfo> userWalletAndInfos = userProvider.getAllUserWalletByUserId(userId);
         List<Map<String, Object>> result = new ArrayList<>();
 
-        int our_event_id = 53482;
+        int our_event_id = 57439;
         List<Map<String, Object>> ourPoapList = new ArrayList<>();
 
         for(UserWalletAndInfo userWallet: userWalletAndInfos){
@@ -689,6 +689,7 @@ public class UserService {
         List<UserWalletAndInfo> userWalletAndInfos = userProvider.getAllUserWalletByUserId(userId);
         Map<String, Object> result = new HashMap<>();
         List<Map<String, Object>> ethR = new ArrayList<>();
+        List<Map<String, Object>> polyR = new ArrayList<>();
         List<Map<String, Object>> cosR = new ArrayList<>();
 
         for(UserWalletAndInfo userWallet: userWalletAndInfos){
@@ -709,23 +710,32 @@ public class UserService {
                     tmp.put("image", jsonObject.get("image"));
                     tmp.put("title", jsonObject.get("name"));
                     tmp.put("obtainedAt", "none");
-                    tmp.put("hiddle", false);
+                    tmp.put("hidden", false);
                     cosR.add(tmp);
                 }
 
             }else{  // metamask, else
-                jsonList = getNFT.getAllEthChainNft(walletAddress);
-                for(Object json:jsonList){
+                String resE = getNFT.getEthNft("eth", walletAddress);
+                String resP = getNFT.getEthNft("polygon", walletAddress);
+
+                JSONArray EjsonList = getNFT.fromJSONtoNftList(resE);
+                JSONArray PjsonList = getNFT.fromJSONtoNftList(resP);
+
+                for(Object json:EjsonList){
                     JSONObject jsonObject = (JSONObject) json;
                     String token_uri = (String) jsonObject.get("token_uri");
-                    String metadata = (String) jsonObject.get("metadata");
-                    System.out.println(metadata);
+                    String metadata = getNFT.getNftMetaData(token_uri);
+                    //String metadata = (String) jsonObject.get("metadata");
                     try{
                         if(metadata.isEmpty()){
                             continue;
                         }
                     }catch(NullPointerException e){
-                        continue;
+                        try{
+                            metadata = (String) jsonObject.get("metadata");
+                        }catch(NullPointerException e2){
+                            continue;
+                        }
                     }
 
                     Map<String, String> metadataJson = (Map) getNFT.fromJSONtoNFT(metadata);
@@ -735,29 +745,76 @@ public class UserService {
 //                    String stringToConvert = String.valueOf();
 //                    Long convertedLong = Long.parseLong(stringToConvert);
 //                    Timestamp createdAt = new Timestamp(convertedLong);
-                    tmp.put("obtainedAt", jsonObject.get("date"));
+                    tmp.put("obtainedAt", jsonObject.get("block_number"));
                     tmp.put("hidden", false);
                     ethR.add(tmp);
+                }
+
+                for(Object json:PjsonList){
+                    JSONObject jsonObject = (JSONObject) json;
+                    String token_uri = (String) jsonObject.get("token_uri");
+                    String metadata = getNFT.getNftMetaData(token_uri);
+                    //String metadata = (String) jsonObject.get("metadata");
+                    try{
+                        if(metadata.isEmpty()){
+                            continue;
+                        }
+                    }catch(NullPointerException e){
+                        try{
+                            metadata = (String) jsonObject.get("metadata");
+                        }catch(NullPointerException e2){
+                            continue;
+                        }
+                    }
+
+                    Map<String, String> metadataJson = (Map) getNFT.fromJSONtoNFT(metadata);
+                    Map<String, Object> tmp = new HashMap<>();
+                    tmp.put("image", metadataJson.get("image"));
+                    tmp.put("title", metadataJson.get("name"));
+//                    String stringToConvert = String.valueOf();
+//                    Long convertedLong = Long.parseLong(stringToConvert);
+//                    Timestamp createdAt = new Timestamp(convertedLong);
+                    tmp.put("obtainedAt", jsonObject.get("block_number"));
+                    tmp.put("hidden", false);
+                    polyR.add(tmp);
                 }
             }
         }
 
-//            ethR.sort(new Comparator<Map<String, Object>>() {
-//            @Override
-//            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
-//                return -(Float.compare(Float.parseFloat((String) o1.get("obtainedAt")),Float.parseFloat((String) o2.get("obtainedAt"))));
-//            }
-//        });
+        ethR.sort(new Comparator<Map<String, Object>>() {
+            @Override
+            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                return -(Float.compare(Float.parseFloat((String) o1.get("obtainedAt")),Float.parseFloat((String) o2.get("obtainedAt"))));
+            }
+        });
 
-        if(ethR.size()>50){
-            ethR = ethR.subList(0,50);
+        polyR.sort(new Comparator<Map<String, Object>>() {
+            @Override
+            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                return -(Float.compare(Float.parseFloat((String) o1.get("obtainedAt")),Float.parseFloat((String) o2.get("obtainedAt"))));
+            }
+        });
+
+        cosR.sort(new Comparator<Map<String, Object>>() {
+            @Override
+            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                return (((String) o1.get("title")).compareTo((String) o2.get("title")));
+            }
+        });
+
+        if(ethR.size()>8){
+            ethR = ethR.subList(0,8);
         }
 
-        result.put("metamask", ethR);
+        if(polyR.size()>8){
+            polyR = polyR.subList(0,8);
+        }
+
+        result.put("ethereum", ethR);
+        result.put("polygon", polyR);
         result.put("keplr", cosR);
 
         return result;
-
     }
 
 
