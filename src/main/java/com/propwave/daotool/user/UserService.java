@@ -735,23 +735,22 @@ public class UserService {
 //                    String stringToConvert = String.valueOf();
 //                    Long convertedLong = Long.parseLong(stringToConvert);
 //                    Timestamp createdAt = new Timestamp(convertedLong);
-                    tmp.put("obtainedAt", jsonObject.get("updated_at"));
+                    tmp.put("obtainedAt", jsonObject.get("date"));
                     tmp.put("hidden", false);
                     ethR.add(tmp);
                 }
             }
         }
 
+//            ethR.sort(new Comparator<Map<String, Object>>() {
+//            @Override
+//            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+//                return -(Float.compare(Float.parseFloat((String) o1.get("obtainedAt")),Float.parseFloat((String) o2.get("obtainedAt"))));
+//            }
+//        });
 
-            ethR.sort(new Comparator<Map<String, Object>>() {
-            @Override
-            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
-                return -(Float.compare(Float.parseFloat((String) o1.get("createdAt")),Float.parseFloat((String) o2.get("createdAt"))));
-            }
-        });
-
-        if(ethR.size()>8){
-            ethR = ethR.subList(0,8);
+        if(ethR.size()>50){
+            ethR = ethR.subList(0,50);
         }
 
         result.put("metamask", ethR);
