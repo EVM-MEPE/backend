@@ -631,14 +631,14 @@ public class UserController {
     }
 
     @GetMapping("following/following")
-    public BaseResponse<List<User>> getFollowingList(@RequestParam("userID") String userID){
-        List<User> followingList= userProvider.getFollowingList(userID);
+    public BaseResponse<List<Map<String, Object>>> getFollowingList(@RequestParam("userID") String userID){
+        List<Map<String, Object>> followingList= userProvider.getFollowingList(userID);
         return new BaseResponse<>(followingList);
     }
 
     @GetMapping("following/follower")
-    public BaseResponse<List<User>> getFollowerList(@RequestParam("userID") String userID){
-        List<User> followerList= userProvider.getFollowerList(userID);
+    public BaseResponse<List<Map<String, Object>>> getFollowerList(@RequestParam("userID") String userID){
+        List<Map<String, Object>> followerList= userProvider.getFollowerList(userID);
         return new BaseResponse<>(followerList);
     }
 

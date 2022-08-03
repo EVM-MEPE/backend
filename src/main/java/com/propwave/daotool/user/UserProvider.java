@@ -1,20 +1,23 @@
 package com.propwave.daotool.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.propwave.daotool.badge.model.*;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
+
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.wallet.UserWalletDao;
 import com.propwave.daotool.wallet.model.UserWallet;
-import com.propwave.daotool.wallet.model.Wallet;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.*;
 
 //Provider: Read 비즈니스 로직 처리
@@ -420,24 +423,50 @@ public class UserProvider {
         return userDao.getFollow(index);
     }
 
-    public List<User> getFollowingList(String userID){
+    public List<Map<String, Object>> getFollowingList(String userID){
         List<Follow> followingList = userDao.getFollowingList(userID);
-        List<User> followingListWithUserInfo = new ArrayList<>();
+        List<Map<String, Object>> followingListWithUserInfo = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+
         for(Follow follow:followingList){
             String following = follow.getFollowing();
             User user = userDao.getUserInfo(following);
-            followingListWithUserInfo.add(user);
+            String profileImg;
+            try{
+                profileImg = userDao.getUserImagePath(user.getId());
+            }catch(EmptyResultDataAccessException e1){
+                profileImg= DEFAULT_USER_PROFILE_IMAGE;
+            }
+            Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
+
+            Timestamp userCreatedAt = user.getCreatedAt();
+            userMap.replace("createdAt", userCreatedAt);
+            userMap.put("profileImage", profileImg);
+
+            followingListWithUserInfo.add(userMap);
         }
         return followingListWithUserInfo;
     }
 
-    public List<User> getFollowerList(String userID){
+    public List<Map<String, Object>> getFollowerList(String userID){
         List<Follow> followerList = userDao.getFollowerList(userID);
-        List<User> followerListWithUserInfo = new ArrayList<>();
+        List<Map<String, Object>> followerListWithUserInfo = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+
         for(Follow follow:followerList){
             String follower = follow.getUser();
             User user = userDao.getUserInfo(follower);
-            followerListWithUserInfo.add(user);
+            String profileImg;
+            try{
+                profileImg = userDao.getUserImagePath(user.getId());
+            }catch(EmptyResultDataAccessException e1){
+                profileImg= DEFAULT_USER_PROFILE_IMAGE;
+            }
+            Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
+            Timestamp userCreatedAt = user.getCreatedAt();
+            userMap.replace("createdAt", userCreatedAt);
+            userMap.put("profileImage", profileImg);
+            followerListWithUserInfo.add(userMap);
         }
         return followerListWithUserInfo;
     }
