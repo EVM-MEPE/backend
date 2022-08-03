@@ -478,16 +478,11 @@ public class UserController {
     @PostMapping("userList")
     public BaseResponse<Map<String, Object>> getUserList(@RequestParam("orderBy") String orderBy, @RequestBody Map<String, String> json) throws BaseException {
         String userID = json.get("userID");
-        String jwtToken = json.get("jwtToken");
-
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
 
         Map<String, Object> userListCreatedAt = userProvider.getUserList("createdAt", userID);
         List<Map<String, Object>> listCreatedAt = (List<Map<String, Object>>) userListCreatedAt.get("list");
         Map<String, Object> userListTodayHits = userProvider.getUserList("todayHits", userID);
-        List<Map<String, Object>> listTodayHits = (List<Map<String, Object>>) userListCreatedAt.get("list");
+        List<Map<String, Object>> listTodayHits = (List<Map<String, Object>>) userListTodayHits.get("list");
         Map<String, Object> userListTodayFollows = userProvider.getUserList("todayFollows", userID);
         List<Map<String, Object>> listTodayFollows = (List<Map<String, Object>>) userListTodayFollows.get("list");
 
@@ -506,12 +501,14 @@ public class UserController {
         res.put("topTodayHits", listTodayHits.get(0));
         res.put("topTodayFollows", listTodayFollows.get(0));
 
-        Map<String, Object> me = new HashMap<>();
-        me.put("createdAt", userListCreatedAt.get("me"));
-        me.put("todayHits", userListTodayHits.get("me"));
-        me.put("todayFollows", userListTodayFollows.get("me"));
+        if(!userID.equals("")){
+            Map<String, Object> me = new HashMap<>();
+            me.put("createdAt", userListCreatedAt.get("me"));
+            me.put("todayHits", userListTodayHits.get("me"));
+            me.put("todayFollows", userListTodayFollows.get("me"));
 
-        res.put("myRecord", me);
+            res.put("myRecord", me);
+        }
 
         return new BaseResponse<>(res);
     }
