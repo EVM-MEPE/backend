@@ -47,24 +47,20 @@ public class UserService {
         this.securityService = securityService;
     }
 
-    public Map<String, Object> createUser(String userID) throws BaseException{
-        try{
-            //newUser의 JWT 토큰 만들기
-            String jwtToken = securityService.createToken(userID, (360*1000*60)); // 토큰 유효시간 6시간
-            User newUser = userDao.createUser(userID);
+    public Map<String, Object> createUser(String userID) {
+        //newUser의 JWT 토큰 만들기
+        String jwtToken = securityService.createToken(userID, (360*1000*60)); // 토큰 유효시간 6시간
+        User newUser = userDao.createUser(userID);
 
-            ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
-            Map<String, Object> res = objectMapper.convertValue(newUser, Map.class);
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+        Map<String, Object> res = objectMapper.convertValue(newUser, Map.class);
 
-            Timestamp userCreatedAt = newUser.getCreatedAt();
-            res.replace("createdAt", userCreatedAt);
+        Timestamp userCreatedAt = newUser.getCreatedAt();
+        res.replace("createdAt", userCreatedAt);
 
-            res.put("jwtToken", jwtToken);
+        res.put("jwtToken", jwtToken);
 
-            return res;
-        } catch(Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
+        return res;
     }
 
     public User createUser(Map<String, Object> userInfo, String profileImageS3Path) throws BaseException{

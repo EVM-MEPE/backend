@@ -41,8 +41,9 @@ public class UserDao {
     }
 
     public User createUser(String userID){
-        String createUserQuery = "INSERT INTO user(id) VALUES (?)";
-        this.jdbcTemplate.update(createUserQuery, userID);
+        String createUserQuery = "INSERT INTO user(id, nickname) VALUES (?, ?)";
+        Object[] createUserParams = new Object[]{userID, userID};
+        this.jdbcTemplate.update(createUserQuery, createUserParams);
         return getUserInfo(userID);
     }
 
