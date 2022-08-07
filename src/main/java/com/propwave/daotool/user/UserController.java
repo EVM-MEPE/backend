@@ -206,7 +206,7 @@ public class UserController {
      ******************************** mypage ********************************
      **/
     @GetMapping("mypage")
-    public BaseResponse<Map<String, Object>> getUserInfo(@RequestParam("userID") String userID) throws BaseException, ParseException {
+    public BaseResponse<Map<String, Object>> getMyPageUserInfo(@RequestParam("userID") String userID) throws BaseException, ParseException {
         User user = userProvider.getUser(userID);
         String profileImg = userProvider.getUserImagePath(userID);
         int friendCount = userProvider.getFriendsCount(userID);
@@ -214,10 +214,6 @@ public class UserController {
         int followingCount = userProvider.getFollowingCount(userID);
         Social social = userProvider.getSocial(userID);
         List<UserWalletAndInfo> walletLists = userProvider.getAllUserWalletByUserId(userID);
-
-        // mvp -> get poap list by api
-        List<Map<String, Object>> poapList = userService.getPoapMypageWithNoDB(userID);
-        Map<String, Object> nftList = userService.getNftMypageWithNoDB(userID);
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
         Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
@@ -235,10 +231,30 @@ public class UserController {
         result.put("social", socialMap);
         result.put("walletList", walletLists);
         result.put("profileImg", profileImg);
-        result.put("poapList", poapList);
-        result.put("nftList", nftList);
 
         userService.addHit(userID);
+
+        return new BaseResponse<>(result);
+    }
+
+    @GetMapping("mypage/collections")
+    public BaseResponse<Map<String, Object>> getMyPageCollections(@RequestParam("userID") String userID) throws BaseException, ParseException {
+        User user = userProvider.getUser(userID);
+
+        // mvp -> get poap list by api
+        List<Map<String, Object>> poapList = userService.getPoapMypageWithNoDB(userID);
+        Map<String, Object> nftList = userService.getNftMypageWithNoDB(userID);
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+        Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
+
+        Timestamp userCreatedAt = user.getCreatedAt();
+        userMap.replace("createdAt", userCreatedAt);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("user", userMap);
+        result.put("poapList", poapList);
+        result.put("nftList", nftList);
 
         return new BaseResponse<>(result);
     }

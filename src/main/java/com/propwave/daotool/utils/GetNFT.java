@@ -14,7 +14,7 @@ import java.util.List;
 public class GetNFT {
     public String getEthNft(String chain, String walletAddress){
         System.out.println("getEthNft");
-        System.out.println(chain+"::"+ walletAddress);
+        //System.out.println(chain+"::"+ walletAddress);
 
         RestTemplate rest = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -32,8 +32,8 @@ public class GetNFT {
         HttpStatus httpStatus = responseEntity.getStatusCode();
         int status = httpStatus.value();
         String response = responseEntity.getBody();
-        System.out.println("Response status: " + status);
-        System.out.println(response);
+        //System.out.println("Response status: " + status);
+        //System.out.println(response);
 
         return response;
     }
@@ -58,8 +58,8 @@ public class GetNFT {
         HttpStatus httpStatus = responseEntity.getStatusCode();
         int status = httpStatus.value();
         String response = responseEntity.getBody();
-        System.out.println("Response status: " + status);
-        System.out.println(response);
+        //System.out.println("Response status: " + status);
+        //System.out.println(response);
 
         return response;
     }
@@ -91,7 +91,7 @@ public class GetNFT {
         RestTemplate rest = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         String body = "";
-        System.out.println(tokenUri);
+        //System.out.println(tokenUri);
 
         HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
         ResponseEntity<String> responseEntity = null;
@@ -105,8 +105,8 @@ public class GetNFT {
         HttpStatus httpStatus = responseEntity.getStatusCode();
         int status = httpStatus.value();
         String response = responseEntity.getBody();
-        System.out.println("Response status: " + status);
-        System.out.println(response);
+        //System.out.println("Response status: " + status);
+        //System.out.println(response);
         return response;
     }
 
