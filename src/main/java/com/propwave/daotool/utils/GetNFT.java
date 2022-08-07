@@ -119,8 +119,14 @@ public class GetNFT {
 
     public JSONArray fromJSONtoNftList(String result) throws ParseException {
         JSONParser jsonParser = new JSONParser();
-        JSONObject obj = (JSONObject)jsonParser.parse(result);
-        JSONArray arr = (JSONArray) obj.get("result");
+        JSONArray arr = new JSONArray();
+        try{
+            JSONObject obj = (JSONObject)jsonParser.parse(result);
+            arr = (JSONArray) obj.get("result");
+        }catch(Exception e){
+            System.out.println();
+        }
+
         return arr;
     }
 }
