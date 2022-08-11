@@ -228,8 +228,9 @@ public class UserService {
             case 3: Friend friend = userDao.getFriend(optionIdx[0]);
                     message = friend.getFriend()+" accepted your friend request. check out the nickname your friend gave you.";
                     return userDao.createNotification(friend.getUser(), type, message, optionIdx);
-            case 4:
-                    break;
+            case 4: Comment comment = userDao.getComment(optionIdx[0]);
+                    message = comment.getCommentFrom() + " left a comment for you. Check out the comments your friend wrote to you.";
+                    return userDao.createNotification(comment.getCommentTo(), type, message, optionIdx);
             case 5:
                     Follow follow = userDao.getFollow(optionIdx[0]);
                     message = follow.getUser() + " starts following you.";
@@ -822,7 +823,9 @@ public class UserService {
         return userDao.reduceFollow(reqTo);
     }
 
-
+    public int createComment(String userID, String friendID, String message){
+        return userDao.createComment(userID, friendID, message);
+    }
 
 
 

@@ -540,9 +540,28 @@ public class UserController {
         Map<String,String> res = new HashMap<>();
         res.put("userID", user.getId());
         res.put("userImg", userImg);
-        res.put("user", friendInfo.getFriendName());
+        res.put("userNickname", friendInfo.getFriendName());
 
         return new BaseResponse<>(res);
+    }
+
+    @PostMapping("comments/new")
+    public BaseResponse<String> createNewComment(@RequestParam("friendID") String friendID, @RequestBody Map<String, String> json){
+        // check jwt token
+        String userID = json.get("userID");
+        String jwtToken = json.get("jwtToken");
+        String message = json.get("message");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        userService.createComment(userID, friendID, message);
+        Comment comment = userProvider.getComment(userID, friendID, message);
+        userService.createNotification(friendID, 4, comment.getIndex());
+
+        return new BaseResponse<>("Success to create a new comment");
+
     }
 
 

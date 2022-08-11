@@ -1134,8 +1134,9 @@ public class UserDao {
             case 3: String createNotificationQuery3 = "INSERT INTO notification(user, type, message, friend) VALUES(?,?,?,?)";
                     Object[] createNotificationParam3 = new Object[]{userID, type, message, optionIdx[0]};
                     return this.jdbcTemplate.update(createNotificationQuery3, createNotificationParam3);
-            case 4:
-                break;
+            case 4: String createNotificationQuery4 = "INSERT INTO notification(user, type, message, comment) VALUES(?,?,?,?)";
+                    Object[] createNotificationParam4 = new Object[]{userID, type, message, optionIdx[0]};
+                    return this.jdbcTemplate.update(createNotificationQuery4, createNotificationParam4);
             case 5: String createNotificationQuery5 = "INSERT INTO notification(user, type, message, follow) VALUES(?,?,?,?)";
                     Object[] createNotificationParam5 = new Object[]{userID, type, message, optionIdx[0]};
                     return this.jdbcTemplate.update(createNotificationQuery5, createNotificationParam5);
@@ -1234,8 +1235,43 @@ public class UserDao {
         return this.jdbcTemplate.queryForObject(getFriendNicknameQuery, String.class, getFriendNicknameParams);
     }
 
+    public int createComment(String userID, String friendID, String message){
+        String createCommentQuery = "INSERT INTO comment(commentTo, commentFrom, message) VALUES(?,?,?)";
+        Object[] createCommentParam = new Object[]{friendID, userID, message};
+        return this.jdbcTemplate.update(createCommentQuery, createCommentParam);
+    }
 
+    public Comment getComment(String userID, String friendID, String message){
+        String getCommentQuery = "SELECT * FROM comment WHERE commentTo=? and commentFrom=? and message=?";
+        Object[] getCommentParam = new Object[]{friendID, userID, message};
+        return this.jdbcTemplate.queryForObject(getCommentQuery,
+                (rs, rowNum) -> new Comment(
+                        rs.getInt("index"),
+                        rs.getString("commentTo"),
+                        rs.getString("commentFrom"),
+                        rs.getString("message"),
+                        rs.getBoolean("isPinned"),
+                        rs.getBoolean("isHide"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getCommentParam
+        );
+    }
 
+    public Comment getComment(int index){
+        String getCommentQuery = "SELECT * FROM comment WHERE `index`=?";
+        return this.jdbcTemplate.queryForObject(getCommentQuery,
+                (rs, rowNum) -> new Comment(
+                    rs.getInt("index"),
+                    rs.getString("commentTo"),
+                    rs.getString("commentFrom"),
+                    rs.getString("message"),
+                    rs.getBoolean("isPinned"),
+                    rs.getBoolean("isHide"),
+                    rs.getTimestamp("createdAt")
+            ),
+            index);
+    }
 
 
 

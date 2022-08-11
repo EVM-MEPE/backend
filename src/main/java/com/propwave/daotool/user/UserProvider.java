@@ -545,4 +545,8 @@ public class UserProvider {
         return res;
     }
 
+    public Comment getComment(String userID, String friendID, String message){
+        return userDao.getComment(userID, friendID, message);
+    }
+
 }
