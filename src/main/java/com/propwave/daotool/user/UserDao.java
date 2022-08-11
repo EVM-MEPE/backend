@@ -1228,6 +1228,26 @@ public class UserDao {
         return this.jdbcTemplate.update(reduceFollowQuery, userID);
     }
 
+    public String getFriendNickname(String userID, String friendID){
+        String getFriendNicknameQuery = "SELECT friendName FROM friend WHERE user=? AND friend=?";
+        Object[] getFriendNicknameParams = new Object[]{userID, friendID};
+        return this.jdbcTemplate.queryForObject(getFriendNicknameQuery, String.class, getFriendNicknameParams);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 초, 분, 시, 일, 월, 주 순서
     @Scheduled(cron = "0 0 0 * * *", zone = "UTC")
     public void initTodayHits() throws InterruptedException {

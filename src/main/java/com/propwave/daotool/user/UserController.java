@@ -293,7 +293,6 @@ public class UserController {
 
 
 
-
     /**
      ******************************** friend ********************************
      **/
@@ -528,6 +527,24 @@ public class UserController {
 
         return new BaseResponse<>(res);
     }
+
+    /*
+    ******************************** comment ********************************
+    **/
+    @GetMapping("comments/new")
+    public BaseResponse<Map<String, String>> getMyInfoForNewComment(@RequestParam("userID") String userID, @RequestParam("friendID") String friendID) throws BaseException {
+        Friend friendInfo = userProvider.getFriend(friendID, userID);
+        User user = userProvider.getUser(userID);
+        String userImg = userProvider.getUserImagePath(userID);
+
+        Map<String,String> res = new HashMap<>();
+        res.put("userID", user.getId());
+        res.put("userImg", userImg);
+        res.put("user", friendInfo.getFriendName());
+
+        return new BaseResponse<>(res);
+    }
+
 
 
 

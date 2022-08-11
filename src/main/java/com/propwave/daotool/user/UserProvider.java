@@ -535,4 +535,14 @@ public class UserProvider {
         return res;
     }
 
+    public Map<String, String> getFriendNickname(String userID, String friendID){
+        // user가 friend를 뭘로 저장했는지 확인하기
+        Map<String, String> res = new HashMap<>();
+        String nickname = userDao.getFriendReqNickname(userID, friendID);
+        res.put("user", userID);
+        res.put("friend", friendID);
+        res.put("friendNickname", nickname);
+        return res;
+    }
+
 }
