@@ -145,7 +145,7 @@ public class UserProvider {
 
     public String getStatusOfFriendReq(String reqFrom, String reqTo) throws BaseException {
         try{
-            FriendReq friendReq = userDao.getFriendReq(reqFrom, reqTo);
+            FriendReq friendReq = userDao.getFriendReq(reqTo, reqFrom);
             if(friendReq.isAccepted()){
                 return "friend";
             }else{
