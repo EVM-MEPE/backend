@@ -597,6 +597,28 @@ public class UserController {
         return new BaseResponse<>("unhide Successfully!");
     }
 
+    @PostMapping("comments/unhidden")
+    public BaseResponse<List<CommentWithInfo>> getCommentsWithoutHiddenComments(@RequestParam("userID") String userID, @RequestBody Map<String, String> json){
+        String jwtToken = json.get("jwtToken");
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        List<CommentWithInfo> commentWithInfoList = userProvider.getAllCommentsExceptHidden(userID);
+        return new BaseResponse<>(commentWithInfoList);
+    }
+
+//    @PostMapping("comments/pinned")
+//    public BaseResponse<String> pinComments(@RequestParam("userID") String userID, @RequestParam("pin") boolean pin, @RequestBody Map<String, Object> json){
+//        String jwtToken = (String) json.get("jwtToken");
+//        ArrayList<Integer> commentsIdxList
+//
+//        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+//            return new BaseResponse<>(USER_TOKEN_WRONG);
+//        }
+//
+//    }
+
 
 
 

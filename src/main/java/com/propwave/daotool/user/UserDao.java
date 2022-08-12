@@ -1317,7 +1317,24 @@ public class UserDao {
         return this.jdbcTemplate.update(hideCommentQuery, hideCommentParam);
     }
 
-
+    public List<CommentWithInfo> getAllCommentsExceptHidden(String userID){
+        String getCommentsQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isHide=false AND F.user=U.id";
+        return this.jdbcTemplate.query(getCommentsQuery,
+                (rs, rowNum) -> new CommentWithInfo(
+                        rs.getInt("index"),
+                        rs.getString("commentTo"),
+                        rs.getString("commentFrom"),
+                        rs.getString("message"),
+                        rs.getBoolean("isPinned"),
+                        rs.getBoolean("isHide"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("nickname"),
+                        rs.getString("profileImg"),
+                        rs.getString("friendName")
+                ),
+                userID
+        );
+    }
 
 
 

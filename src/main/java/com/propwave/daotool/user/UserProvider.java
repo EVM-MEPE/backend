@@ -557,4 +557,8 @@ public class UserProvider {
         return userDao.getAllPinnedCommentsForUser(userID);
     }
 
+    public List<CommentWithInfo> getAllCommentsExceptHidden(String userID){
+        return userDao.getAllCommentsExceptHidden(userID);
+    }
+
 }
