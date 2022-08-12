@@ -539,8 +539,9 @@ public class UserController {
 
         Map<String,String> res = new HashMap<>();
         res.put("userID", user.getId());
+        res.put("userNickname", user.getNickname());
         res.put("userImg", userImg);
-        res.put("userNickname", friendInfo.getFriendName());
+        res.put("userFriendNickname", friendInfo.getFriendName());
 
         return new BaseResponse<>(res);
     }
@@ -563,6 +564,25 @@ public class UserController {
         return new BaseResponse<>("Success to create a new comment");
 
     }
+
+    @GetMapping("comments/all")
+    public BaseResponse<Map<String, Object>> getAllCommentsForUser(@RequestParam("userID") String userID, @RequestBody Map<String, String> json){
+        String jwtToken = json.get("jwtToken");
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        List<CommentWithInfo> commentsList = userProvider.getAllCommentsExceptPinnedForUser(userID);
+        List<CommentWithInfo> pinnedCommentList = userProvider.getAllPinnedCommentsForUser(userID);
+
+        Map<String, Object> res = new HashMap<>();
+        res.put("commentsList", commentsList);
+        res.put("pinnedComemntList", pinnedCommentList);
+
+
+        return new BaseResponse<>(res);
+    }
+
 
 
 

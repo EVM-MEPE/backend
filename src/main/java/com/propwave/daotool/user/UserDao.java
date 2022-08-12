@@ -1273,6 +1273,44 @@ public class UserDao {
             index);
     }
 
+    public List<CommentWithInfo> getAllCommentsExceptPinnedForUser(String userID){
+        String getQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isPinned=false AND F.user=U.id";
+        return this.jdbcTemplate.query(getQuery,
+                (rs, rowNum) -> new CommentWithInfo(
+                        rs.getInt("index"),
+                        rs.getString("commentTo"),
+                        rs.getString("commentFrom"),
+                        rs.getString("message"),
+                        rs.getBoolean("isPinned"),
+                        rs.getBoolean("isHide"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("nickname"),
+                        rs.getString("profileImg"),
+                        rs.getString("friendName")
+                ),
+                userID
+        );
+    }
+
+    public List<CommentWithInfo> getAllPinnedCommentsForUser(String userID){
+        String getQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isPinned=true AND F.user=U.id";
+        return this.jdbcTemplate.query(getQuery,
+                (rs, rowNum) -> new CommentWithInfo(
+                        rs.getInt("index"),
+                        rs.getString("commentTo"),
+                        rs.getString("commentFrom"),
+                        rs.getString("message"),
+                        rs.getBoolean("isPinned"),
+                        rs.getBoolean("isHide"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("nickname"),
+                        rs.getString("profileImg"),
+                        rs.getString("friendName")
+                ),
+                userID
+        );
+    }
+
 
 
 
