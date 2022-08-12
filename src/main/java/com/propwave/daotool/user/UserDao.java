@@ -1311,6 +1311,11 @@ public class UserDao {
         );
     }
 
+    public int hideComment(int commentIdx, String userID, boolean hide){
+        String hideCommentQuery = "UPDATE comment SET `isHide`=? WHERE `index`=? AND commentTo=?";
+        Object[] hideCommentParam = new Object[]{hide, commentIdx, userID};
+        return this.jdbcTemplate.update(hideCommentQuery, hideCommentParam);
+    }
 
 
 

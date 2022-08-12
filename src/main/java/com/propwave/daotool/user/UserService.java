@@ -827,6 +827,8 @@ public class UserService {
         return userDao.createComment(userID, friendID, message);
     }
 
-
+    public int hideComment(int commentIdx, String userID, boolean hide){
+        return userDao.hideComment(commentIdx, userID, hide);
+    }
 
 }

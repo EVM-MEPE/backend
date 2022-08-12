@@ -565,7 +565,7 @@ public class UserController {
 
     }
 
-    @GetMapping("comments/all")
+    @PostMapping("comments/all")
     public BaseResponse<Map<String, Object>> getAllCommentsForUser(@RequestParam("userID") String userID, @RequestBody Map<String, String> json){
         String jwtToken = json.get("jwtToken");
         if(!isUserJwtTokenAvailable(jwtToken, userID)){
@@ -581,6 +581,20 @@ public class UserController {
 
 
         return new BaseResponse<>(res);
+    }
+
+    @PostMapping("comments/hidden")
+    public BaseResponse<String> hideComment(@RequestParam("userID") String userID, @RequestParam("commentIdx") int commentIdx, @RequestParam("hide") boolean hide,@RequestBody Map<String, String> json){
+        String jwtToken = json.get("jwtToken");
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        userService.hideComment(commentIdx, userID, hide);
+        if(hide){
+            return new BaseResponse<>("hide Successfully!");
+        }
+        return new BaseResponse<>("unhide Successfully!");
     }
 
 
