@@ -831,4 +831,8 @@ public class UserService {
         return userDao.hideComment(commentIdx, userID, hide);
     }
 
+    public int pinComment(int commentIdx, boolean pin){
+        return userDao.pinComment(commentIdx, pin);
+    }
+
 }

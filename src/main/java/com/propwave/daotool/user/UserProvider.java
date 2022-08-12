@@ -561,4 +561,8 @@ public class UserProvider {
         return userDao.getAllCommentsExceptHidden(userID);
     }
 
+    public List<CommentWithInfo> getNRecentComments(int count, String userID){
+        return userDao.getNRecentComments(count, userID);
+    }
+
 }

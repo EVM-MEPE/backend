@@ -1274,7 +1274,7 @@ public class UserDao {
     }
 
     public List<CommentWithInfo> getAllCommentsExceptPinnedForUser(String userID){
-        String getQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isPinned=false AND F.user=U.id";
+        String getQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isPinned=false AND F.user=U.id ORDER BY C.createdAt DESC ";
         return this.jdbcTemplate.query(getQuery,
                 (rs, rowNum) -> new CommentWithInfo(
                         rs.getInt("index"),
@@ -1293,7 +1293,7 @@ public class UserDao {
     }
 
     public List<CommentWithInfo> getAllPinnedCommentsForUser(String userID){
-        String getQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isPinned=true AND F.user=U.id";
+        String getQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isPinned=true AND F.user=U.id ORDER BY C.createdAt DESC ";
         return this.jdbcTemplate.query(getQuery,
                 (rs, rowNum) -> new CommentWithInfo(
                         rs.getInt("index"),
@@ -1318,7 +1318,7 @@ public class UserDao {
     }
 
     public List<CommentWithInfo> getAllCommentsExceptHidden(String userID){
-        String getCommentsQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isHide=false AND F.user=U.id";
+        String getCommentsQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isHide=false AND F.user=U.id ORDER BY C.createdAt DESC ";
         return this.jdbcTemplate.query(getCommentsQuery,
                 (rs, rowNum) -> new CommentWithInfo(
                         rs.getInt("index"),
@@ -1333,6 +1333,32 @@ public class UserDao {
                         rs.getString("friendName")
                 ),
                 userID
+        );
+    }
+
+    public int pinComment(int commentIdx, boolean pin){
+        String pinCommentQuery = "UPDATE comment SET `isPinned`=? WHERE `index`=?";
+        Object[] pinCommentParam = new Object[]{pin, commentIdx};
+        return this.jdbcTemplate.update(pinCommentQuery, pinCommentParam);
+    }
+
+    public List<CommentWithInfo> getNRecentComments(int count, String userID){
+        String getCommentsQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isHide=false AND C.isPinned=false AND F.user=U.id ORDER BY C.createdAt DESC LIMIT ?";
+        Object[] getCommentsParam = new Object[]{userID, count};
+        return this.jdbcTemplate.query(getCommentsQuery,
+                (rs, rowNum) -> new CommentWithInfo(
+                        rs.getInt("index"),
+                        rs.getString("commentTo"),
+                        rs.getString("commentFrom"),
+                        rs.getString("message"),
+                        rs.getBoolean("isPinned"),
+                        rs.getBoolean("isHide"),
+                        rs.getTimestamp("createdAt"),
+                        rs.getString("nickname"),
+                        rs.getString("profileImg"),
+                        rs.getString("friendName")
+                ),
+                getCommentsParam
         );
     }
 

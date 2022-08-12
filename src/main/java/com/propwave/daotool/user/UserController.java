@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.propwave.daotool.config.BaseResponseStatus.*;
 
@@ -214,6 +215,14 @@ public class UserController {
         int followingCount = userProvider.getFollowingCount(userID);
         Social social = userProvider.getSocial(userID);
         List<UserWalletAndInfo> walletLists = userProvider.getAllUserWalletByUserId(userID);
+        List<CommentWithInfo> pinnedCommentWithInfoList = userProvider.getAllPinnedCommentsForUser(userID);
+        int pinnedCommentCount = pinnedCommentWithInfoList.size();
+
+        if(pinnedCommentCount<3){
+            List<CommentWithInfo> commentRecentLists = userProvider.getNRecentComments(3-pinnedCommentCount, userID);
+            pinnedCommentWithInfoList.addAll(commentRecentLists);
+        }
+
 
         ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
         Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
@@ -231,6 +240,7 @@ public class UserController {
         result.put("social", socialMap);
         result.put("walletList", walletLists);
         result.put("profileImg", profileImg);
+        result.put("comments", pinnedCommentWithInfoList);
 
         userService.addHit(userID);
 
@@ -608,16 +618,24 @@ public class UserController {
         return new BaseResponse<>(commentWithInfoList);
     }
 
-//    @PostMapping("comments/pinned")
-//    public BaseResponse<String> pinComments(@RequestParam("userID") String userID, @RequestParam("pin") boolean pin, @RequestBody Map<String, Object> json){
-//        String jwtToken = (String) json.get("jwtToken");
-//        ArrayList<Integer> commentsIdxList
-//
-//        if(!isUserJwtTokenAvailable(jwtToken, userID)){
-//            return new BaseResponse<>(USER_TOKEN_WRONG);
-//        }
-//
-//    }
+    @PostMapping("comments/pinned")
+    public BaseResponse<String> pinComments(@RequestParam("userID") String userID, @RequestParam("pin") boolean pin, @RequestBody Map<String, Object> json){
+        String jwtToken = (String) json.get("jwtToken");
+        ArrayList<Integer> commentsIdxList = (ArrayList<Integer>) json.get("idxArr");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        for(int idx: commentsIdxList){
+            userService.pinComment(idx, pin);
+        }
+        if(pin){
+            return new BaseResponse<>("pin Successfully!");
+        }
+        return new BaseResponse<>("unpin Successfully!");
+
+    }
 
 
 
