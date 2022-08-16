@@ -1363,7 +1363,10 @@ public class UserDao {
     }
 
 
-
+    public String getWalletChain(String walletAddress){
+        String getWalletChainQuery = "SELECT walletType FROM wallet WHERE address=?";
+        return this.jdbcTemplate.queryForObject(getWalletChainQuery, String.class, walletAddress);
+    }
 
 
 

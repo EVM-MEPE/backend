@@ -64,6 +64,29 @@ public class GetNFT {
         return response;
     }
 
+    public String getSolanaNft(String walletAddress){
+        System.out.println("get Solana nft");
+
+        RestTemplate rest = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        String body = "";
+
+        HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
+        ResponseEntity<String> responseEntity = null;
+        try{
+            responseEntity = rest.exchange("https://api-mainnet.magiceden.dev/v2/wallets/"+walletAddress+"/tokens?offset=0&limit=100&listStatus=both", HttpMethod.GET, requestEntity, String.class);
+        }catch(Exception e){
+
+        }
+        HttpStatus httpStatus = responseEntity.getStatusCode();
+        int status = httpStatus.value();
+        String response = responseEntity.getBody();
+        //System.out.println("Response status: " + status);
+        //System.out.println(response);
+
+        return response;
+    }
+
     public JSONArray getAllEthChainNft(String walletAddress) throws ParseException {
         ArrayList<String> chainList = new ArrayList<>();
         chainList.add("eth");

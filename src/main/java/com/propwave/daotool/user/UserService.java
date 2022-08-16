@@ -688,13 +688,14 @@ public class UserService {
         List<Map<String, Object>> ethR = new ArrayList<>();
         List<Map<String, Object>> polyR = new ArrayList<>();
         List<Map<String, Object>> cosR = new ArrayList<>();
+        List<Map<String, Object>> solR = new ArrayList<>();
 
         for(UserWalletAndInfo userWallet: userWalletAndInfos){
             // POAP 가져오기
             String walletAddress = userWallet.getWalletAddress();
+            String wallet = userDao.getWalletChain(walletAddress);
             JSONArray jsonList = null;
-            if(walletAddress.startsWith("cosmos")){ // cosmos
-                System.out.println("go");
+            if(wallet.equals("Keplr")){ // cosmos
                 String res = getNFT.getStargazeNft(walletAddress);
                 JSONParser jsonParser = new JSONParser();
                 jsonList = (JSONArray)jsonParser.parse(res);
@@ -711,7 +712,7 @@ public class UserService {
                     cosR.add(tmp);
                 }
 
-            }else{  // metamask, else
+            }else if(wallet.equals("Metamask")){  // metamask, else
                 String resE = getNFT.getEthNft("eth", walletAddress);
                 String resP = getNFT.getEthNft("polygon", walletAddress);
 
@@ -775,6 +776,22 @@ public class UserService {
                     tmp.put("hidden", false);
                     polyR.add(tmp);
                 }
+            }else if(wallet.equals("Phantom")){  // metamask, else
+                String res = getNFT.getSolanaNft(walletAddress);
+                JSONParser jsonParser = new JSONParser();
+                jsonList = (JSONArray)jsonParser.parse(res);
+
+                //jsonList = getNFT.fromJSONtoNftList(res);
+                for(Object json:jsonList){
+                    JSONObject jsonObject = (JSONObject) json;
+
+                    Map<String, Object> tmp = new HashMap<>();
+                    tmp.put("image", jsonObject.get("image"));
+                    tmp.put("title", jsonObject.get("name"));
+                    tmp.put("obtainedAt", "none");
+                    tmp.put("hidden", false);
+                    solR.add(tmp);
+                }
             }
         }
 
@@ -799,6 +816,13 @@ public class UserService {
             }
         });
 
+        solR.sort(new Comparator<Map<String, Object>>() {
+            @Override
+            public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                return (((String) o1.get("title")).compareTo((String) o2.get("title")));
+            }
+        });
+
         if(ethR.size()>8){
             ethR = ethR.subList(0,8);
         }
@@ -810,6 +834,7 @@ public class UserService {
         result.put("ethereum", ethR);
         result.put("polygon", polyR);
         result.put("keplr", cosR);
+        result.put("solana", solR);
 
         return result;
     }
