@@ -316,6 +316,13 @@ public class UserController {
         if(!isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
+        if(userProvider.checkFriendReqExist(reqTo, userID)){
+            return new BaseResponse<>(FRIEND_REQ_ALREADY_EXIST);
+        }
+        if(userProvider.getStatusOfFriendReq(userID, reqTo).equals("friend")){
+            return new BaseResponse<>(FRIEND_ALREADY_EXIST);
+        }
+
         userService.createFriendReq(reqTo, json.get("reqFrom"), json.get("reqNickname"));
         FriendReq friendReq = userProvider.getFriendReq(reqTo, json.get("reqFrom"));
         userService.createNotification(reqTo, 2, friendReq.getIndex());
@@ -420,6 +427,7 @@ public class UserController {
                 default:
                         break;
             }
+            tmp.put("notiSender", user.getId());
             tmp.put("img", userProvider.getUserImagePath(user.getId()));
             tmp.put("notification", notification);
             Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -485,6 +493,7 @@ public class UserController {
             default:
                 break;
         }
+        res.put("notiSender", user.getId());
         res.put("img", userProvider.getUserImagePath(user.getId()));
         res.put("notification", notification);
         Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -552,6 +561,7 @@ public class UserController {
         res.put("userNickname", user.getNickname());
         res.put("userImg", userImg);
         res.put("userFriendNickname", friendInfo.getFriendName());
+        res.put("friendID",friendID);
 
         return new BaseResponse<>(res);
     }

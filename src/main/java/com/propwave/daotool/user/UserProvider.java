@@ -565,4 +565,12 @@ public class UserProvider {
         return userDao.getNRecentComments(count, userID);
     }
 
+    public boolean checkFriendReqExist(String reqTo, String reqFrom){
+        FriendReq friendReq = userDao.getFriendReq(reqTo, reqFrom);
+        if(!friendReq.isAccepted() && !friendReq.isRejected()){
+            return true;
+        }
+        return false;
+    }
+
 }
