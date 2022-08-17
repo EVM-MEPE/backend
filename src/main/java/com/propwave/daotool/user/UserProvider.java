@@ -573,4 +573,13 @@ public class UserProvider {
         return false;
     }
 
+    public boolean checkFriendExist(String user1, String user2){
+        try{
+            userDao.getFriend(user1, user2);
+        }catch(EmptyResultDataAccessException e){
+            return false;
+        }
+        return true;
+    }
+
 }

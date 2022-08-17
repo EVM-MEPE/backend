@@ -338,7 +338,9 @@ public class UserController {
         if(!isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
-
+        if(userProvider.checkFriendExist(userID, json.get("reqFrom"))){
+            return new BaseResponse<>(FRIEND_ALREADY_EXIST);
+        }
         userService.acceptFriend(isAccepted, json.get("reqTo"), json.get("reqFrom"), json.get("reqNickname"));
         if(isAccepted){
             Friend friend = userProvider.getFriend(json.get("reqFrom"), json.get("reqTo"));
