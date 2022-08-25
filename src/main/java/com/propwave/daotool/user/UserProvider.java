@@ -566,7 +566,12 @@ public class UserProvider {
     }
 
     public boolean checkFriendReqExist(String reqTo, String reqFrom){
-        FriendReq friendReq = userDao.getFriendReq(reqTo, reqFrom);
+        FriendReq friendReq;
+        try{
+            friendReq = userDao.getFriendReq(reqTo, reqFrom);
+        }catch(EmptyResultDataAccessException e){
+            return false;
+        }
         if(!friendReq.isAccepted() && !friendReq.isRejected()){
             return true;
         }
