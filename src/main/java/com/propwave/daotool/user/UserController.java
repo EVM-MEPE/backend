@@ -364,8 +364,8 @@ public class UserController {
     }
 
     @GetMapping("friends")
-    public BaseResponse<List<Friend>> getAllFriendsList(@RequestParam("userID") String userId){
-        List<Friend> friendList = userProvider.getAllFriends(userId);
+    public BaseResponse<List<FriendWithFriendImg>> getAllFriendsList(@RequestParam("userID") String userId){
+        List<FriendWithFriendImg> friendList = userProvider.getAllFriendsWithFriendImg(userId);
         return new BaseResponse<>(friendList);
     }
 

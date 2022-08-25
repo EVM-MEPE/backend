@@ -127,8 +127,8 @@ public class UserProvider {
         return userDao.getFriend(index);
     }
 
-    public List<Friend> getAllFriends(String userId){
-        return userDao.getAllFriends(userId);
+    public List<FriendWithFriendImg> getAllFriendsWithFriendImg(String userId){
+        return userDao.getAllFriendsWithFriendImg(userId);
     }
 
     public int getFriendsCount(String userId){

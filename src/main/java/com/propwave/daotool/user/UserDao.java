@@ -287,6 +287,21 @@ public class UserDao {
         );
     }
 
+    public List<FriendWithFriendImg> getAllFriendsWithFriendImg(String userID){
+        String getAllFriendsWithFriendImgQuery = "SELECT A.*, B.profileImg FROM friend A, user B WHERE B.id = A.friend AND A.user=?";
+        return this.jdbcTemplate.query(getAllFriendsWithFriendImgQuery,
+                (rs, rowNum) -> new FriendWithFriendImg(
+                        rs.getInt("index"),
+                        rs.getString("user"),
+                        rs.getString("friend"),
+                        rs.getString("profileImg"),
+                        rs.getString("friendName"),
+                        rs.getTimestamp("createdAt")
+                ),
+                userID
+        );
+    }
+
     public int getFriendsCount(String userId){
         String getFriendsCountQuery = "SELECT COUNT(*) FROM friend WHERE user=?";
         return this.jdbcTemplate.queryForObject(getFriendsCountQuery, int.class, userId);
