@@ -507,6 +507,34 @@ public class UserController {
         return new BaseResponse<>(res);
     }
 
+    @DeleteMapping("notification")
+    public BaseResponse<String> deleteANotification(@RequestParam("notiID") int notiID, @RequestBody Map<String, String> json) throws BaseException{
+        // check jwt token
+        String userID = json.get("userID");
+        String jwtToken = json.get("jwtToken");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        userService.deleteANotification(notiID);
+        return new BaseResponse<>("Delete a notification Successfully!");
+    }
+
+    @DeleteMapping("notification/all")
+    public BaseResponse<String> deleteAllNotification(@RequestBody Map<String, String> json) throws BaseException{
+        // check jwt token
+        String userID = json.get("userID");
+        String jwtToken = json.get("jwtToken");
+
+        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        userService.deleteAllNotification(userID);
+        return new BaseResponse<>("Delete all notifications Successfully!");
+    }
+
     /**
      ******************************** userList ********************************
      **/

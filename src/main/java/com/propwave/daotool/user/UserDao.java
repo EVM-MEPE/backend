@@ -1210,6 +1210,16 @@ public class UserDao {
         );
     }
 
+    public int deleteANotification(int notiID){
+        String deleteANotificationQuery = "DELETE FROM notification WHERE `index`=?";
+        return this.jdbcTemplate.update(deleteANotificationQuery, notiID);
+    }
+
+    public int deleteAllNotification(String userID){
+        String deleteAllNotification = "DELETE FROM notification WHERE user=?";
+        return this.jdbcTemplate.update(deleteAllNotification, userID);
+    }
+
     public List<User> getUserList(String orderBy){
         String getUserList = "SELECT * FROM user ORDER BY `createdAt`";
         if(orderBy.equals("todayHits")){

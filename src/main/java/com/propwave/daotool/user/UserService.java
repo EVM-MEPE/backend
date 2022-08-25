@@ -245,6 +245,13 @@ public class UserService {
         return userDao.checkNotification(index);
     }
 
+    public int deleteANotification(int notiID) {
+        return userDao.deleteANotification(notiID);
+    }
+
+    public int deleteAllNotification(String userID){
+        return userDao.deleteAllNotification(userID);
+    }
 
     // ----------------------------------------------
 
