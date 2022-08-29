@@ -408,16 +408,19 @@ public class UserController {
             User user = userProvider.getUser(notification.getUser());
             switch(notification.getType()){
                 case 1: user = userProvider.getUser(notification.getUser());
+                        tmp.put("img", userProvider.getUserImagePath(user.getId()));
                         break;
                 case 2: int friendReqIndex = notification.getFriendReq();
                         FriendReq friendReq = userProvider.getFriendReq(friendReqIndex);
                         String reqID = friendReq.getReqFrom();
                         user = userProvider.getUser(reqID);
+                        tmp.put("img", userProvider.getUserImagePath(user.getId()));
                         break;
                 case 3: int friendIndex = notification.getFriend();
                         Friend friend = userProvider.getFriend(friendIndex);
                         String friendID = friend.getFriend();
                         user = userProvider.getUser(friendID);
+                        tmp.put("img", userProvider.getUserImagePath(user.getId()));
                         break;
                 case 4:
                         break;
@@ -425,12 +428,16 @@ public class UserController {
                         Follow follow = userProvider.getFollow(followIndex);
                         String followID = follow.getUser();
                         user = userProvider.getUser(followID);
+                        tmp.put("img", userProvider.getUserImagePath(user.getId()));
+                        break;
+                case 6: user = userProvider.getUser(notification.getUser());
+                        tmp.put("img", "https://daotool.s3.ap-northeast-2.amazonaws.com/static/etc/61d4c43b-d8d0-45bb-a437-8af1977812a1mepe+poap+-+amazing+mepe.svg");
                         break;
                 default:
                         break;
             }
             tmp.put("notiSender", user.getId());
-            tmp.put("img", userProvider.getUserImagePath(user.getId()));
+
             tmp.put("notification", notification);
             Timestamp now = new Timestamp(System.currentTimeMillis());
             LocalDateTime a = now.toLocalDateTime();
