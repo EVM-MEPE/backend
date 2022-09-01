@@ -1,4 +1,4 @@
-package com.propwave.daotool.wallet.model;
+package com.propwave.daotool.user.model;
 
 import lombok.*;
 import java.sql.Timestamp;
