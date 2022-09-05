@@ -401,7 +401,10 @@ public class UserController {
                         tmp.put("img", userProvider.getUserImagePath(user.getId()));
                         break;
                 case 4:
-
+                        int commentIdx = notification.getComment();
+                        Comment comment = userProvider.getComment(commentIdx);
+                        user = userProvider.getUser(comment.getCommentFrom());
+                        tmp.put("img", userProvider.getUserImagePath(user.getId()));
                         break;
                 case 5: int followIndex = notification.getFollow();
                         Follow follow = userProvider.getFollow(followIndex);

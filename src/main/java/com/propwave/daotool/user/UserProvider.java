@@ -332,6 +332,10 @@ public class UserProvider {
         return userDao.getComment(userID, friendID, message);
     }
 
+    public Comment getComment(int commentIdx){
+        return userDao.getComment(commentIdx);
+    }
+
     public List<CommentWithInfo> getAllCommentsExceptPinnedForUser(String userID){
         return userDao.getAllCommentsExceptPinnedForUser(userID);
     }
