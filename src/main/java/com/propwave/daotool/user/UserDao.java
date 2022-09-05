@@ -934,7 +934,7 @@ public class UserDao {
     }
 
     public List<CommentWithInfo> getAllCommentsExceptHidden(String userID){
-        String getCommentsQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isHide=false AND F.user=U.id ORDER BY C.createdAt DESC ";
+        String getCommentsQuery = "SELECT DISTINCT C.*, U1.nickname, U2.profileImg, F.friendName FROM comment C, user U1, friend F, user U2 WHERE C.commentTo=U1.id AND U1.id=? AND C.isHide=false AND F.user=U1.id AND F.friend=C.commentFrom AND U2.id=C.commentFrom ORDER BY C.createdAt DESC;";
         return this.jdbcTemplate.query(getCommentsQuery,
                 (rs, rowNum) -> new CommentWithInfo(
                         rs.getInt("index"),
