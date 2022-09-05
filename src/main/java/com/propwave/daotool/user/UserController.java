@@ -401,6 +401,7 @@ public class UserController {
                         tmp.put("img", userProvider.getUserImagePath(user.getId()));
                         break;
                 case 4:
+
                         break;
                 case 5: int followIndex = notification.getFollow();
                         Follow follow = userProvider.getFollow(followIndex);

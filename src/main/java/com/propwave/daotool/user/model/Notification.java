@@ -15,6 +15,7 @@ public class Notification {
     private int type;
     private int friendReq;
     private int friend;
+    private int comment;
     private int follow;
     private String message;
     private boolean isChecked;

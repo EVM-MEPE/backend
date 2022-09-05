@@ -41,6 +41,10 @@ dependencies {
     testImplementation group: 'org.springframework', name: 'spring-test', version: '5.3.15'
     implementation ('org.springframework:spring-test:5.3.15')
     // Spring Security + JWT
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-security
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-security', version: '2.6.3'
+    implementation group: 'io.jsonwebtoken', name: 'jjwt', version: '0.9.1'
     //implementation 'io.jsonwebtoken:jjwt:0.9.1'
     //implementation 'org.springframework.boot:spring-boot-starter-security'
     //testImplementation 'org.springframework.security:spring-security-test'
@@ -57,6 +61,7 @@ dependencies {
     implementation group: 'org.seleniumhq.selenium', name: 'selenium-ie-driver', version: '4.4.0'
     implementation group: 'org.seleniumhq.selenium', name: 'selenium-api', version: '4.4.0' //Thanks for using https://jar-download.com
     implementation group: 'org.seleniumhq.selenium', name: 'selenium-chrome-driver', version: '4.4.0'
+    implementation 'org.jsoup:jsoup:1.15.3'
 
 //    // https://mvnrepository.com/artifact/org.json/json
 //    implementation 'org.json:json:20180813'
