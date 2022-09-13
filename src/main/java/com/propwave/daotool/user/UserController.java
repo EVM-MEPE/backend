@@ -665,6 +665,12 @@ public class UserController {
 
     }
 
+    @GetMapping("comments")
+    public BaseResponse<Optional<Comment>> getCommentByIdx(@RequestParam("index") int idx){
+        Optional<Comment> comment = userProvider.getOptionalComment(idx);
+        return new BaseResponse<>(comment);
+    }
+
 
 
 

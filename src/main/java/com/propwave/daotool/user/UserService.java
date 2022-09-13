@@ -249,7 +249,8 @@ public class UserService {
                 if(tokenUri.endsWith(".json")){
                     tokenUri = tokenUri.substring(0, tokenUri.length()-5);
                 }
-                String metaData = getNFT.getNftMetaData(tokenUri);
+                Map<String, String> hashMap = new HashMap();
+                String metaData = getNFT.externalGetAPIInterface(tokenUri, "", hashMap);
                 JSONObject metaJsonObject = getNFT.fromJSONtoNFT(metaData);
 
                 userDao.createNFT(result, metaJsonObject, chain);
@@ -420,12 +421,9 @@ public class UserService {
             String walletAddress = userWallet.getWalletAddress();
             String wallet = userDao.getWalletChain(walletAddress);
             JSONArray jsonList = null;
-            if(wallet.equals("Keplr")){ // cosmos
-                String res = getNFT.getStargazeNft(walletAddress);
-                JSONParser jsonParser = new JSONParser();
-                jsonList = (JSONArray)jsonParser.parse(res);
+            if(wallet.equals("Keplr")){
+                jsonList = getNFT.getNFTs("stargaze", walletAddress);
 
-                //jsonList = getNFT.fromJSONtoNftList(res);
                 for(Object json:jsonList){
                     JSONObject jsonObject = (JSONObject) json;
 
@@ -437,18 +435,15 @@ public class UserService {
                     cosR.add(tmp);
                 }
 
-            }else if(wallet.equals("Metamask")){  // metamask, else
-                String resE = getNFT.getEthNft("eth", walletAddress);
-                String resP = getNFT.getEthNft("polygon", walletAddress);
-
-                JSONArray EjsonList = getNFT.fromJSONtoNftList(resE);
-                JSONArray PjsonList = getNFT.fromJSONtoNftList(resP);
+            }else if(wallet.equals("Metamask")){
+                JSONArray EjsonList = getNFT.getNFTs("eth", walletAddress);
+                JSONArray PjsonList = getNFT.getNFTs("polygon", walletAddress);
 
                 for(Object json:EjsonList){
                     JSONObject jsonObject = (JSONObject) json;
                     String token_uri = (String) jsonObject.get("token_uri");
-                    String metadata = getNFT.getNftMetaData(token_uri);
-                    //String metadata = (String) jsonObject.get("metadata");
+                    Map<String, String> hashMap = new HashMap();
+                    String metadata = getNFT.externalGetAPIInterface(token_uri, "", hashMap);
                     try{
                         if(metadata.isEmpty()){
                             continue;
@@ -465,9 +460,6 @@ public class UserService {
                     Map<String, Object> tmp = new HashMap<>();
                     tmp.put("image", metadataJson.get("image"));
                     tmp.put("title", metadataJson.get("name"));
-//                    String stringToConvert = String.valueOf();
-//                    Long convertedLong = Long.parseLong(stringToConvert);
-//                    Timestamp createdAt = new Timestamp(convertedLong);
                     tmp.put("obtainedAt", jsonObject.get("block_number"));
                     tmp.put("hidden", false);
                     ethR.add(tmp);
@@ -476,8 +468,9 @@ public class UserService {
                 for(Object json:PjsonList){
                     JSONObject jsonObject = (JSONObject) json;
                     String token_uri = (String) jsonObject.get("token_uri");
-                    String metadata = getNFT.getNftMetaData(token_uri);
-                    //String metadata = (String) jsonObject.get("metadata");
+                    Map<String, String> hashMap = new HashMap();
+                    String metadata = getNFT.externalGetAPIInterface(token_uri, "", hashMap);
+
                     try{
                         if(metadata.isEmpty()){
                             continue;
@@ -494,19 +487,13 @@ public class UserService {
                     Map<String, Object> tmp = new HashMap<>();
                     tmp.put("image", metadataJson.get("image"));
                     tmp.put("title", metadataJson.get("name"));
-//                    String stringToConvert = String.valueOf();
-//                    Long convertedLong = Long.parseLong(stringToConvert);
-//                    Timestamp createdAt = new Timestamp(convertedLong);
                     tmp.put("obtainedAt", jsonObject.get("block_number"));
                     tmp.put("hidden", false);
                     polyR.add(tmp);
                 }
-            }else if(wallet.equals("Phantom")){  // metamask, else
-                String res = getNFT.getSolanaNft(walletAddress);
-                JSONParser jsonParser = new JSONParser();
-                jsonList = (JSONArray)jsonParser.parse(res);
+            }else if(wallet.equals("Phantom")){
+                jsonList = getNFT.getNFTs("solana", walletAddress);
 
-                //jsonList = getNFT.fromJSONtoNftList(res);
                 for(Object json:jsonList){
                     JSONObject jsonObject = (JSONObject) json;
 

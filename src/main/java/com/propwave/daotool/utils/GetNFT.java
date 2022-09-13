@@ -1,4 +1,5 @@
 package com.propwave.daotool.utils;
+import lombok.val;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.JSONObject;
@@ -7,18 +8,88 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 public class GetNFT {
-    public String getEthNft(String chain, String walletAddress){
-        System.out.println("getEthNft");
-        //System.out.println(chain+"::"+ walletAddress);
+    public JSONArray getNFTs(String network, String walletAddress) throws ParseException {
+        /*
+        * network: eth, polygon, stargaze, solana, evmos
+        * */
 
+        JSONArray result = null;
+        String url = null;
+        String body = "";
+        Map<String, String> header = new HashMap<String, String>();
+        int type = 1;
+        switch(network){
+            case "eth":
+            case "polygon":
+                url = "https://deep-index.moralis.io/api/v2/"+walletAddress+"/nft?chain="+network+"&format=decimal";
+                header.clear();
+                header.put("x-api-key", Secret.MORALIS_NFT_API_KEY);
+                break;
+            case "stargaze":
+                type = 2;
+                walletAddress = "stars" + walletAddress.substring(6);
+                url = "https://nft-api.stargaze-apis.com/api/v1beta/profile/"+walletAddress+"/nfts";
+                break;
+            case "solana":
+                type = 2;
+                url = "https://api-mainnet.magiceden.dev/v2/wallets/"+walletAddress+"/tokens?offset=0&limit=100&listStatus=both";
+                break;
+            case "evmos":
+                break;
+            default:
+                return result;
+        }
+        return getNftResult(url, body, header, type);
+    }
+
+    public JSONArray getNftResult(String url, String body, Map<String, String> additionalHeaders, int type) throws ParseException {
+        String apiStringRes = externalGetAPIInterface(url, body, additionalHeaders);
+        JSONParser jsonParser = new JSONParser();
+        JSONArray JsonArrRes = new JSONArray();
+        if(type==1){
+            try{
+                JSONObject obj = (JSONObject)jsonParser.parse(apiStringRes);
+                JsonArrRes = (JSONArray) obj.get("result");
+            }catch(Exception e){
+                System.out.println();
+            }
+        }else{
+            JsonArrRes = (JSONArray)jsonParser.parse(apiStringRes);
+        }
+        return JsonArrRes;
+    }
+
+    public String externalGetAPIInterface(String url, String body, Map<String, String> additionalHeaders){
         RestTemplate rest = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
-        headers.add("x-api-key", Secret.NFT_API_KEY);
+        additionalHeaders.forEach((strKey, strValue)->{
+            headers.add(strKey, strValue);
+        });
+        HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
+        ResponseEntity<String> responseEntity = null;
+        try{
+            responseEntity = rest.exchange(url, HttpMethod.GET, requestEntity, String.class);
+        }catch(Exception e){
+            return "";
+        }
+        String response = responseEntity.getBody();
+
+        return response;
+    }
+
+
+    public String getEthNft(String chain, String walletAddress){
+        RestTemplate rest = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("x-api-key", Secret.MORALIS_NFT_API_KEY);
         String body = "";
 
         HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
@@ -29,107 +100,10 @@ public class GetNFT {
         }catch(Exception e){
             return "";
         }
-        HttpStatus httpStatus = responseEntity.getStatusCode();
-        int status = httpStatus.value();
+        //HttpStatus httpStatus = responseEntity.getStatusCode();
+        //int status = httpStatus.value();
         String response = responseEntity.getBody();
-        //System.out.println("Response status: " + status);
-        //System.out.println(response);
 
-        return response;
-    }
-
-    public String getStargazeNft(String walletAddress){
-
-        System.out.println("getStarNft");
-        walletAddress = "stars" + walletAddress.substring(6);
-
-        RestTemplate rest = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        String body = "";
-
-        HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
-        ResponseEntity<String> responseEntity = null;
-        try{
-            responseEntity = rest.exchange("https://nft-api.stargaze-apis.com/api/v1beta/profile/"+walletAddress+"/nfts", HttpMethod.GET, requestEntity, String.class);
-        }catch(Exception e){
-            return "";
-        }
-
-        HttpStatus httpStatus = responseEntity.getStatusCode();
-        int status = httpStatus.value();
-        String response = responseEntity.getBody();
-        //System.out.println("Response status: " + status);
-        //System.out.println(response);
-
-        return response;
-    }
-
-    public String getSolanaNft(String walletAddress){
-        System.out.println("get Solana nft");
-
-        RestTemplate rest = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        String body = "";
-
-        HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
-        ResponseEntity<String> responseEntity = null;
-        try{
-            responseEntity = rest.exchange("https://api-mainnet.magiceden.dev/v2/wallets/"+walletAddress+"/tokens?offset=0&limit=100&listStatus=both", HttpMethod.GET, requestEntity, String.class);
-        }catch(Exception e){
-
-        }
-        HttpStatus httpStatus = responseEntity.getStatusCode();
-        int status = httpStatus.value();
-        String response = responseEntity.getBody();
-        //System.out.println("Response status: " + status);
-        //System.out.println(response);
-
-        return response;
-    }
-
-    public JSONArray getAllEthChainNft(String walletAddress) throws ParseException {
-        ArrayList<String> chainList = new ArrayList<>();
-        chainList.add("eth");
-        chainList.add("polygon");
-
-        JSONArray result = new JSONArray();
-        JSONArray ethR = new JSONArray();
-        JSONArray polyR = new JSONArray();
-
-        for(String chain:chainList){
-            String res = getEthNft(chain, walletAddress);
-
-            if(res.equals("")){
-                continue;
-            }
-            if(chain.equals("eth")){
-                result.addAll(fromJSONtoNftList(res));
-            }
-
-        }
-        return result;
-    }
-
-    public String getNftMetaData(String tokenUri){
-        RestTemplate rest = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        String body = "";
-        //System.out.println(tokenUri);
-
-        HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
-        ResponseEntity<String> responseEntity = null;
-
-        try{
-            responseEntity = rest.exchange(tokenUri, HttpMethod.GET, requestEntity, String.class);
-        }catch(Exception e){
-            return "";
-        }
-
-        HttpStatus httpStatus = responseEntity.getStatusCode();
-        int status = httpStatus.value();
-        String response = responseEntity.getBody();
-        //System.out.println("Response status: " + status);
-        //System.out.println(response);
         return response;
     }
 
@@ -140,16 +114,91 @@ public class GetNFT {
         return (JSONObject) obj;
     }
 
-    public JSONArray fromJSONtoNftList(String result) throws ParseException {
-        JSONParser jsonParser = new JSONParser();
-        JSONArray arr = new JSONArray();
-        try{
-            JSONObject obj = (JSONObject)jsonParser.parse(result);
-            arr = (JSONArray) obj.get("result");
-        }catch(Exception e){
-            System.out.println();
-        }
 
-        return arr;
-    }
+
+//    public String getStargazeNft(String walletAddress){
+//
+//        System.out.println("getStarNft");
+//        walletAddress = "stars" + walletAddress.substring(6);
+//
+//        RestTemplate rest = new RestTemplate();
+//        HttpHeaders headers = new HttpHeaders();
+//        String body = "";
+//
+//        HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
+//        ResponseEntity<String> responseEntity = null;
+//        try{
+//            responseEntity = rest.exchange("https://nft-api.stargaze-apis.com/api/v1beta/profile/"+walletAddress+"/nfts", HttpMethod.GET, requestEntity, String.class);
+//        }catch(Exception e){
+//            return "";
+//        }
+//
+//        //HttpStatus httpStatus = responseEntity.getStatusCode();
+//        //int status = httpStatus.value();
+//        String response = responseEntity.getBody();
+//        //System.out.println("Response status: " + status);
+//        //System.out.println(response);
+//
+//        return response;
+//    }
+//
+//    public String getSolanaNft(String walletAddress){
+//        System.out.println("get Solana nft");
+//
+//        RestTemplate rest = new RestTemplate();
+//        HttpHeaders headers = new HttpHeaders();
+//        String body = "";
+//
+//        HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
+//        ResponseEntity<String> responseEntity = null;
+//        try{
+//            responseEntity = rest.exchange("https://api-mainnet.magiceden.dev/v2/wallets/"+walletAddress+"/tokens?offset=0&limit=100&listStatus=both", HttpMethod.GET, requestEntity, String.class);
+//        }catch(Exception e){
+//
+//        }
+//        //HttpStatus httpStatus = responseEntity.getStatusCode();
+//        //int status = httpStatus.value();
+//        String response = responseEntity.getBody();
+//        //System.out.println("Response status: " + status);
+//        //System.out.println(response);
+//
+//        return response;
+//    }
+
+//    public JSONArray getAllEthChainNft(String walletAddress) throws ParseException {
+//        ArrayList<String> chainList = new ArrayList<>();
+//        chainList.add("eth");
+//        chainList.add("polygon");
+//
+//        JSONArray result = new JSONArray();
+//        JSONArray ethR = new JSONArray();
+//        JSONArray polyR = new JSONArray();
+//
+//        for(String chain:chainList){
+//            String res = getEthNft(chain, walletAddress);
+//
+//            if(res.equals("")){
+//                continue;
+//            }
+//            if(chain.equals("eth")){
+//                result.addAll(fromJSONtoNftList(res));
+//            }
+//
+//        }
+//        return result;
+//    }
+
+
+//    public JSONArray fromJSONtoNftList(String result) throws ParseException {
+//        JSONParser jsonParser = new JSONParser();
+//        JSONArray arr = new JSONArray();
+//        try{
+//            JSONObject obj = (JSONObject)jsonParser.parse(result);
+//            arr = (JSONArray) obj.get("result");
+//        }catch(Exception e){
+//            System.out.println();
+//        }
+//
+//        return arr;
+//    }
 }

@@ -17,6 +17,7 @@ import javax.sql.DataSource;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @EnableScheduling
@@ -873,6 +874,23 @@ public class UserDao {
                 getCommentParam
         );
     }
+
+    public Optional<Comment> getOptionalComment(int idx){
+        String getCommentQuery = "SELECT * FROM comment WHERE 'index'=?";
+        return Optional.ofNullable(this.jdbcTemplate.queryForObject(getCommentQuery,
+                (rs, rowNum) -> new Comment(
+                        rs.getInt("index"),
+                        rs.getString("commentTo"),
+                        rs.getString("commentFrom"),
+                        rs.getString("message"),
+                        rs.getBoolean("isPinned"),
+                        rs.getBoolean("isHide"),
+                        rs.getTimestamp("createdAt")
+                ),
+                idx
+        ));
+    }
+
 
     public Comment getComment(int index){
         String getCommentQuery = "SELECT * FROM comment WHERE `index`=?";

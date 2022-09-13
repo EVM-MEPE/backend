@@ -336,6 +336,10 @@ public class UserProvider {
         return userDao.getComment(commentIdx);
     }
 
+    public Optional<Comment> getOptionalComment(int commentIdx){
+        return userDao.getOptionalComment(commentIdx);
+    }
+
     public List<CommentWithInfo> getAllCommentsExceptPinnedForUser(String userID){
         return userDao.getAllCommentsExceptPinnedForUser(userID);
     }
