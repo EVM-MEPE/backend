@@ -428,7 +428,9 @@ public class UserService {
                     JSONObject jsonObject = (JSONObject) json;
 
                     Map<String, Object> tmp = new HashMap<>();
-                    tmp.put("image", jsonObject.get("image"));
+                    String imgUrl = checkImgUrl((String)jsonObject.get("image"));
+                    tmp.put("image", imgUrl);
+                    //tmp.put("image", jsonObject.get("image"));
                     tmp.put("title", jsonObject.get("name"));
                     tmp.put("obtainedAt", "none");
                     tmp.put("hidden", false);
@@ -458,7 +460,9 @@ public class UserService {
 
                     Map<String, String> metadataJson = (Map) getNFT.fromJSONtoNFT(metadata);
                     Map<String, Object> tmp = new HashMap<>();
-                    tmp.put("image", metadataJson.get("image"));
+                    String imgUrl = checkImgUrl((String)jsonObject.get("image"));
+                    tmp.put("image", imgUrl);
+                    //tmp.put("image", metadataJson.get("image"));
                     tmp.put("title", metadataJson.get("name"));
                     tmp.put("obtainedAt", jsonObject.get("block_number"));
                     tmp.put("hidden", false);
@@ -485,7 +489,9 @@ public class UserService {
 
                     Map<String, String> metadataJson = (Map) getNFT.fromJSONtoNFT(metadata);
                     Map<String, Object> tmp = new HashMap<>();
-                    tmp.put("image", metadataJson.get("image"));
+                    String imgUrl = checkImgUrl(metadataJson.get("image"));
+                    tmp.put("image", imgUrl);
+                    //tmp.put("image", metadataJson.get("image"));
                     tmp.put("title", metadataJson.get("name"));
                     tmp.put("obtainedAt", jsonObject.get("block_number"));
                     tmp.put("hidden", false);
@@ -498,7 +504,8 @@ public class UserService {
                     JSONObject jsonObject = (JSONObject) json;
 
                     Map<String, Object> tmp = new HashMap<>();
-                    tmp.put("image", jsonObject.get("image"));
+                    String imgUrl = checkImgUrl((String)jsonObject.get("image"));
+                    tmp.put("image", imgUrl);
                     tmp.put("title", jsonObject.get("name"));
                     tmp.put("obtainedAt", "none");
                     tmp.put("hidden", false);
@@ -549,6 +556,15 @@ public class UserService {
         result.put("solana", solR);
 
         return result;
+    }
+
+    public String checkImgUrl(String imgUrl){
+        if(imgUrl.startsWith("ipfs://")){
+            System.out.println(imgUrl);
+            imgUrl = "https://ipfs.io/ipfs/" + imgUrl.substring(7);
+            System.out.println(imgUrl);
+        }
+        return imgUrl;
     }
 
 
