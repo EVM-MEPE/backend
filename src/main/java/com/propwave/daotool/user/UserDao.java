@@ -908,7 +908,7 @@ public class UserDao {
     }
 
     public List<CommentWithInfo> getAllCommentsExceptPinnedForUser(String userID){
-        String getQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isPinned=false AND F.user=U.id ORDER BY C.createdAt DESC ";
+        String getQuery = "SELECT C.*, U1.nickname, U2.profileImg, F.friendName FROM comment C, user U1, user U2, friend F WHERE C.commentTo=U1.id AND U1.id=? AND C.isPinned=false AND F.user=U1.id AND F.friend=C.commentFrom AND U2.id=C.commentFrom ORDER BY C.createdAt DESC ";
         return this.jdbcTemplate.query(getQuery,
                 (rs, rowNum) -> new CommentWithInfo(
                         rs.getInt("index"),
@@ -927,7 +927,7 @@ public class UserDao {
     }
 
     public List<CommentWithInfo> getAllPinnedCommentsForUser(String userID){
-        String getQuery = "SELECT C.*, U.nickname, U.profileImg, F.friendName FROM comment C, user U, friend F WHERE C.commentTo=U.id AND U.id=? AND C.isPinned=true AND F.user=U.id ORDER BY C.createdAt DESC ";
+        String getQuery = "SELECT C.*, U1.nickname, U2.profileImg, F.friendName FROM comment C, user U1, user U2, friend F WHERE C.commentTo=U1.id AND U1.id=? AND C.isPinned=true AND F.user=U1.id AND F.friend=C.commentFrom AND U2.id=C.commentFrom ORDER BY C.createdAt DESC ";
         return this.jdbcTemplate.query(getQuery,
                 (rs, rowNum) -> new CommentWithInfo(
                         rs.getInt("index"),
