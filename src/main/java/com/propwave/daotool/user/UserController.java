@@ -92,6 +92,14 @@ public class UserController {
         return new BaseResponse<>("successfully add wallet to user");
     }
 
+    @GetMapping("users/wallet/all")
+    public BaseResponse<List<UserWalletAndInfo>> getAllWalletFromUser(@RequestParam("userID") String userID) throws BaseException {
+        List<UserWalletAndInfo> userWalletList = userProvider.getAllUserWalletByUserId(userID);
+
+        return new BaseResponse<>(userWalletList);
+
+    }
+
     @PostMapping("wallets/delete")
     public BaseResponse<String> deleteWalletToUser(@RequestBody Map<String, String> req) throws BaseException {
         System.out.println("\n Delete Wallet \n");
