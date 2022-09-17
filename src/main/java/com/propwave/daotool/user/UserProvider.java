@@ -48,8 +48,6 @@ public class UserProvider {
         }
     }
 
-
-
     //User의 profileImage Path불러오기
     public String getUserImagePath(String userId) throws BaseException{
         try{
@@ -99,46 +97,6 @@ public class UserProvider {
             throw new BaseException(DATABASE_ERROR);
         }
     }
-
-//    public Friend getFriend(String user, String friend){
-//        return userDao.getFriend(user, friend);
-//    }
-//
-//    public Friend getFriend(int index){
-//        return userDao.getFriend(index);
-//    }
-//
-//    public List<FriendWithFriendImg> getAllFriendsWithFriendImg(String userId){
-//        return userDao.getAllFriendsWithFriendImg(userId);
-//    }
-
-//    public int getFriendsCount(String userId){
-//        return userDao.getFriendsCount(userId);
-//    }
-
-//    public FriendReq getFriendReq(String reqTo, String reqFrom){
-//        return userDao.getFriendReq(reqTo, reqFrom);
-//    }
-//
-//    public FriendReq getFriendReq(int index){
-//        return userDao.getFriendReq(index);
-//    }
-
-//    public String getStatusOfFriendReq(String reqFrom, String reqTo) throws BaseException {
-//        try{
-//            FriendReq friendReq = userDao.getFriendReq(reqTo, reqFrom);
-//            if(friendReq.isAccepted()){
-//                return "friend";
-//            }else{
-//                return "wait";
-//            }
-//        }catch(EmptyResultDataAccessException e){
-//            return "none";
-//        }catch(Exception exception){
-//            throw new BaseException(DATABASE_ERROR);
-//        }
-//
-//    }
 
     public List<UserWalletAndInfo> getAllUserWalletByUserId(String userId) throws BaseException{
         try{
@@ -197,74 +155,6 @@ public class UserProvider {
             throw new BaseException(DATABASE_ERROR);
         }
     }
-
-//    public Follow getFollow(String reqTo, String reqFrom){
-//        return userDao.getFollow(reqTo, reqFrom);
-//    }
-//
-//    public Follow getFollow(int index){
-//        return userDao.getFollow(index);
-//    }
-//
-//    public List<Map<String, Object>> getFollowingList(String userID){
-//        List<Follow> followingList = userDao.getFollowingList(userID);
-//        List<Map<String, Object>> followingListWithUserInfo = new ArrayList<>();
-//        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
-//
-//        for(Follow follow:followingList){
-//            String following = follow.getFollowing();
-//            User user = userDao.getUserInfo(following);
-//            String profileImg;
-//            try{
-//                profileImg = userDao.getUserImagePath(user.getId());
-//            }catch(EmptyResultDataAccessException e1){
-//                profileImg= DEFAULT_USER_PROFILE_IMAGE;
-//            }
-//            Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
-//
-//            Timestamp userCreatedAt = user.getCreatedAt();
-//            userMap.replace("createdAt", userCreatedAt);
-//            userMap.put("profileImage", profileImg);
-//
-//            followingListWithUserInfo.add(userMap);
-//        }
-//        return followingListWithUserInfo;
-//    }
-//
-//    public List<Map<String, Object>> getFollowerList(String userID){
-//        List<Follow> followerList = userDao.getFollowerList(userID);
-//        List<Map<String, Object>> followerListWithUserInfo = new ArrayList<>();
-//        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
-//
-//        for(Follow follow:followerList){
-//            String follower = follow.getUser();
-//            User user = userDao.getUserInfo(follower);
-//            String profileImg;
-//            try{
-//                profileImg = userDao.getUserImagePath(user.getId());
-//            }catch(EmptyResultDataAccessException e1){
-//                profileImg= DEFAULT_USER_PROFILE_IMAGE;
-//            }
-//            Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
-//            Timestamp userCreatedAt = user.getCreatedAt();
-//            userMap.replace("createdAt", userCreatedAt);
-//            userMap.put("profileImage", profileImg);
-//            followerListWithUserInfo.add(userMap);
-//        }
-//        return followerListWithUserInfo;
-//    }
-//
-//    public int getFollowerCount(String userID){
-//        return userDao.getFollowerCount(userID);
-//    }
-//
-//    public int getFollowingCount(String userID){
-//        return userDao.getFollowingCount(userID);
-//    }
-//
-//    public int isFollowing(String userID1, String userID2){
-//        return userDao.isFollowExist(userID1, userID2);
-//    }
 
     public List<PoapWithDetails> getUserPoaps(String userId){
         // 1. user의 모든 지갑 불러오기
@@ -345,27 +235,5 @@ public class UserProvider {
     public List<CommentWithInfo> getNRecentComments(int count, String userID){
         return userDao.getNRecentComments(count, userID);
     }
-
-//    public boolean checkFriendReqExist(String reqTo, String reqFrom){
-//        FriendReq friendReq;
-//        try{
-//            friendReq = userDao.getFriendReq(reqTo, reqFrom);
-//        }catch(EmptyResultDataAccessException e){
-//            return false;
-//        }
-//        if(!friendReq.isAccepted() && !friendReq.isRejected()){
-//            return true;
-//        }
-//        return false;
-//    }
-
-//    public boolean checkFriendExist(String user1, String user2){
-//        try{
-//            userDao.getFriend(user1, user2);
-//        }catch(EmptyResultDataAccessException e){
-//            return false;
-//        }
-//        return true;
-//    }
 
 }

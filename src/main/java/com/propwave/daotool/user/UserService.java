@@ -134,52 +134,6 @@ public class UserService {
         }
     }
 
-//    public int createFriendReq(String reqTo, String reqFrom, String reqNickname) throws BaseException {
-//        try{
-//            // make friendReq record
-//            return userDao.createFriendReq(reqTo, reqFrom, reqNickname);
-//
-//            // make alarm to reqTo
-//            //userDao.createAlarm();
-//        }catch(Exception exception){
-//            throw new BaseException(DATABASE_ERROR);
-//        }
-//    }
-
-//    public int acceptFriend(boolean accepted, String reqTo, String reqFrom, String toNickname) throws BaseException {
-//        try{
-//            if(accepted){
-//                //1. friend Req accept로 바꾸기
-//                userDao.updateFriendReq(reqTo, reqFrom);
-//                //2. friend record 만들기
-//                String fromNickname = userDao.getFriendReqNickname(reqFrom, reqTo);
-//                userDao.createFriend(reqTo, reqFrom, toNickname);   // to에게 from이라는 친구가 to Nickname 이라는 이름으로 생김
-//                return userDao.createFriend(reqFrom, reqTo, fromNickname);
-//                //3. 알람 만들기
-//            } else{
-//                return userDao.deleteFriendReq(reqFrom, reqTo);
-//            }
-//        }catch(Exception exception) {
-//            throw new BaseException(DATABASE_ERROR);
-//        }
-//    }
-//
-//    public Friend editFriendNickname(String user, String friend, String newNickname){
-//        return userDao.editFriendNickname(user, friend, newNickname);
-//    }
-//
-//    public int createFollow(String reqTo, String reqFrom){
-//        int checkFollowExist = userDao.isFollowExist(reqTo, reqFrom);
-//        if(checkFollowExist == 1){
-//            return -2;
-//        }
-//        return userDao.createFollow(reqTo, reqFrom);
-//    }
-//
-//    public int deleteFollow(String reqTo, String reqFrom){
-//        return userDao.deleteFollow(reqTo, reqFrom);
-//    }
-
     public int createNotification(String userID, int type, int... optionIdx){
         // type: 1 - welcome, 2 - friend req, 3 - friend ok, 4 - comment, 5 - follow
         String message;
@@ -571,15 +525,6 @@ public class UserService {
         }
         return imgUrl;
     }
-
-//
-//    public int addFollow(String reqTo){
-//        return userDao.addFollow(reqTo);
-//    }
-//
-//    public int reduceFollow(String reqTo){
-//        return userDao.reduceFollow(reqTo);
-//    }
 
     public int createComment(String userID, String friendID, String message){
         return userDao.createComment(userID, friendID, message);
