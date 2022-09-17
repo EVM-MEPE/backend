@@ -7,6 +7,7 @@ import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.user.UserProvider;
 import com.propwave.daotool.user.UserService;
 import com.propwave.daotool.user.model.User;
+import com.propwave.daotool.wallet.model.Transaction;
 import com.propwave.daotool.wallet.model.UserWalletAndInfo;
 import com.propwave.daotool.utils.Utils;
 import com.propwave.daotool.wallet.model.NftForDashboard;
@@ -158,6 +159,15 @@ public class WalletController {
 
         return new BaseResponse<>("Successfully save token request");
     }
+
+    @GetMapping("wallet/transactions/all")
+    public BaseResponse<List<Transaction>> getTransaction(@RequestParam("userID") String userID){
+        List<Transaction> transactionList = walletService.getAllTransaction(userID);
+
+        return new BaseResponse<>(transactionList);
+    }
+
+
 
 
      /**

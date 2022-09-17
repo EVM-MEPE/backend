@@ -377,6 +377,30 @@ public class WalletDao {
         );
     }
 
+    public List<Transaction> getAllTransaction(String userID){
+        String getTransactionQuery = "SELECT * FROM transaction WHERE toUser=? OR fromUser=?";
+        Object[] getTransactionParam = new Object[] {userID, userID};
+        return this.jdbcTemplate.query(getTransactionQuery,
+                (rs, rowNum) -> new Transaction(
+                        rs.getInt("index"),
+                        rs.getString("toWalletAddress"),
+                        rs.getString("fromWalletAddress"),
+                        rs.getString("toUser"),
+                        rs.getString("fromUser"),
+                        rs.getString("gasPrice"),
+                        rs.getString("gas"),
+                        rs.getString("value"),
+                        rs.getString("chainID"),
+                        rs.getString("memo"),
+                        rs.getString("udenom"),
+                        rs.getString("walletType"),
+                        rs.getString("txHash"),
+                        rs.getTimestamp("createdAt")
+                ),
+                getTransactionParam
+        );
+    }
+
     public TokenReq getTokenReq(int tokenReqIdx){
         String getTokenReqQuery = "SELECT * FROM tokenReq WHERE `index`=?";
         return this.jdbcTemplate.queryForObject(getTokenReqQuery,

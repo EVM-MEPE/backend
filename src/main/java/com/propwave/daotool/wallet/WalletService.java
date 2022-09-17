@@ -384,6 +384,10 @@ public class WalletService {
         return walletDao.createTokenRequest(tokenRequest);
     }
 
+    public List<Transaction> getAllTransaction(String userID){
+        return walletDao.getAllTransaction(userID);
+    }
+
 
     //    public void getPoapRefresh(String walletAddress, String userID) throws ParseException {
 //        // POAP 가져오기
