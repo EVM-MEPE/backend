@@ -3,6 +3,10 @@ package com.propwave.daotool.user;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.propwave.daotool.Friend.FriendService;
+import com.propwave.daotool.Friend.model.Follow;
+import com.propwave.daotool.Friend.model.Friend;
+import com.propwave.daotool.Friend.model.FriendReq;
 import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
@@ -36,17 +40,17 @@ public class UserController {
     @Autowired
     private final UserService userService;
     @Autowired
-    private SecurityService securityService;
+    private final FriendService friendService;
     @Autowired
-    private final GetNFT getNFT;
+    private SecurityService securityService;
 
 
-    public UserController(GetNFT getNFT, S3Uploader s3Uploader, UserProvider userProvider, UserService userService, SecurityService securityService){
+    public UserController(S3Uploader s3Uploader, UserProvider userProvider, UserService userService, FriendService friendService, SecurityService securityService){
         this.s3Uploader = s3Uploader;
         this.userProvider = userProvider;
         this.userService = userService;
+        this.friendService = friendService;
         this.securityService = securityService;
-        this.getNFT = getNFT;
     }
 
     /**
@@ -62,7 +66,7 @@ public class UserController {
     }
 
     @PostMapping("users/create")
-    public BaseResponse<Map<String, Object>> createUserWithAWallet(@RequestParam("userID") String userID, @RequestBody Map<String, String> req) throws BaseException{
+    public BaseResponse<Map<String, Object>> createUserWithAWallet(@RequestParam("userID") String userID, @RequestBody Map<String, String> req){
         System.out.println("\n Create user with one wallet\n");
         Map<String, Object> newUser = userService.createUser(userID);
 
@@ -193,12 +197,12 @@ public class UserController {
      ******************************** mypage ********************************
      **/
     @GetMapping("mypage")
-    public BaseResponse<Map<String, Object>> getMyPageUserInfo(@RequestParam("userID") String userID) throws BaseException, ParseException {
+    public BaseResponse<Map<String, Object>> getMyPageUserInfo(@RequestParam("userID") String userID) throws BaseException{
         User user = userProvider.getUser(userID);
         String profileImg = userProvider.getUserImagePath(userID);
-        int friendCount = userProvider.getFriendsCount(userID);
-        int followerCount = userProvider.getFollowerCount(userID);
-        int followingCount = userProvider.getFollowingCount(userID);
+        int friendCount = friendService.getFriendsCount(userID);
+        int followerCount = friendService.getFollowerCount(userID);
+        int followingCount = friendService.getFollowingCount(userID);
         Social social = userProvider.getSocial(userID);
         List<UserWalletAndInfo> walletLists = userProvider.getAllUserWalletByUserId(userID);
         List<CommentWithInfo> pinnedCommentWithInfoList = userProvider.getAllPinnedCommentsForUser(userID);
@@ -293,85 +297,85 @@ public class UserController {
      ******************************** friend ********************************
      **/
 
-    @PostMapping("friends/request")
-    public BaseResponse<String> requestFriend(@RequestParam("user") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
-        // check jwt token
-        String jwtToken = json.get("jwtToken");
-        String userID = json.get("reqFrom");
+//    @PostMapping("friends/request")
+//    public BaseResponse<String> requestFriend(@RequestParam("user") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
+//        // check jwt token
+//        String jwtToken = json.get("jwtToken");
+//        String userID = json.get("reqFrom");
+//
+//        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+//            return new BaseResponse<>(USER_TOKEN_WRONG);
+//        }
+//        if(userProvider.checkFriendReqExist(reqTo, userID)){
+//            return new BaseResponse<>(FRIEND_REQ_ALREADY_EXIST);
+//        }
+//        if(userProvider.getStatusOfFriendReq(userID, reqTo).equals("friend")){
+//            return new BaseResponse<>(FRIEND_ALREADY_EXIST);
+//        }
+//
+//        userService.createFriendReq(reqTo, json.get("reqFrom"), json.get("reqNickname"));
+//        FriendReq friendReq = userProvider.getFriendReq(reqTo, json.get("reqFrom"));
+//        userService.createNotification(reqTo, 2, friendReq.getIndex());
+//        return new BaseResponse<>("successfully make friend request");
+//    }
 
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
-        if(userProvider.checkFriendReqExist(reqTo, userID)){
-            return new BaseResponse<>(FRIEND_REQ_ALREADY_EXIST);
-        }
-        if(userProvider.getStatusOfFriendReq(userID, reqTo).equals("friend")){
-            return new BaseResponse<>(FRIEND_ALREADY_EXIST);
-        }
-
-        userService.createFriendReq(reqTo, json.get("reqFrom"), json.get("reqNickname"));
-        FriendReq friendReq = userProvider.getFriendReq(reqTo, json.get("reqFrom"));
-        userService.createNotification(reqTo, 2, friendReq.getIndex());
-        return new BaseResponse<>("successfully make friend request");
-    }
-
-    @PatchMapping("friends/request")
-    public BaseResponse<String> friendRequestProcess(@RequestParam("accept") boolean isAccepted, @RequestBody Map<String, String> json) throws BaseException {
-        // check jwt token
-        String jwtToken = json.get("jwtToken");
-        String userID = json.get("reqTo");
-
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
-        if(userProvider.checkFriendExist(userID, json.get("reqFrom"))){
-            return new BaseResponse<>(FRIEND_ALREADY_EXIST);
-        }
-        userService.acceptFriend(isAccepted, json.get("reqTo"), json.get("reqFrom"), json.get("reqNickname"));
-        if(isAccepted){
-            Friend friend = userProvider.getFriend(json.get("reqFrom"), json.get("reqTo"));
-            userService.createNotification(userID, 3, friend.getIndex());
-        }
-        return new BaseResponse<>("successfully process friend request");
-    }
-
-    @PatchMapping("friends/nickname")
-    public BaseResponse<Friend> editFriendNickname(@RequestBody Map<String, String> json){
-        // check jwt token
-        String jwtToken = json.get("jwtToken");
-        String userID = json.get("user");
-
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
-
-        Friend newNickname = userService.editFriendNickname(json.get("user"), json.get("friend"), json.get("newNickname"));
-        return new BaseResponse<>(newNickname);
-    }
-
-    @GetMapping("friends")
-    public BaseResponse<List<FriendWithFriendImg>> getAllFriendsList(@RequestParam("userID") String userId){
-        List<FriendWithFriendImg> friendList = userProvider.getAllFriendsWithFriendImg(userId);
-        return new BaseResponse<>(friendList);
-    }
-
-    @GetMapping("friends/number")
-    public BaseResponse<Integer> getFriendsCount(@RequestParam("userID") String userId){
-        int friendsCount = userProvider.getFriendsCount(userId);
-        return new BaseResponse<>(friendsCount);
-    }
-
-    @PostMapping("friends/request/status")
-    public BaseResponse<String> getStatusOfFriendReq(@RequestParam("reqFrom") String reqFrom, @RequestParam("reqTo") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
-        // check jwt token
-        String jwtToken = json.get("jwtToken");
-
-        if(!isUserJwtTokenAvailable(jwtToken, reqFrom)){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
-        String status = userProvider.getStatusOfFriendReq(reqFrom, reqTo);
-        return new BaseResponse<>(status);
-    }
+//    @PatchMapping("friends/request")
+//    public BaseResponse<String> friendRequestProcess(@RequestParam("accept") boolean isAccepted, @RequestBody Map<String, String> json) throws BaseException {
+//        // check jwt token
+//        String jwtToken = json.get("jwtToken");
+//        String userID = json.get("reqTo");
+//
+//        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+//            return new BaseResponse<>(USER_TOKEN_WRONG);
+//        }
+//        if(userProvider.checkFriendExist(userID, json.get("reqFrom"))){
+//            return new BaseResponse<>(FRIEND_ALREADY_EXIST);
+//        }
+//        userService.acceptFriend(isAccepted, json.get("reqTo"), json.get("reqFrom"), json.get("reqNickname"));
+//        if(isAccepted){
+//            Friend friend = userProvider.getFriend(json.get("reqFrom"), json.get("reqTo"));
+//            userService.createNotification(userID, 3, friend.getIndex());
+//        }
+//        return new BaseResponse<>("successfully process friend request");
+//    }
+//
+//    @PatchMapping("friends/nickname")
+//    public BaseResponse<Friend> editFriendNickname(@RequestBody Map<String, String> json){
+//        // check jwt token
+//        String jwtToken = json.get("jwtToken");
+//        String userID = json.get("user");
+//
+//        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+//            return new BaseResponse<>(USER_TOKEN_WRONG);
+//        }
+//
+//        Friend newNickname = userService.editFriendNickname(json.get("user"), json.get("friend"), json.get("newNickname"));
+//        return new BaseResponse<>(newNickname);
+//    }
+//
+//    @GetMapping("friends")
+//    public BaseResponse<List<FriendWithFriendImg>> getAllFriendsList(@RequestParam("userID") String userId){
+//        List<FriendWithFriendImg> friendList = userProvider.getAllFriendsWithFriendImg(userId);
+//        return new BaseResponse<>(friendList);
+//    }
+//
+//    @GetMapping("friends/number")
+//    public BaseResponse<Integer> getFriendsCount(@RequestParam("userID") String userId){
+//        int friendsCount = userProvider.getFriendsCount(userId);
+//        return new BaseResponse<>(friendsCount);
+//    }
+//
+//    @PostMapping("friends/request/status")
+//    public BaseResponse<String> getStatusOfFriendReq(@RequestParam("reqFrom") String reqFrom, @RequestParam("reqTo") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
+//        // check jwt token
+//        String jwtToken = json.get("jwtToken");
+//
+//        if(!isUserJwtTokenAvailable(jwtToken, reqFrom)){
+//            return new BaseResponse<>(USER_TOKEN_WRONG);
+//        }
+//        String status = userProvider.getStatusOfFriendReq(reqFrom, reqTo);
+//        return new BaseResponse<>(status);
+//    }
 
     /**
      ******************************** notification ********************************
@@ -397,13 +401,13 @@ public class UserController {
                         tmp.put("img", userProvider.getUserImagePath(user.getId()));
                         break;
                 case 2: int friendReqIndex = notification.getFriendReq();
-                        FriendReq friendReq = userProvider.getFriendReq(friendReqIndex);
+                        FriendReq friendReq = friendService.getFriendReq(friendReqIndex);
                         String reqID = friendReq.getReqFrom();
                         user = userProvider.getUser(reqID);
                         tmp.put("img", userProvider.getUserImagePath(user.getId()));
                         break;
                 case 3: int friendIndex = notification.getFriend();
-                        Friend friend = userProvider.getFriend(friendIndex);
+                        Friend friend = friendService.getFriend(friendIndex);
                         String friendID = friend.getFriend();
                         user = userProvider.getUser(friendID);
                         tmp.put("img", userProvider.getUserImagePath(user.getId()));
@@ -415,7 +419,7 @@ public class UserController {
                         tmp.put("img", userProvider.getUserImagePath(user.getId()));
                         break;
                 case 5: int followIndex = notification.getFollow();
-                        Follow follow = userProvider.getFollow(followIndex);
+                        Follow follow = friendService.getFollow(followIndex);
                         String followID = follow.getUser();
                         user = userProvider.getUser(followID);
                         tmp.put("img", userProvider.getUserImagePath(user.getId()));
@@ -441,7 +445,7 @@ public class UserController {
     }
 
     @PostMapping("notification/left")
-    public BaseResponse<Boolean> checkNotificationLeft(@RequestParam("userID") String userID, @RequestBody Map<String, String> json) throws BaseException {
+    public BaseResponse<Boolean> checkNotificationLeft(@RequestParam("userID") String userID, @RequestBody Map<String, String> json){
         // check jwt token
         String jwtToken = json.get("jwtToken");
 
@@ -472,19 +476,19 @@ public class UserController {
             case 1: user = userProvider.getUser(notification.getUser());
                 break;
             case 2: int friendReqIndex = notification.getFriendReq();
-                FriendReq friendReq = userProvider.getFriendReq(friendReqIndex);
+                FriendReq friendReq = friendService.getFriendReq(friendReqIndex);
                 String reqID = friendReq.getReqFrom();
                 user = userProvider.getUser(reqID);
                 break;
             case 3: int friendIndex = notification.getFriend();
-                Friend friend = userProvider.getFriend(friendIndex);
+                Friend friend = friendService.getFriend(friendIndex);
                 String friendID = friend.getFriend();
                 user = userProvider.getUser(friendID);
                 break;
             case 4:
                 break;
             case 5: int followIndex = notification.getFollow();
-                Follow follow = userProvider.getFollow(followIndex);
+                Follow follow = friendService.getFollow(followIndex);
                 String followID = follow.getUser();
                 user = userProvider.getUser(followID);
                 break;
@@ -504,7 +508,7 @@ public class UserController {
     }
 
     @DeleteMapping("notification")
-    public BaseResponse<String> deleteANotification(@RequestParam("notiID") int notiID, @RequestBody Map<String, String> json) throws BaseException{
+    public BaseResponse<String> deleteANotification(@RequestParam("notiID") int notiID, @RequestBody Map<String, String> json){
         // check jwt token
         String userID = json.get("userID");
         String jwtToken = json.get("jwtToken");
@@ -518,7 +522,7 @@ public class UserController {
     }
 
     @DeleteMapping("notification/all")
-    public BaseResponse<String> deleteAllNotification(@RequestBody Map<String, String> json) throws BaseException{
+    public BaseResponse<String> deleteAllNotification(@RequestBody Map<String, String> json){
         // check jwt token
         String userID = json.get("userID");
         String jwtToken = json.get("jwtToken");
@@ -547,14 +551,18 @@ public class UserController {
         List<Map<String, Object>> listTodayFollows = (List<Map<String, Object>>) userListTodayFollows.get("list");
 
         Map<String, Object> res = new HashMap<>();
-        if(orderBy.equals("createdAt")){
-            res.put("userList", listCreatedAt);
-        }else if(orderBy.equals("todayHits")){
-            res.put("userList", listTodayHits);
-        }else if(orderBy.equals("todayFollows")){
-            res.put("userList", listTodayFollows);
-        }else{
-            return new BaseResponse<>(REQUEST_ERROR);
+        switch (orderBy) {
+            case "createdAt":
+                res.put("userList", listCreatedAt);
+                break;
+            case "todayHits":
+                res.put("userList", listTodayHits);
+                break;
+            case "todayFollows":
+                res.put("userList", listTodayFollows);
+                break;
+            default:
+                return new BaseResponse<>(REQUEST_ERROR);
         }
         System.out.println(listCreatedAt.get(0));
         res.put("topCreatedAt", listCreatedAt.get(0));
@@ -578,7 +586,7 @@ public class UserController {
     **/
     @GetMapping("comments/new")
     public BaseResponse<Map<String, String>> getMyInfoForNewComment(@RequestParam("userID") String userID, @RequestParam("friendID") String friendID) throws BaseException {
-        Friend friendInfo = userProvider.getFriend(friendID, userID);
+        Friend friendInfo = friendService.getFriend(friendID, userID);
         User user = userProvider.getUser(userID);
         String userImg = userProvider.getUserImagePath(userID);
 
@@ -763,60 +771,60 @@ public class UserController {
      ******************************** follow ********************************
      **/
 
-    @PostMapping("following/request")
-    public BaseResponse<String> requestFollow(@RequestParam("userID") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
-        // check jwt token
-        String jwtToken = json.get("jwtToken");
-        String reqFrom = json.get("reqFrom");
-
-        if(!isUserJwtTokenAvailable(jwtToken, reqFrom)){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
-
-        int result = userService.createFollow(reqTo, json.get("reqFrom"));
-        if(result==-2){
-            return new BaseResponse<>(FOLLOW_ALREADY_EXIST);
-        }
-        Follow follow = userProvider.getFollow(reqTo, json.get("reqFrom"));
-        userService.createNotification(reqTo, 5, follow.getIndex());
-        userService.addFollow(reqTo);
-        return new BaseResponse<>("successfully follow " + reqTo);
-    }
-
-    @PostMapping("following/delete")
-    public BaseResponse<String> deleteFollow(@RequestParam("userID") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
-        // check jwt token
-        String jwtToken = json.get("jwtToken");
-        String reqFrom = json.get("reqFrom");
-
-        if(!isUserJwtTokenAvailable(jwtToken, reqFrom)){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
-
-        userService.deleteFollow(reqTo, json.get("reqFrom"));
-        userService.reduceFollow(reqTo);
-        return new BaseResponse<>("successfully delete follow " + reqTo);
-    }
-
-    @GetMapping("following/following")
-    public BaseResponse<List<Map<String, Object>>> getFollowingList(@RequestParam("userID") String userID){
-        List<Map<String, Object>> followingList= userProvider.getFollowingList(userID);
-        return new BaseResponse<>(followingList);
-    }
-
-    @GetMapping("following/follower")
-    public BaseResponse<List<Map<String, Object>>> getFollowerList(@RequestParam("userID") String userID){
-        List<Map<String, Object>> followerList= userProvider.getFollowerList(userID);
-        return new BaseResponse<>(followerList);
-    }
-
-    @GetMapping("following")
-    public BaseResponse<Boolean> isFollowing(@RequestParam("userID1") String userID1, @RequestParam("userID2") String userID2){
-        int isFollowing = userProvider.isFollowing(userID1, userID2);
-        boolean result;
-        result = isFollowing == 1;
-        return new BaseResponse<>(result);
-    }
+//    @PostMapping("following/request")
+//    public BaseResponse<String> requestFollow(@RequestParam("userID") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
+//        // check jwt token
+//        String jwtToken = json.get("jwtToken");
+//        String reqFrom = json.get("reqFrom");
+//
+//        if(!isUserJwtTokenAvailable(jwtToken, reqFrom)){
+//            return new BaseResponse<>(USER_TOKEN_WRONG);
+//        }
+//
+//        int result = userService.createFollow(reqTo, json.get("reqFrom"));
+//        if(result==-2){
+//            return new BaseResponse<>(FOLLOW_ALREADY_EXIST);
+//        }
+//        Follow follow = userProvider.getFollow(reqTo, json.get("reqFrom"));
+//        userService.createNotification(reqTo, 5, follow.getIndex());
+//        userService.addFollow(reqTo);
+//        return new BaseResponse<>("successfully follow " + reqTo);
+//    }
+//
+//    @PostMapping("following/delete")
+//    public BaseResponse<String> deleteFollow(@RequestParam("userID") String reqTo, @RequestBody Map<String, String> json) throws BaseException {
+//        // check jwt token
+//        String jwtToken = json.get("jwtToken");
+//        String reqFrom = json.get("reqFrom");
+//
+//        if(!isUserJwtTokenAvailable(jwtToken, reqFrom)){
+//            return new BaseResponse<>(USER_TOKEN_WRONG);
+//        }
+//
+//        userService.deleteFollow(reqTo, json.get("reqFrom"));
+//        userService.reduceFollow(reqTo);
+//        return new BaseResponse<>("successfully delete follow " + reqTo);
+//    }
+//
+//    @GetMapping("following/following")
+//    public BaseResponse<List<Map<String, Object>>> getFollowingList(@RequestParam("userID") String userID){
+//        List<Map<String, Object>> followingList= userProvider.getFollowingList(userID);
+//        return new BaseResponse<>(followingList);
+//    }
+//
+//    @GetMapping("following/follower")
+//    public BaseResponse<List<Map<String, Object>>> getFollowerList(@RequestParam("userID") String userID){
+//        List<Map<String, Object>> followerList= userProvider.getFollowerList(userID);
+//        return new BaseResponse<>(followerList);
+//    }
+//
+//    @GetMapping("following")
+//    public BaseResponse<Boolean> isFollowing(@RequestParam("userID1") String userID1, @RequestParam("userID2") String userID2){
+//        int isFollowing = userProvider.isFollowing(userID1, userID2);
+//        boolean result;
+//        result = isFollowing == 1;
+//        return new BaseResponse<>(result);
+//    }
 
     public boolean isUserJwtTokenAvailable(String jwtToken, String userID){
         // check jwt token

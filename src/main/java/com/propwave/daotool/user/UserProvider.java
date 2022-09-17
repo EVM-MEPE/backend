@@ -1,7 +1,6 @@
 package com.propwave.daotool.user;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.propwave.daotool.Friend.FriendDao;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
 
@@ -15,20 +14,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
 import java.util.*;
 
 //Provider: Read 비즈니스 로직 처리
 @Service
 public class UserProvider {
-    final static String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/d1b5e5d6-fc89-486b-99d6-b2a6894f9eafprofileimg-default.png";
+    final public static String DEFAULT_USER_PROFILE_IMAGE = "https://daotool.s3.ap-northeast-2.amazonaws.com/static/user/d1b5e5d6-fc89-486b-99d6-b2a6894f9eafprofileimg-default.png";
 
     private final UserDao userDao;
+    private final FriendDao friendDao;
 
     final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public UserProvider(UserDao userDao){
+    public UserProvider(UserDao userDao, FriendDao friendDao){
         this.userDao = userDao;
+        this.friendDao = friendDao;
     }
 
     public int checkUserIdExist(String id) throws BaseException{
@@ -89,7 +89,7 @@ public class UserProvider {
     public List<String> getAllUserByWallet(String walletAddress) throws BaseException {
         try{
             List<UserWallet> userWallets = userDao.getAllUserByWallet(walletAddress);
-            List<String> users = new ArrayList<String>();
+            List<String> users = new ArrayList<>();
             for(UserWallet userWallet:userWallets){
                 users.add(userWallet.getUser());
             }
@@ -100,45 +100,45 @@ public class UserProvider {
         }
     }
 
-    public Friend getFriend(String user, String friend){
-        return userDao.getFriend(user, friend);
-    }
+//    public Friend getFriend(String user, String friend){
+//        return userDao.getFriend(user, friend);
+//    }
+//
+//    public Friend getFriend(int index){
+//        return userDao.getFriend(index);
+//    }
+//
+//    public List<FriendWithFriendImg> getAllFriendsWithFriendImg(String userId){
+//        return userDao.getAllFriendsWithFriendImg(userId);
+//    }
 
-    public Friend getFriend(int index){
-        return userDao.getFriend(index);
-    }
+//    public int getFriendsCount(String userId){
+//        return userDao.getFriendsCount(userId);
+//    }
 
-    public List<FriendWithFriendImg> getAllFriendsWithFriendImg(String userId){
-        return userDao.getAllFriendsWithFriendImg(userId);
-    }
+//    public FriendReq getFriendReq(String reqTo, String reqFrom){
+//        return userDao.getFriendReq(reqTo, reqFrom);
+//    }
+//
+//    public FriendReq getFriendReq(int index){
+//        return userDao.getFriendReq(index);
+//    }
 
-    public int getFriendsCount(String userId){
-        return userDao.getFriendsCount(userId);
-    }
-
-    public FriendReq getFriendReq(String reqTo, String reqFrom){
-        return userDao.getFriendReq(reqTo, reqFrom);
-    }
-
-    public FriendReq getFriendReq(int index){
-        return userDao.getFriendReq(index);
-    }
-
-    public String getStatusOfFriendReq(String reqFrom, String reqTo) throws BaseException {
-        try{
-            FriendReq friendReq = userDao.getFriendReq(reqTo, reqFrom);
-            if(friendReq.isAccepted()){
-                return "friend";
-            }else{
-                return "wait";
-            }
-        }catch(EmptyResultDataAccessException e){
-            return "none";
-        }catch(Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
-
-    }
+//    public String getStatusOfFriendReq(String reqFrom, String reqTo) throws BaseException {
+//        try{
+//            FriendReq friendReq = userDao.getFriendReq(reqTo, reqFrom);
+//            if(friendReq.isAccepted()){
+//                return "friend";
+//            }else{
+//                return "wait";
+//            }
+//        }catch(EmptyResultDataAccessException e){
+//            return "none";
+//        }catch(Exception exception){
+//            throw new BaseException(DATABASE_ERROR);
+//        }
+//
+//    }
 
     public List<UserWalletAndInfo> getAllUserWalletByUserId(String userId) throws BaseException{
         try{
@@ -198,73 +198,73 @@ public class UserProvider {
         }
     }
 
-    public Follow getFollow(String reqTo, String reqFrom){
-        return userDao.getFollow(reqTo, reqFrom);
-    }
-
-    public Follow getFollow(int index){
-        return userDao.getFollow(index);
-    }
-
-    public List<Map<String, Object>> getFollowingList(String userID){
-        List<Follow> followingList = userDao.getFollowingList(userID);
-        List<Map<String, Object>> followingListWithUserInfo = new ArrayList<>();
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
-
-        for(Follow follow:followingList){
-            String following = follow.getFollowing();
-            User user = userDao.getUserInfo(following);
-            String profileImg;
-            try{
-                profileImg = userDao.getUserImagePath(user.getId());
-            }catch(EmptyResultDataAccessException e1){
-                profileImg= DEFAULT_USER_PROFILE_IMAGE;
-            }
-            Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
-
-            Timestamp userCreatedAt = user.getCreatedAt();
-            userMap.replace("createdAt", userCreatedAt);
-            userMap.put("profileImage", profileImg);
-
-            followingListWithUserInfo.add(userMap);
-        }
-        return followingListWithUserInfo;
-    }
-
-    public List<Map<String, Object>> getFollowerList(String userID){
-        List<Follow> followerList = userDao.getFollowerList(userID);
-        List<Map<String, Object>> followerListWithUserInfo = new ArrayList<>();
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
-
-        for(Follow follow:followerList){
-            String follower = follow.getUser();
-            User user = userDao.getUserInfo(follower);
-            String profileImg;
-            try{
-                profileImg = userDao.getUserImagePath(user.getId());
-            }catch(EmptyResultDataAccessException e1){
-                profileImg= DEFAULT_USER_PROFILE_IMAGE;
-            }
-            Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
-            Timestamp userCreatedAt = user.getCreatedAt();
-            userMap.replace("createdAt", userCreatedAt);
-            userMap.put("profileImage", profileImg);
-            followerListWithUserInfo.add(userMap);
-        }
-        return followerListWithUserInfo;
-    }
-
-    public int getFollowerCount(String userID){
-        return userDao.getFollowerCount(userID);
-    }
-
-    public int getFollowingCount(String userID){
-        return userDao.getFollowingCount(userID);
-    }
-
-    public int isFollowing(String userID1, String userID2){
-        return userDao.isFollowExist(userID1, userID2);
-    }
+//    public Follow getFollow(String reqTo, String reqFrom){
+//        return userDao.getFollow(reqTo, reqFrom);
+//    }
+//
+//    public Follow getFollow(int index){
+//        return userDao.getFollow(index);
+//    }
+//
+//    public List<Map<String, Object>> getFollowingList(String userID){
+//        List<Follow> followingList = userDao.getFollowingList(userID);
+//        List<Map<String, Object>> followingListWithUserInfo = new ArrayList<>();
+//        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+//
+//        for(Follow follow:followingList){
+//            String following = follow.getFollowing();
+//            User user = userDao.getUserInfo(following);
+//            String profileImg;
+//            try{
+//                profileImg = userDao.getUserImagePath(user.getId());
+//            }catch(EmptyResultDataAccessException e1){
+//                profileImg= DEFAULT_USER_PROFILE_IMAGE;
+//            }
+//            Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
+//
+//            Timestamp userCreatedAt = user.getCreatedAt();
+//            userMap.replace("createdAt", userCreatedAt);
+//            userMap.put("profileImage", profileImg);
+//
+//            followingListWithUserInfo.add(userMap);
+//        }
+//        return followingListWithUserInfo;
+//    }
+//
+//    public List<Map<String, Object>> getFollowerList(String userID){
+//        List<Follow> followerList = userDao.getFollowerList(userID);
+//        List<Map<String, Object>> followerListWithUserInfo = new ArrayList<>();
+//        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
+//
+//        for(Follow follow:followerList){
+//            String follower = follow.getUser();
+//            User user = userDao.getUserInfo(follower);
+//            String profileImg;
+//            try{
+//                profileImg = userDao.getUserImagePath(user.getId());
+//            }catch(EmptyResultDataAccessException e1){
+//                profileImg= DEFAULT_USER_PROFILE_IMAGE;
+//            }
+//            Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
+//            Timestamp userCreatedAt = user.getCreatedAt();
+//            userMap.replace("createdAt", userCreatedAt);
+//            userMap.put("profileImage", profileImg);
+//            followerListWithUserInfo.add(userMap);
+//        }
+//        return followerListWithUserInfo;
+//    }
+//
+//    public int getFollowerCount(String userID){
+//        return userDao.getFollowerCount(userID);
+//    }
+//
+//    public int getFollowingCount(String userID){
+//        return userDao.getFollowingCount(userID);
+//    }
+//
+//    public int isFollowing(String userID1, String userID2){
+//        return userDao.isFollowExist(userID1, userID2);
+//    }
 
     public List<PoapWithDetails> getUserPoaps(String userId){
         // 1. user의 모든 지갑 불러오기
@@ -318,16 +318,6 @@ public class UserProvider {
         return res;
     }
 
-    public Map<String, String> getFriendNickname(String userID, String friendID){
-        // user가 friend를 뭘로 저장했는지 확인하기
-        Map<String, String> res = new HashMap<>();
-        String nickname = userDao.getFriendReqNickname(userID, friendID);
-        res.put("user", userID);
-        res.put("friend", friendID);
-        res.put("friendNickname", nickname);
-        return res;
-    }
-
     public Comment getComment(String userID, String friendID, String message){
         return userDao.getComment(userID, friendID, message);
     }
@@ -356,26 +346,26 @@ public class UserProvider {
         return userDao.getNRecentComments(count, userID);
     }
 
-    public boolean checkFriendReqExist(String reqTo, String reqFrom){
-        FriendReq friendReq;
-        try{
-            friendReq = userDao.getFriendReq(reqTo, reqFrom);
-        }catch(EmptyResultDataAccessException e){
-            return false;
-        }
-        if(!friendReq.isAccepted() && !friendReq.isRejected()){
-            return true;
-        }
-        return false;
-    }
+//    public boolean checkFriendReqExist(String reqTo, String reqFrom){
+//        FriendReq friendReq;
+//        try{
+//            friendReq = userDao.getFriendReq(reqTo, reqFrom);
+//        }catch(EmptyResultDataAccessException e){
+//            return false;
+//        }
+//        if(!friendReq.isAccepted() && !friendReq.isRejected()){
+//            return true;
+//        }
+//        return false;
+//    }
 
-    public boolean checkFriendExist(String user1, String user2){
-        try{
-            userDao.getFriend(user1, user2);
-        }catch(EmptyResultDataAccessException e){
-            return false;
-        }
-        return true;
-    }
+//    public boolean checkFriendExist(String user1, String user2){
+//        try{
+//            userDao.getFriend(user1, user2);
+//        }catch(EmptyResultDataAccessException e){
+//            return false;
+//        }
+//        return true;
+//    }
 
 }
