@@ -55,7 +55,7 @@ public class WalletController {
         return new BaseResponse<>("successfully add wallet to user");
     }
 
-    // 유저의 지갑을 모두 불러옴
+    // 지갑으로부터 유저 불러오기
     @GetMapping("wallets/users")
     public BaseResponse<List<String>> getUsersfromWallet(@RequestParam("walletAddress") String walletAddress) throws BaseException {
         System.out.println("\n Get users from wallet \n");
@@ -122,8 +122,15 @@ public class WalletController {
         return new BaseResponse<>(nftRefreshLeft);
     }
 
-
     /**
+     ******************************** transaction ********************************
+     **/
+
+    @PostMapping("wallet/transactions/remitment")
+    public BaseResponse<>
+
+
+     /**
      ******************************** nft ********************************
      **/
 
