@@ -1,4 +1,4 @@
-package com.propwave.daotool.Friend.model;
+package com.propwave.daotool.friend.model;
 
 import lombok.*;
 

@@ -1,4 +1,5 @@
-package com.propwave.daotool.Friend.model;
+package com.propwave.daotool.friend.model;
+
 
 import lombok.*;
 
@@ -6,13 +7,12 @@ import java.sql.Timestamp;
 
 @Getter
 @Setter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access= AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class FriendWithFriendImg {
+public class Friend {
     private int index;
     private String user;
     private String friend;
-    private String friendProfileImg;
     private String friendName;
     private Timestamp createdAt;
 }

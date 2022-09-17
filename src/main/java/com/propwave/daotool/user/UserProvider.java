@@ -1,6 +1,6 @@
 package com.propwave.daotool.user;
 
-import com.propwave.daotool.Friend.FriendDao;
+import com.propwave.daotool.friend.FriendDao;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
 
@@ -9,6 +9,7 @@ import static com.propwave.daotool.config.BaseResponseStatus.*;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.user.model.UserWallet;
 
+import com.propwave.daotool.wallet.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -73,104 +74,6 @@ public class UserProvider {
         } catch(Exception exception){
             throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
         }
-    }
-
-    // 지갑 주소가 wallet에 있는지 확인
-    public int isWalletExist(String walletAddress) throws BaseException {
-        try{
-            return userDao.isWalletExist(walletAddress);
-        } catch(Exception exception){
-            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
-        }
-    }
-
-    public List<String> getAllUserByWallet(String walletAddress) throws BaseException {
-        try{
-            List<UserWallet> userWallets = userDao.getAllUserByWallet(walletAddress);
-            List<String> users = new ArrayList<>();
-            for(UserWallet userWallet:userWallets){
-                users.add(userWallet.getUser());
-            }
-            return users;
-
-        }catch(Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
-    }
-
-    public List<UserWalletAndInfo> getAllUserWalletByUserId(String userId) throws BaseException{
-        try{
-            List<UserWallet> userWallets = userDao.getAllUserWalletByUserId(userId);
-            List<UserWalletAndInfo> userWalletsWithInfo = new ArrayList<>();
-
-            for(UserWallet userWallet: userWallets){
-                String walletAddress = userWallet.getWalletAddress();
-                WalletInfo walletInfo = userDao.getWalletInfo(walletAddress);
-
-                UserWalletAndInfo tmp = new UserWalletAndInfo(userWallet.getIndex(), userWallet.getUser(), userWallet.getWalletAddress(), walletInfo.getWalletType(), walletInfo.getWalletTypeImage(), userWallet.getChain(), userWallet.getCreatedAt());
-                userWalletsWithInfo.add(tmp);
-            }
-            return userWalletsWithInfo;
-
-        } catch(Exception exception){
-            throw new BaseException(BaseResponseStatus.DATABASE_ERROR);
-        }
-    }
-
-    public List<NftForDashboard> getNftDashboardInfoByUserId(String userId){
-        // get all user's userWallet
-        List<UserWallet> userWalletList = userDao.getAllUserWalletByUserId(userId);
-        List<NftForDashboard> nftForDashboardList = new ArrayList<>();
-        // get wallets' all nfts
-        for(UserWallet userWallet:userWalletList){
-            List<NftWallet> nftWalletList = userDao.getNftWallets(userWallet.getIndex());
-                for(NftWallet nftWallet:nftWalletList){
-                Nft nft = userDao.getNFT(nftWallet.getNftAddress(), nftWallet.getNftTokenId());
-                NftForDashboard nftForDashboard = new NftForDashboard(nft.getIndex(), nftWallet.getIndex(), nft.getAddress(), nft.getTokenID(), nftWallet.isHidden(), nft.getImage());
-                nftForDashboardList.add(nftForDashboard);
-            }
-        }
-        return removeNftDashboardDuplicated(nftForDashboardList);
-    }
-
-    // util
-    public List<NftForDashboard> removeNftDashboardDuplicated(List<NftForDashboard> nftForDashboardList){
-        List<String> nftNameList = new ArrayList<>();
-        List<NftForDashboard> dupRemovedNftForDashboardList = new ArrayList<>();
-        for(NftForDashboard nftForDashboard:nftForDashboardList){
-            String name = nftForDashboard.getAddress() + " " + nftForDashboard.getTokenID();
-            if(nftNameList.contains(name)){
-                continue;
-            }
-            nftNameList.add(name);
-            dupRemovedNftForDashboardList.add(nftForDashboard);
-        }
-        return dupRemovedNftForDashboardList;
-    }
-
-    public int getRefreshLeft(String userId)throws BaseException {
-        try{
-            return userDao.getRefreshLeft(userId);
-        }catch(Exception exception){
-            throw new BaseException(DATABASE_ERROR);
-        }
-    }
-
-    public List<PoapWithDetails> getUserPoaps(String userId){
-        // 1. user의 모든 지갑 불러오기
-        List<UserWallet> userWallets = userDao.getAllUserWalletByUserId(userId);
-
-        // 2. 각 지갑에 있는 Poap 모두 가져오기
-        List<PoapWithDetails> userPoaps = new ArrayList<>();
-        for(UserWallet userWallet:userWallets){
-            List<PoapWithDetails> poaps = userDao.getPoapWithDetailsByWalletAddress(userWallet.getWalletAddress());
-            userPoaps.addAll(poaps);
-        }
-        return userPoaps;
-    }
-
-    public List<Poap> getAllPoaps(){
-        return userDao.getAllPoaps();
     }
 
     public List<Notification> getUserNotificationList(String userID){

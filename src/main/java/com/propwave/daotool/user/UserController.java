@@ -3,16 +3,18 @@ package com.propwave.daotool.user;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.propwave.daotool.Friend.FriendService;
-import com.propwave.daotool.Friend.model.Follow;
-import com.propwave.daotool.Friend.model.Friend;
-import com.propwave.daotool.Friend.model.FriendReq;
+import com.propwave.daotool.friend.FriendService;
+import com.propwave.daotool.friend.model.Follow;
+import com.propwave.daotool.friend.model.Friend;
+import com.propwave.daotool.friend.model.FriendReq;
 import com.propwave.daotool.commons.S3Uploader;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
-import org.json.simple.parser.ParseException;
+import com.propwave.daotool.utils.Utils;
+import com.propwave.daotool.wallet.WalletService;
+import com.propwave.daotool.wallet.model.UserWalletAndInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,22 +36,22 @@ public class UserController {
     final Logger logger = LoggerFactory.getLogger(this.getClass());
     private final S3Uploader s3Uploader;
 
-    @Autowired
     private final UserProvider userProvider;
-    @Autowired
     private final UserService userService;
-    @Autowired
     private final FriendService friendService;
-    @Autowired
-    private SecurityService securityService;
+    private final WalletService walletService;
+    private final Utils utils;
+    private final SecurityService securityService;
 
 
-    public UserController(S3Uploader s3Uploader, UserProvider userProvider, UserService userService, FriendService friendService, SecurityService securityService){
+    public UserController(Utils utils, S3Uploader s3Uploader, UserProvider userProvider, UserService userService, FriendService friendService, WalletService walletService, SecurityService securityService){
         this.s3Uploader = s3Uploader;
         this.userProvider = userProvider;
         this.userService = userService;
         this.friendService = friendService;
+        this.walletService = walletService;
         this.securityService = securityService;
+        this.utils = utils;
     }
 
     /**
@@ -69,60 +71,15 @@ public class UserController {
         System.out.println("\n Create user with one wallet\n");
         Map<String, Object> newUser = userService.createUser(userID);
 
-        userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
+        walletService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
         userService.createNotification(userID, 1, -1);
         return new BaseResponse<>(newUser);
-    }
-
-
-    @PostMapping("wallets/create")
-    public BaseResponse<String> addWalletToUser(@RequestBody Map<String, String> req){
-        System.out.println("\n Add Wallet \n");
-
-        // check jwt token
-        String jwtToken = req.get("jwtToken");
-        String userID = req.get("userID");
-
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
-
-        int result = userService.addWalletToUser(userID, req.get("walletAddress"), req.get("walletType"));
-        if(result==-1){
-            return new BaseResponse<>(WALLET_ALREADY_EXIST_TO_USER);
-        }
-
-        return new BaseResponse<>("successfully add wallet to user");
-    }
-
-    @GetMapping("users/wallet/all")
-    public BaseResponse<List<UserWalletAndInfo>> getAllWalletFromUser(@RequestParam("userID") String userID) throws BaseException {
-        List<UserWalletAndInfo> userWalletList = userProvider.getAllUserWalletByUserId(userID);
-
-        return new BaseResponse<>(userWalletList);
-
-    }
-
-    @PostMapping("wallets/delete")
-    public BaseResponse<String> deleteWalletToUser(@RequestBody Map<String, String> req) throws BaseException {
-        System.out.println("\n Delete Wallet \n");
-
-        // check jwt token
-        String jwtToken = req.get("jwtToken");
-        String userID = req.get("userID");
-
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
-            return new BaseResponse<>(USER_TOKEN_WRONG);
-        }
-
-        userService.deleteUserWallet(req.get("userID"), req.get("walletAddress"));
-        return new BaseResponse<>("successfully delete wallet to user");
     }
 
     @GetMapping("users/login")
     public BaseResponse<Map<String, Object>> login(@RequestParam("userID") String userID) throws BaseException {
         System.out.println("\n Login \n");
-        List<UserWalletAndInfo> userWalletList = userProvider.getAllUserWalletByUserId(userID);
+        List<UserWalletAndInfo> userWalletList = walletService.getAllUserWalletByUserId(userID);
 
         //User의 JWT 토큰 만들기
         String jwtToken = securityService.createToken(userID, (360*1000*60)); // 토큰 유효시간 6시간
@@ -147,7 +104,7 @@ public class UserController {
         // check jwt token
         String jwtToken = req.get("jwtToken");
 
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -179,19 +136,6 @@ public class UserController {
         return new BaseResponse<>(userSocial);
     }
 
-    // 유저의 지갑을 모두 불러옴
-    @GetMapping("wallets/users")
-    public BaseResponse<List<String>> getUsersfromWallet(@RequestParam("walletAddress") String walletAddress) throws BaseException {
-        System.out.println("\n Get users from wallet \n");
-        if(userProvider.isWalletExist(walletAddress)==0){
-            return new BaseResponse<>(NO_WALLET_EXIST);
-        }
-        else{
-            List<String> users = userProvider.getAllUserByWallet(walletAddress);
-            return new BaseResponse<>(users);
-        }
-    }
-
     /**
      ******************************** mypage ********************************
      **/
@@ -203,7 +147,7 @@ public class UserController {
         int followerCount = friendService.getFollowerCount(userID);
         int followingCount = friendService.getFollowingCount(userID);
         Social social = userProvider.getSocial(userID);
-        List<UserWalletAndInfo> walletLists = userProvider.getAllUserWalletByUserId(userID);
+        List<UserWalletAndInfo> walletLists = walletService.getAllUserWalletByUserId(userID);
         List<CommentWithInfo> pinnedCommentWithInfoList = userProvider.getAllPinnedCommentsForUser(userID);
         int pinnedCommentCount = pinnedCommentWithInfoList.size();
 
@@ -236,28 +180,6 @@ public class UserController {
         return new BaseResponse<>(result);
     }
 
-    @GetMapping("mypage/collections")
-    public BaseResponse<Map<String, Object>> getMyPageCollections(@RequestParam("userID") String userID) throws BaseException, ParseException {
-        User user = userProvider.getUser(userID);
-
-        // mvp -> get poap list by api
-        List<Map<String, Object>> poapList = userService.getPoapMypageWithNoDB(userID);
-        Map<String, Object> nftList = userService.getNftMypageWithNoDB(userID);
-
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(new SimpleModule());
-        Map<String, Object> userMap = objectMapper.convertValue(user, Map.class);
-
-        Timestamp userCreatedAt = user.getCreatedAt();
-        userMap.replace("createdAt", userCreatedAt);
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("user", userMap);
-        result.put("poapList", poapList);
-        result.put("nftList", nftList);
-
-        return new BaseResponse<>(result);
-    }
-
     @GetMapping("profileHistory")
     public BaseResponse<List<ProfileImg>> getProfileImgHistory(@RequestParam("userID") String userID) throws BaseException {
         List<ProfileImg> profileImgList = userProvider.getProfileImgHistory(userID);
@@ -265,10 +187,10 @@ public class UserController {
     }
 
     @PostMapping("profileHistory/delete")
-    public BaseResponse<String> deleteProfileImgHistory(@RequestParam("userID") String userID, @RequestBody Map<String, Object> json) throws BaseException {
+    public BaseResponse<String> deleteProfileImgHistory(@RequestParam("userID") String userID, @RequestBody Map<String, Object> json){
         String jwtToken = (String) json.get("jwtToken");
         int profileIndex = (int) json.get("profileIndex");
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -279,7 +201,7 @@ public class UserController {
     @PostMapping("profileHistory")
     public BaseResponse<String> hideProfileImgHistory(@RequestParam("userID") String userID, @RequestParam("profileIndex") int profileIndex, @RequestParam("hide") boolean hide, @RequestBody Map<String, String> json){
         String jwtToken = json.get("jwtToken");
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -300,7 +222,7 @@ public class UserController {
         String jwtToken = json.get("jwtToken");
         List<Map<String, Object>> res = new ArrayList<>();
 
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -363,7 +285,7 @@ public class UserController {
         // check jwt token
         String jwtToken = json.get("jwtToken");
 
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -377,7 +299,7 @@ public class UserController {
         String userID = json.get("userID");
         String jwtToken = json.get("jwtToken");
 
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -427,7 +349,7 @@ public class UserController {
         String userID = json.get("userID");
         String jwtToken = json.get("jwtToken");
 
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -441,7 +363,7 @@ public class UserController {
         String userID = json.get("userID");
         String jwtToken = json.get("jwtToken");
 
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -521,7 +443,7 @@ public class UserController {
         String jwtToken = json.get("jwtToken");
         String message = json.get("message");
 
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -536,7 +458,7 @@ public class UserController {
     @PostMapping("comments/all")
     public BaseResponse<Map<String, Object>> getAllCommentsForUser(@RequestParam("userID") String userID, @RequestBody Map<String, String> json){
         String jwtToken = json.get("jwtToken");
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -554,7 +476,7 @@ public class UserController {
     @PostMapping("comments/hidden")
     public BaseResponse<String> hideComment(@RequestParam("userID") String userID, @RequestParam("commentIdx") int commentIdx, @RequestParam("hide") boolean hide,@RequestBody Map<String, String> json){
         String jwtToken = json.get("jwtToken");
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -568,7 +490,7 @@ public class UserController {
     @PostMapping("comments/unhidden")
     public BaseResponse<List<CommentWithInfo>> getCommentsWithoutHiddenComments(@RequestParam("userID") String userID, @RequestBody Map<String, String> json){
         String jwtToken = json.get("jwtToken");
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -581,7 +503,7 @@ public class UserController {
         String jwtToken = (String) json.get("jwtToken");
         ArrayList<Integer> commentsIdxList = (ArrayList<Integer>) json.get("idxArr");
 
-        if(!isUserJwtTokenAvailable(jwtToken, userID)){
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
@@ -599,98 +521,6 @@ public class UserController {
     public BaseResponse<Optional<Comment>> getCommentByIdx(@RequestParam("index") int idx){
         Optional<Comment> comment = userProvider.getOptionalComment(idx);
         return new BaseResponse<>(comment);
-    }
-
-
-
-
-
-
-
-    /**
-    ******************************** nft ********************************
-    **/
-
-//    @GetMapping("mypage/refreshCollections")
-//    public BaseResponse<Map<Object, Object>> getCollectionsRefresh(@RequestParam("userID") String userId) throws ParseException, BaseException {
-//        //1. refresh가 0번 이상 남았는지 확인하기
-//        int refreshLeft = userProvider.getRefreshLeft(userId);
-//        if(refreshLeft<=0){
-//            return new BaseResponse<>(NO_REFRESH_LEFT);
-//        }
-//
-//        // 2. 이 인간의 모든 지갑 불러오기
-//        List<UserWalletAndInfo> userWallets = userProvider.getAllUserWalletByUserId(userId);
-//
-//        //3. POAP 모두 불러오기
-//        for(UserWalletAndInfo userWallet:userWallets) {
-//            userService.getPoapRefresh(userWallet.getWalletAddress(), userWallet.getUser());
-//        }
-//
-//        //4. NFT 모두 불러오기
-//
-//
-//        //5. POAP, NFT 불러온거 가져오기
-//        Map<Object, Object> result = new HashMap<>();
-//        List<Nft> nftList = userProvider.getUserNfts(userId);
-//        List<PoapWithDetails> poapList = userProvider.getUserPoaps(userId);
-//        result.put("nftList", nftList);
-//        result.put("poapList", poapList);
-//
-//        //5. 기타
-//        userService.reduceRefreshNftCount(userId);
-//
-//        return new BaseResponse<>)(result);
-//    }
-
-    @GetMapping("nfts/refresh")
-    public BaseResponse<String> getNftRefresh(@RequestParam("userId") String userId) throws BaseException, ParseException {
-        //1. 이 인간의 Dashboard 지갑 다불러오기
-        List<UserWalletAndInfo> userWallets =  userProvider.getAllUserWalletByUserId(userId);
-        for(UserWalletAndInfo userWallet:userWallets){
-            String walletAddress = userWallet.getWalletAddress();
-
-            String api_chain = "polygon";
-            String chain = "Polygon";
-            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
-
-            api_chain = "eth";
-            chain = "Ethereum";
-            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
-
-            api_chain = "avalanche";
-            chain = "Avalanche";
-            userService.getNFTRefresh(walletAddress, api_chain, chain, userWallet.getIndex());
-
-            userService.reduceRefreshNftCount(userId);
-        }
-        return new BaseResponse<>("refresh success");
-    }
-
-
-    @GetMapping("nfts")
-    public BaseResponse<List<NftForDashboard>> getMyNfts(@RequestParam("userId") String userId){
-        // 유저의 모든 nftWallet 불러오기
-        List<NftForDashboard> nftForDashboardList = userProvider.getNftDashboardInfoByUserId(userId);
-        return new BaseResponse<>(nftForDashboardList);
-    }
-
-    @GetMapping("nfts/refreshLeft")
-    public BaseResponse<Integer> getNftRefreshLeft(@RequestParam("userId") String userId) throws BaseException {
-        int nftRefreshLeft = userProvider.getRefreshLeft(userId);
-        return new BaseResponse<>(nftRefreshLeft);
-    }
-
-    public boolean isUserJwtTokenAvailable(String jwtToken, String userID){
-        // check jwt token
-        String subject;
-        try{
-            subject = securityService.getSubject(jwtToken);
-        } catch(Exception e){
-            return false;
-        }
-
-        return subject.equals(userID);
     }
 }
 

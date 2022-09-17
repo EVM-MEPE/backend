@@ -1,16 +1,15 @@
-package com.propwave.daotool.Friend;
+package com.propwave.daotool.friend;
 
-import com.propwave.daotool.Friend.model.Follow;
-import com.propwave.daotool.Friend.model.Friend;
-import com.propwave.daotool.Friend.model.FriendReq;
-import com.propwave.daotool.Friend.model.FriendWithFriendImg;
+import com.propwave.daotool.friend.model.Follow;
+import com.propwave.daotool.friend.model.Friend;
+import com.propwave.daotool.friend.model.FriendReq;
+import com.propwave.daotool.friend.model.FriendWithFriendImg;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.user.UserService;
 import com.propwave.daotool.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

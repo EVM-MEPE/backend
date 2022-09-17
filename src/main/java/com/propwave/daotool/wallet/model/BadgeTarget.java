@@ -1,4 +1,4 @@
-package com.propwave.daotool.user.model;
+package com.propwave.daotool.wallet.model;
 
 import lombok.*;
 
@@ -6,8 +6,8 @@ import lombok.*;
 @Setter
 @NoArgsConstructor(access= AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class Chain {
-    private String name;
-    private String image;
+public class BadgeTarget {
     private int index;
+    private String badgeName;
+    private int targetIdx;
 }

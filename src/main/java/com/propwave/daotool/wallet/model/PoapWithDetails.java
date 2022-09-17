@@ -1,14 +1,15 @@
-package com.propwave.daotool.user.model;
+package com.propwave.daotool.wallet.model;
 
 import lombok.*;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class Poap {
+public class PoapWithDetails {
     private int event_id;
     private String fancy_id;
     private String name;
@@ -22,4 +23,15 @@ public class Poap {
     private Date end_date;
     private Date expiry_date;
     private int supply_total;
+    // add
+    private int poapWalletIndex;
+    private int token_id;
+    private String walletAddress;
+    private int supply_order;
+    private Timestamp createdAt;
+    private Timestamp migratedAt;
+
+    private int userWalletPoapIndex;
+    private String user;
+    private boolean isHide;
 }

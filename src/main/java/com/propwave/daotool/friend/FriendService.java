@@ -1,11 +1,11 @@
-package com.propwave.daotool.Friend;
+package com.propwave.daotool.friend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.propwave.daotool.Friend.model.Follow;
-import com.propwave.daotool.Friend.model.Friend;
-import com.propwave.daotool.Friend.model.FriendReq;
-import com.propwave.daotool.Friend.model.FriendWithFriendImg;
+import com.propwave.daotool.friend.model.Follow;
+import com.propwave.daotool.friend.model.Friend;
+import com.propwave.daotool.friend.model.FriendReq;
+import com.propwave.daotool.friend.model.FriendWithFriendImg;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.user.UserDao;
 import com.propwave.daotool.user.UserProvider;
