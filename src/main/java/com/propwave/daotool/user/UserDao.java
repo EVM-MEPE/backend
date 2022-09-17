@@ -197,6 +197,12 @@ public class UserDao {
             case 5: String createNotificationQuery5 = "INSERT INTO notification(user, type, message, follow) VALUES(?,?,?,?)";
                     Object[] createNotificationParam5 = new Object[]{userID, type, message, optionIdx[0]};
                     return this.jdbcTemplate.update(createNotificationQuery5, createNotificationParam5);
+            case 7: String createNotificationQuery7 = "INSERT INTO notification(user, type, message, transaction) VALUES(?,?,?,?)";
+                    Object[] createNotificationParam7 = new Object[]{userID, type, message, optionIdx[0]};
+                    return this.jdbcTemplate.update(createNotificationQuery7, createNotificationParam7);
+            case 8: String createNotificationQuery8 = "INSERT INTO notification(user, type, message, tokenReq) VALUES(?,?,?,?)";
+                    Object[] createNotificationParam8 = new Object[]{userID, type, message, optionIdx[0]};
+                    return this.jdbcTemplate.update(createNotificationQuery8, createNotificationParam8);
             default:
                 break;
         }

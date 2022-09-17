@@ -368,9 +368,21 @@ public class WalletService {
         return walletDao.getAllPoaps();
     }
 
+    public Transaction getTransaction(int trxIdx){
+        return walletDao.getTransaction(trxIdx);
+    }
 
-    Transaction trx = walletService.getTransaction(trxIdx);
-    TokenReq tokenReq = walletService.getTokenReq(tokenReqIdx);
+    public TokenReq getTokenReq(int tokenReqIdx){
+        return walletDao.getTokenReq(tokenReqIdx);
+    }
+
+    public int saveRemit(Map<String, String> remitRes){
+        return walletDao.saveRemit(remitRes);
+    }
+
+    public int createTokenRequest(Map<String, String> tokenRequest){
+        return walletDao.createTokenRequest(tokenRequest);
+    }
 
 
     //    public void getPoapRefresh(String walletAddress, String userID) throws ParseException {

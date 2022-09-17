@@ -354,4 +354,58 @@ public class WalletDao {
         return this.jdbcTemplate.queryForObject(getWalletChainQuery, String.class, walletAddress);
     }
 
+    public Transaction getTransaction(int trxIdx){
+        String getTransactionQuery = "SELECT * FROM transaction WHERE `index`=?";
+        return this.jdbcTemplate.queryForObject(getTransactionQuery,
+                (rs, rowNum) -> new Transaction(
+                        rs.getInt("index"),
+                        rs.getString("toWalletAddress"),
+                        rs.getString("fromWalletAddress"),
+                        rs.getString("toUser"),
+                        rs.getString("fromUser"),
+                        rs.getString("gasPrice"),
+                        rs.getString("gas"),
+                        rs.getString("value"),
+                        rs.getString("chainID"),
+                        rs.getString("memo"),
+                        rs.getString("udenom"),
+                        rs.getString("walletType"),
+                        rs.getString("txHash"),
+                        rs.getTimestamp("createdAt")
+                ),
+                trxIdx
+        );
+    }
+
+    public TokenReq getTokenReq(int tokenReqIdx){
+        String getTokenReqQuery = "SELECT * FROM tokenReq WHERE `index`=?";
+        return this.jdbcTemplate.queryForObject(getTokenReqQuery,
+                (rs, rowNum) -> new TokenReq(
+                        rs.getInt("index"),
+                        rs.getString("reqWalletAddress"),
+                        rs.getInt("reqTokenAmount"),
+                        rs.getString("toUser"),
+                        rs.getString("fromUser"),
+                        rs.getString("chainID"),
+                        rs.getString("walletType"),
+                        rs.getString("memo"),
+                        rs.getTimestamp("createdAt")
+                ),
+                tokenReqIdx
+        );
+    }
+
+    public int saveRemit(Map<String, String> remitRes){
+        String creatsaveRemitQuery = "INSERT INTO transaction(toWalletAddress, fromWalletAddress, toUser, fromUser, gasPrice, gas, value, chainID, memo, udenom, walletType, txHash) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
+        Object[] creatsaveRemitParam = new Object[] {remitRes.get("toWalletAddress"), remitRes.get("fromWalletAddress"), remitRes.get("toUser"), remitRes.get("fromUser"), remitRes.get("gasPrice"), remitRes.get("gas"), remitRes.get("value"), remitRes.get("chainID"), remitRes.get("memo"), remitRes.get("udenom"), remitRes.get("walletType"), remitRes.get("trxHash")};
+        this.jdbcTemplate.update(creatsaveRemitQuery, creatsaveRemitParam);
+        return jdbcTemplate.queryForObject("select last_insert_id()", Integer.class);
+    }
+
+    public int createTokenRequest(Map<String, String> tokenRequest){
+        String createTokenRequestQuery = "INSERT INTO tokenReq(reqWalletAddress, reqTokenAmount, toUser, fromUser, chainID, walletType, memo) VALUES(?,?,?,?,?,?,?)";
+        Object[] createTokenRequestParam = new Object[] {tokenRequest.get("reqWalletAddress"), tokenRequest.get("reqTokenAmount"), tokenRequest.get("toUser"), tokenRequest.get("fromUser"), tokenRequest.get("chainID"), tokenRequest.get("walletType"), tokenRequest.get("memo")};
+        this.jdbcTemplate.update(createTokenRequestQuery, createTokenRequestParam);
+        return jdbcTemplate.queryForObject("select last_insert_id()", Integer.class);
+    }
 }

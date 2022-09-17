@@ -132,16 +132,31 @@ public class WalletController {
     @PostMapping("wallet/transactions/remitment")
     public BaseResponse<String> saveRemit(@RequestBody Map<String, String> remitRes){
         String jwtToken = remitRes.get("jwtToken");
-        String userID = remitRes.get("fromWallet");
+        String userID = remitRes.get("fromUser");
 
         if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
             return new BaseResponse<>(USER_TOKEN_WRONG);
         }
 
-        walletService.saveRemit(remitRes);
-        userService.createNotification(remitRes.get("toUser"))
+        int trxIdx = walletService.saveRemit(remitRes);
+        userService.createNotification(remitRes.get("toUser"), 7, trxIdx);
 
-        return new BaseResponse<>("Successfully send token");
+        return new BaseResponse<>("Successfully save transaction");
+    }
+
+    @PostMapping("wallet/transactions/request")
+    public BaseResponse<String> createTokenRequest(@RequestBody Map<String, String> tokenRequest){
+        String jwtToken = tokenRequest.get("jwtToken");
+        String userID = tokenRequest.get("fromUser");
+
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        int tokenReqIdx = walletService.createTokenRequest(tokenRequest);
+        userService.createNotification(tokenRequest.get("toUser"), 8, tokenReqIdx);
+
+        return new BaseResponse<>("Successfully save token request");
     }
 
 

@@ -39,13 +39,11 @@ public class UserService {
     private final WalletService walletService;
     private final SecurityService securityService;
 
-    public UserService(GetNFT getNFT, UserDao userDao, FriendDao friendDao, UserProvider userProvider, WalletService walletService, SecurityService securityService, GetPOAP getPOAP){
+    public UserService(UserDao userDao, FriendDao friendDao, UserProvider userProvider, WalletService walletService, SecurityService securityService){
         this.userDao = userDao;
         this.userProvider = userProvider;
         this.friendDao = friendDao;
         this.walletService = walletService;
-        this.getNFT = getNFT;
-        this.getPOAP = getPOAP;
         this.securityService = securityService;
     }
 
@@ -136,15 +134,14 @@ public class UserService {
             case 4: Comment comment = userDao.getComment(optionIdx[0]);
                     message = comment.getCommentFrom() + " left a comment for you. Check out the comments your friend wrote to you.";
                     return userDao.createNotification(comment.getCommentTo(), type, message, optionIdx);
-            case 5:
-                    Follow follow = friendDao.getFollow(optionIdx[0]);
+            case 5: Follow follow = friendDao.getFollow(optionIdx[0]);
                     message = follow.getUser() + " starts following you.";
                     return userDao.createNotification(userID, type, message, optionIdx);
             case 7: Transaction trx = walletService.getTransaction(optionIdx[0]);
                     message = trx.getFromUser() + " sends you token. Check it out.";
                     return userDao.createNotification(userID, type, message, optionIdx);
             case 8: TokenReq tokenReq = walletService.getTokenReq(optionIdx[0]);
-                    message = tokenReq.getFromUser() + "request you token. Check it out.";
+                    message = tokenReq.getFromUser() + " request you token. Check it out.";
                     return userDao.createNotification(userID, type, message, optionIdx);
             default:
                     break;

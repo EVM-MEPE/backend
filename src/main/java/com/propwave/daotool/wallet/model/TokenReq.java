@@ -11,11 +11,11 @@ import java.sql.Timestamp;
 public class TokenReq {
     private int index;
     private String reqWalletAddress;
-    private int reqTokenAmount;
-    private String memo;
-    private String fromUser;
+    private float reqTokenAmount;
     private String toUser;
-    private String walletType;
+    private String fromUser;
     private String chainID;
+    private String walletType;
+    private String memo;
     private Timestamp createdAt;
 }

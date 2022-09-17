@@ -12,10 +12,10 @@ public class Transaction {
     private int index;
     private String toWalletAddress;
     private String fromWalletAddress;
-    private String gasPrice;
-    private String gas;
     private String toUser;
     private String fromUser;
+    private String gasPrice;
+    private String gas;
     private String value;
     private String chainID;
     private String memo;
