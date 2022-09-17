@@ -214,6 +214,8 @@ public class UserDao {
                         rs.getInt("friend"),
                         rs.getInt("comment"),
                         rs.getInt("follow"),
+                        rs.getInt("transaction"),
+                        rs.getInt("tokenReq"),
                         rs.getString("message"),
                         rs.getBoolean("isChecked"),
                         rs.getTimestamp("createdAt")
@@ -246,6 +248,8 @@ public class UserDao {
                         rs.getInt("friend"),
                         rs.getInt("comment"),
                         rs.getInt("follow"),
+                        rs.getInt("transaction"),
+                        rs.getInt("tokenReq"),
                         rs.getString("message"),
                         rs.getBoolean("isChecked"),
                         rs.getTimestamp("createdAt")

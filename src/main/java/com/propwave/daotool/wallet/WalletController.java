@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponse;
 import com.propwave.daotool.user.UserProvider;
+import com.propwave.daotool.user.UserService;
 import com.propwave.daotool.user.model.User;
 import com.propwave.daotool.wallet.model.UserWalletAndInfo;
 import com.propwave.daotool.utils.Utils;
@@ -29,12 +30,14 @@ public class WalletController {
 
     private final WalletService walletService;
     private final UserProvider userProvider;
+    private final UserService userService;
     private final Utils utils;
 
 
-    public WalletController(WalletService walletService, UserProvider userProvider, Utils utils){
+    public WalletController(WalletService walletService, UserProvider userProvider, UserService userService, Utils utils){
         this.walletService = walletService;
         this.userProvider = userProvider;
+        this.userService = userService;
         this.utils = utils;
     }
 
@@ -127,7 +130,19 @@ public class WalletController {
      **/
 
     @PostMapping("wallet/transactions/remitment")
-    public BaseResponse<>
+    public BaseResponse<String> saveRemit(@RequestBody Map<String, String> remitRes){
+        String jwtToken = remitRes.get("jwtToken");
+        String userID = remitRes.get("fromWallet");
+
+        if(!utils.isUserJwtTokenAvailable(jwtToken, userID)){
+            return new BaseResponse<>(USER_TOKEN_WRONG);
+        }
+
+        walletService.saveRemit(remitRes);
+        userService.createNotification(remitRes.get("toUser"))
+
+        return new BaseResponse<>("Successfully send token");
+    }
 
 
      /**

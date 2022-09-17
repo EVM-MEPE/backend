@@ -8,7 +8,7 @@ import java.sql.Timestamp;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
-public class tokenReq {
+public class TokenReq {
     private int index;
     private String reqWalletAddress;
     private int reqTokenAmount;

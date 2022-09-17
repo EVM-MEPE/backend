@@ -13,6 +13,9 @@ import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.GetNFT;
 import com.propwave.daotool.utils.GetPOAP;
+import com.propwave.daotool.wallet.WalletService;
+import com.propwave.daotool.wallet.model.TokenReq;
+import com.propwave.daotool.wallet.model.Transaction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
@@ -33,16 +36,14 @@ public class UserService {
     private final UserDao userDao;
     private final UserProvider userProvider;
     private final FriendDao friendDao;
-    @Autowired
-    private final GetNFT getNFT;
-    @Autowired
-    private final GetPOAP getPOAP;
+    private final WalletService walletService;
     private final SecurityService securityService;
 
-    public UserService(GetNFT getNFT, UserDao userDao, FriendDao friendDao, UserProvider userProvider, SecurityService securityService, GetPOAP getPOAP){
+    public UserService(GetNFT getNFT, UserDao userDao, FriendDao friendDao, UserProvider userProvider, WalletService walletService, SecurityService securityService, GetPOAP getPOAP){
         this.userDao = userDao;
         this.userProvider = userProvider;
         this.friendDao = friendDao;
+        this.walletService = walletService;
         this.getNFT = getNFT;
         this.getPOAP = getPOAP;
         this.securityService = securityService;
@@ -138,6 +139,12 @@ public class UserService {
             case 5:
                     Follow follow = friendDao.getFollow(optionIdx[0]);
                     message = follow.getUser() + " starts following you.";
+                    return userDao.createNotification(userID, type, message, optionIdx);
+            case 7: Transaction trx = walletService.getTransaction(optionIdx[0]);
+                    message = trx.getFromUser() + " sends you token. Check it out.";
+                    return userDao.createNotification(userID, type, message, optionIdx);
+            case 8: TokenReq tokenReq = walletService.getTokenReq(optionIdx[0]);
+                    message = tokenReq.getFromUser() + "request you token. Check it out.";
                     return userDao.createNotification(userID, type, message, optionIdx);
             default:
                     break;

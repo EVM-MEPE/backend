@@ -17,6 +17,8 @@ public class Notification {
     private int friend;
     private int comment;
     private int follow;
+    private int transaction;
+    private int tokenReq;
     private String message;
     private boolean isChecked;
     private Timestamp createdAt;

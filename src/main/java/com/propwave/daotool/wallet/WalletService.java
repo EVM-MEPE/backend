@@ -369,6 +369,9 @@ public class WalletService {
     }
 
 
+    Transaction trx = walletService.getTransaction(trxIdx);
+    TokenReq tokenReq = walletService.getTokenReq(tokenReqIdx);
+
 
     //    public void getPoapRefresh(String walletAddress, String userID) throws ParseException {
 //        // POAP 가져오기

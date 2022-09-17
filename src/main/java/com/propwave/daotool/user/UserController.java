@@ -14,6 +14,8 @@ import com.propwave.daotool.config.jwt.SecurityService;
 import com.propwave.daotool.user.model.*;
 import com.propwave.daotool.utils.Utils;
 import com.propwave.daotool.wallet.WalletService;
+import com.propwave.daotool.wallet.model.TokenReq;
+import com.propwave.daotool.wallet.model.Transaction;
 import com.propwave.daotool.wallet.model.UserWalletAndInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -263,6 +265,16 @@ public class UserController {
                 case 6: user = userProvider.getUser(notification.getUser());
                         tmp.put("img", "https://daotool.s3.ap-northeast-2.amazonaws.com/static/etc/61d4c43b-d8d0-45bb-a437-8af1977812a1mepe+poap+-+amazing+mepe.svg");
                         break;
+                case 7: int trxIdx = notification.getTransaction();
+                        Transaction trx = walletService.getTransaction(trxIdx);
+                        user = userProvider.getUser(trx.getFromUser());
+                        tmp.put("img", userProvider.getUserImagePath(user.getId()));
+                        break;
+                case 8: int tokenReqIdx = notification.getTokenReq();
+                        TokenReq tokenReq = walletService.getTokenReq(tokenReqIdx);
+                        user = userProvider.getUser(tokenReq.getFromUser());
+                        tmp.put("img", userProvider.getUserImagePath(user.getId()));
+                        break;
                 default:
                         break;
             }
@@ -321,12 +333,22 @@ public class UserController {
                 String friendID = friend.getFriend();
                 user = userProvider.getUser(friendID);
                 break;
-            case 4:
+            case 4: int commentIdx = notification.getComment();
+                Comment comment = userProvider.getComment(commentIdx);
+                user = userProvider.getUser(comment.getCommentFrom());
                 break;
             case 5: int followIndex = notification.getFollow();
                 Follow follow = friendService.getFollow(followIndex);
                 String followID = follow.getUser();
                 user = userProvider.getUser(followID);
+                break;
+            case 7: int trxIdx = notification.getTransaction();
+                Transaction trx = walletService.getTransaction(trxIdx);
+                user = userProvider.getUser(trx.getFromUser());
+                break;
+            case 8: int tokenReqIdx = notification.getTokenReq();
+                TokenReq tokenReq = walletService.getTokenReq(tokenReqIdx);
+                user = userProvider.getUser(tokenReq.getFromUser());
                 break;
             default:
                 break;
