@@ -141,7 +141,7 @@ public class UserService {
                     message = trx.getFromUser() + " sends you token. Check it out.";
                     return userDao.createNotification(userID, type, message, optionIdx);
             case 8: TokenReq tokenReq = walletService.getTokenReq(optionIdx[0]);
-                    message = tokenReq.getFromUser() + " request you token. Check it out.";
+                    message = tokenReq.getFromUser() + " requests" + tokenReq.getReqTokenAmount() + ". /n"+ tokenReq.getMemo() +"/n Would you like to send?";
                     return userDao.createNotification(userID, type, message, optionIdx);
             default:
                     break;

@@ -3,7 +3,6 @@ package com.propwave.daotool.wallet;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
 import com.propwave.daotool.user.model.UserWallet;
-import com.propwave.daotool.utils.Evmos;
 import com.propwave.daotool.wallet.model.UserWalletAndInfo;
 import com.propwave.daotool.utils.GetNFT;
 import com.propwave.daotool.utils.GetPOAP;
