@@ -3,6 +3,7 @@ package com.propwave.daotool.wallet;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
 import com.propwave.daotool.user.model.UserWallet;
+import com.propwave.daotool.utils.Evmos;
 import com.propwave.daotool.wallet.model.UserWalletAndInfo;
 import com.propwave.daotool.utils.GetNFT;
 import com.propwave.daotool.utils.GetPOAP;
@@ -128,6 +129,7 @@ public class WalletService {
         List<Map<String, Object>> polyR = new ArrayList<>();
         List<Map<String, Object>> cosR = new ArrayList<>();
         List<Map<String, Object>> solR = new ArrayList<>();
+        List<Map<String, Object>> evmR = new ArrayList<>();
 
         for(UserWalletAndInfo userWallet: userWalletAndInfos){
             // POAP 가져오기
@@ -224,6 +226,19 @@ public class WalletService {
                     tmp.put("hidden", false);
                     solR.add(tmp);
                 }
+            }else if(wallet.equals("Evmos")){
+                jsonList = getNFT.getNFTs("Evmos", walletAddress);
+                for(Object json:jsonList){
+                    JSONObject jsonObject = (JSONObject) json;
+
+                    Map<String, Object> tmp = new HashMap<>();
+                    String imgUrl = checkImgUrl((String)jsonObject.get("image"));
+                    tmp.put("image", imgUrl);
+                    tmp.put("title", jsonObject.get("name"));
+                    tmp.put("obtainedAt", "none");
+                    tmp.put("hidden", false);
+                    evmR.add(tmp);
+                }
             }
         }
 
@@ -267,6 +282,7 @@ public class WalletService {
         result.put("polygon", polyR);
         result.put("keplr", cosR);
         result.put("solana", solR);
+        result.put("evmos", evmR);
 
         return result;
     }
