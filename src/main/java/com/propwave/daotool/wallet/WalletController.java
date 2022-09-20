@@ -161,8 +161,8 @@ public class WalletController {
     }
 
     @GetMapping("wallet/transactions/all")
-    public BaseResponse<List<Transaction>> getTransaction(@RequestParam("userID") String userID){
-        List<Transaction> transactionList = walletService.getAllTransaction(userID);
+    public BaseResponse<List<Map<String, Object>>> getTransaction(@RequestParam("userID") String userID) throws BaseException {
+        List<Map<String, Object>> transactionList = walletService.getAllTransaction(userID);
 
         return new BaseResponse<>(transactionList);
     }

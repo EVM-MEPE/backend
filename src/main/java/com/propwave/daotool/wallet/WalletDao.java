@@ -421,7 +421,7 @@ public class WalletDao {
 
     public int saveRemit(Map<String, String> remitRes){
         String creatsaveRemitQuery = "INSERT INTO transaction(toWalletAddress, fromWalletAddress, toUser, fromUser, gasPrice, gas, value, chainID, memo, udenom, walletType, txHash) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)";
-        Object[] creatsaveRemitParam = new Object[] {remitRes.get("toWalletAddress"), remitRes.get("fromWalletAddress"), remitRes.get("toUser"), remitRes.get("fromUser"), remitRes.get("gasPrice"), remitRes.get("gas"), remitRes.get("value"), remitRes.get("chainID"), remitRes.get("memo"), remitRes.get("udenom"), remitRes.get("walletType"), remitRes.get("trxHash")};
+        Object[] creatsaveRemitParam = new Object[] {remitRes.get("toWalletAddress"), remitRes.get("fromWalletAddress"), remitRes.get("toUser"), remitRes.get("fromUser"), remitRes.get("gasPrice"), remitRes.get("gas"), remitRes.get("value"), remitRes.get("chainID"), remitRes.get("memo"), remitRes.get("udenom"), remitRes.get("walletType"), remitRes.get("txHash")};
         this.jdbcTemplate.update(creatsaveRemitQuery, creatsaveRemitParam);
         return jdbcTemplate.queryForObject("select last_insert_id()", Integer.class);
     }

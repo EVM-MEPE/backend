@@ -46,7 +46,6 @@ public class GetNFT {
                 break;
             case "Evmos":
                 type = 3;
-                System.out.println("aa");
                 url = "https://api.covalenthq.com/v1/9001/address/" + walletAddress + "/balances_v2/?quote-currency=KRW&format=JSON&nft=true&no-nft-fetch=true&key=" + Secret.EVMOS_NFT_API_KEY;
                 break;
             default:

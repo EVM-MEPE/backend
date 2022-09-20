@@ -1,7 +1,9 @@
 package com.propwave.daotool.wallet;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.propwave.daotool.config.BaseException;
 import com.propwave.daotool.config.BaseResponseStatus;
+import com.propwave.daotool.user.UserProvider;
 import com.propwave.daotool.user.model.UserWallet;
 import com.propwave.daotool.wallet.model.UserWalletAndInfo;
 import com.propwave.daotool.utils.GetNFT;
@@ -24,13 +26,15 @@ public class WalletService {
     final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private final WalletDao walletDao;
+    private final UserProvider userProvider;
     private final GetNFT getNFT;
     private final GetPOAP getPOAP;
 
-    public WalletService(WalletDao walletDao, GetNFT getNFT, GetPOAP getPOAP){
+    public WalletService(WalletDao walletDao, UserProvider userProvider, GetNFT getNFT, GetPOAP getPOAP){
         this.walletDao = walletDao;
         this.getNFT = getNFT;
         this.getPOAP = getPOAP;
+        this.userProvider = userProvider;
     }
 
     public int addWalletToUser(String userID, String walletAddress, String walletType){
@@ -399,8 +403,25 @@ public class WalletService {
         return walletDao.createTokenRequest(tokenRequest);
     }
 
-    public List<Transaction> getAllTransaction(String userID){
-        return walletDao.getAllTransaction(userID);
+    public List<Map<String, Object>> getAllTransaction(String userID) throws BaseException {
+        List<Transaction> transactions = walletDao.getAllTransaction(userID);
+        List<Map<String, Object>> result = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        for(Transaction transaction: transactions){
+            Map<String, Object> trxMap = objectMapper.convertValue(transaction, Map.class);
+
+            Timestamp userCreatedAt = transaction.getCreatedAt();
+            trxMap.replace("createdAt", userCreatedAt);
+
+            String fromUserProfileImg = userProvider.getUserImagePath(transaction.getFromUser());
+            String toUserProfileImg = userProvider.getUserImagePath(transaction.getToUser());
+
+            trxMap.put("fromUserProfileImg", fromUserProfileImg);
+            trxMap.put("toUserProfileImg", toUserProfileImg);
+
+            result.add(trxMap);
+        }
+        return result;
     }
 
 
