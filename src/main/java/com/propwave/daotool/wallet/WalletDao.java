@@ -378,7 +378,7 @@ public class WalletDao {
     }
 
     public List<Transaction> getAllTransaction(String userID){
-        String getTransactionQuery = "SELECT * FROM transaction WHERE toUser=? OR fromUser=?";
+        String getTransactionQuery = "SELECT * FROM transaction WHERE toUser=? OR fromUser=? ORDER BY `createdAt` DESC";
         Object[] getTransactionParam = new Object[] {userID, userID};
         return this.jdbcTemplate.query(getTransactionQuery,
                 (rs, rowNum) -> new Transaction(
